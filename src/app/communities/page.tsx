@@ -1,6 +1,6 @@
 import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { CommunityCard } from '@/components/CommunityCard';
-import { MapPin, Users } from 'lucide-react';
+import { MapPin, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -13,6 +13,14 @@ interface CommunitiesPageProps {
     searchParams: Promise<{ city?: string }>;
 }
 
+const CITY_OPTIONS = [
+    { label: 'All Cities', value: 'all' },
+    { label: 'Noida', value: 'Noida' },
+    { label: 'Delhi', value: 'Delhi' },
+    { label: 'Gurgaon', value: 'Gurgaon' },
+    { label: 'Bangalore', value: 'Bangalore' },
+];
+
 export default async function CommunitiesPage({ searchParams }: CommunitiesPageProps) {
     const params = await searchParams;
     const city = params.city || 'all';
@@ -23,48 +31,50 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
 
     return (
         <div className="min-h-screen bg-neutral-50">
-            {/* Header */}
-            <div className="bg-white border-b border-neutral-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="border-b border-neutral-200 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+                <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+                    <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 flex items-center gap-2">
-                                <Users size={24} className="text-primary-600" />
-                                {city === 'all' ? 'All Communities' : `${city} Communities`}
+                            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700">
+                                <Sparkles size={15} />
+                                Community-led discovery
+                            </div>
+                            <h1 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+                                {city === 'all' ? 'Browse all communities' : `${city} communities`}
                             </h1>
-                            <p className="text-neutral-500 mt-1">
-                                {communities.length} communit{communities.length !== 1 ? 'ies' : 'y'} available
+                            <p className="mt-3 max-w-2xl text-sm leading-7 text-neutral-500 sm:text-base">
+                                Discover niche circles, local groups, and trusted organizers building recurring experiences around shared interests.
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Link
-                                href="/communities?city=all"
-                                className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${city === 'all'
-                                        ? 'bg-primary-600 text-white border-primary-600'
-                                        : 'bg-white text-neutral-600 border-neutral-200 hover:border-primary-300'
-                                    }`}
-                            >
-                                All Cities
-                            </Link>
-                            <Link
-                                href="/communities?city=Noida"
-                                className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${city === 'Noida'
-                                        ? 'bg-primary-600 text-white border-primary-600'
-                                        : 'bg-white text-neutral-600 border-neutral-200 hover:border-primary-300'
-                                    }`}
-                            >
-                                <MapPin size={14} className="inline mr-1" />
-                                Noida
-                            </Link>
+
+                        <div className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Visible communities</div>
+                            <div className="mt-2 text-3xl font-bold text-neutral-900">{communities.length}</div>
+                            <div className="mt-1 text-sm text-neutral-500">matching this city view</div>
                         </div>
+                    </div>
+
+                    <div className="mt-7 flex gap-2 overflow-x-auto pb-1">
+                        {CITY_OPTIONS.map((option) => (
+                            <Link
+                                key={option.value}
+                                href={`/communities?city=${option.value}`}
+                                className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-all ${city === option.value
+                                    ? 'border-primary-600 bg-primary-600 text-white'
+                                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-primary-300 hover:text-primary-600'
+                                    }`}
+                            >
+                                {option.value !== 'all' && <MapPin size={14} className="mr-1 inline" />}
+                                {option.label}
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            {/* Communities Grid */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
                 {communities.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                         {communities.map((community) => (
                             <CommunityCard
                                 key={community.id}
@@ -74,17 +84,17 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-20">
-                        <div className="w-16 h-16 mx-auto rounded-2xl bg-primary-100 flex items-center justify-center mb-4">
-                            <Users size={28} className="text-primary-400" />
+                    <div className="rounded-[2rem] border border-dashed border-neutral-300 bg-white px-6 py-16 text-center shadow-sm">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100">
+                            <Users size={28} className="text-primary-500" />
                         </div>
-                        <h3 className="text-lg font-semibold text-neutral-900 mb-2">No communities found</h3>
-                        <p className="text-neutral-500 text-sm max-w-sm mx-auto">
-                            Be the first to create a community in your area!
+                        <h3 className="text-xl font-semibold text-neutral-900">No communities found yet</h3>
+                        <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-neutral-500">
+                            This city needs a few founding communities to make discovery feel alive. You can create the first one and start shaping local culture.
                         </p>
                         <Link
                             href="/create-community"
-                            className="inline-flex mt-4 px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all"
+                            className="mt-6 inline-flex rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-700"
                         >
                             Create Community
                         </Link>

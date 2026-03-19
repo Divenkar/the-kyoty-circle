@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Calendar, X } from 'lucide-react';
+import { Calendar, Search, SlidersHorizontal, X } from 'lucide-react';
 
 export function FilterBar() {
     const router = useRouter();
@@ -22,7 +22,13 @@ export function FilterBar() {
         router.push(`/explore?${params.toString()}`);
     }, [router, searchParams]);
 
-    // Debounced search — fires 400ms after user stops typing
+    React.useEffect(() => {
+        setQuery(searchParams.get('q') || '');
+        setDateFrom(searchParams.get('from') || '');
+        setDateTo(searchParams.get('to') || '');
+        setPriceFilter(searchParams.get('price') || 'all');
+    }, [searchParams]);
+
     React.useEffect(() => {
         const currentQ = searchParams.get('q') || '';
         if (query === currentQ) return;
@@ -64,66 +70,72 @@ export function FilterBar() {
     const hasActiveFilters = query || dateFrom || dateTo || priceFilter !== 'all';
 
     return (
-        <div className="flex flex-col gap-3 mt-5">
-            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
-                {/* Search */}
-                <form onSubmit={handleSearch} className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-xs">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+        <div className="mt-6 rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-neutral-800">
+                <SlidersHorizontal size={16} className="text-primary-500" />
+                Refine your event search
+            </div>
+
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <form onSubmit={handleSearch} className="relative flex-1">
+                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
                     <input
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search events..."
-                        className="w-full pl-9 pr-4 py-2 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all"
+                        placeholder="Search by event name or description"
+                        className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 py-3 pl-11 pr-4 text-sm outline-none transition-all focus:border-primary-400 focus:bg-white focus:ring-4 focus:ring-primary-500/10"
                     />
                 </form>
 
-                {/* Date Range */}
-                <div className="flex items-center gap-1.5">
-                    <Calendar size={14} className="text-neutral-400 hidden sm:block" />
-                    <input
-                        type="date"
-                        value={dateFrom}
-                        onChange={(e) => handleDateChange(e.target.value, dateTo)}
-                        className="flex-1 sm:flex-none px-2.5 py-2 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all min-w-0"
-                    />
-                    <span className="text-xs text-neutral-400">to</span>
-                    <input
-                        type="date"
-                        value={dateTo}
-                        onChange={(e) => handleDateChange(dateFrom, e.target.value)}
-                        className="flex-1 sm:flex-none px-2.5 py-2 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all min-w-0"
-                    />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center lg:min-w-[360px]">
+                    <label className="flex items-center gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm text-neutral-600 focus-within:border-primary-400 focus-within:bg-white">
+                        <Calendar size={15} className="text-primary-500" />
+                        <input
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => handleDateChange(e.target.value, dateTo)}
+                            className="min-w-0 flex-1 bg-transparent outline-none"
+                        />
+                    </label>
+                    <span className="hidden text-center text-xs font-medium uppercase tracking-wide text-neutral-400 sm:block">to</span>
+                    <label className="flex items-center gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm text-neutral-600 focus-within:border-primary-400 focus-within:bg-white">
+                        <Calendar size={15} className="text-primary-500" />
+                        <input
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => handleDateChange(dateFrom, e.target.value)}
+                            className="min-w-0 flex-1 bg-transparent outline-none"
+                        />
+                    </label>
                 </div>
 
-                {/* Price Toggle */}
-                <div className="flex items-center bg-neutral-100 rounded-xl p-0.5 self-start">
+                <div className="flex flex-wrap items-center gap-2">
                     {['all', 'free', 'paid'].map((opt) => (
                         <button
                             type="button"
                             key={opt}
                             onClick={() => handlePriceChange(opt)}
-                            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all capitalize ${priceFilter === opt
-                                ? 'bg-white text-neutral-900 shadow-sm'
-                                : 'text-neutral-500 hover:text-neutral-700'
+                            className={`rounded-full px-4 py-2 text-sm font-semibold capitalize transition-all ${priceFilter === opt
+                                ? 'bg-primary-600 text-white shadow-sm'
+                                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900'
                                 }`}
                         >
                             {opt}
                         </button>
                     ))}
-                </div>
 
-                {/* Clear */}
-                {hasActiveFilters && (
-                    <button
-                        type="button"
-                        onClick={clearFilters}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors self-start"
-                    >
-                        <X size={12} />
-                        Clear
-                    </button>
-                )}
+                    {hasActiveFilters && (
+                        <button
+                            type="button"
+                            onClick={clearFilters}
+                            className="inline-flex items-center gap-1 rounded-full bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
+                        >
+                            <X size={14} />
+                            Clear
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
