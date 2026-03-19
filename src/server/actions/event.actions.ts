@@ -1,0 +1,99 @@
+'use server';
+
+import { getCurrentUser } from '@/lib/auth-server';
+import { EventService } from '@/lib/services/event-service';
+import type { ActionResponse, KyotyEvent } from '@/types';
+
+export async function createEventAction(
+    formData: FormData
+): Promise<ActionResponse<KyotyEvent>> {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: 'Authentication required' };
+
+        if (user.role !== 'community_admin' && user.role !== 'kyoty_admin' && user.role !== 'admin') {
+            return { success: false, error: 'Only community admins can create events' };
+        }
+
+        const data = {
+            title: formData.get('title') as string,
+            description: (formData.get('description') as string) || undefined,
+            community_id: Number(formData.get('community_id')),
+            city_id: Number(formData.get('city_id')) || 6,
+            location_text: (formData.get('location_text') as string) || undefined,
+            date: formData.get('date') as string,
+            start_time: (formData.get('start_time') as string) || undefined,
+            end_time: (formData.get('end_time') as string) || undefined,
+            max_participants: Number(formData.get('capacity')) || Number(formData.get('max_participants')) || 50,
+            pricing_model: (formData.get('pricing_model') as string) || 'free',
+            price_per_person: Number(formData.get('cost') || formData.get('price_per_person')) || 0,
+            created_by: user.id,
+        };
+
+        const ticketTiersStr = formData.get('ticket_tiers') as string;
+        let ticketTiers = [];
+        if (ticketTiersStr) {
+            try {
+                ticketTiers = JSON.parse(ticketTiersStr);
+                // Note: If tiered, we should calculate max_participants from sum of tier capacities
+                if (data.pricing_model === 'tiered') {
+                    data.max_participants = ticketTiers.reduce((sum: number, tier: any) => sum + Number(tier.capacity), 0);
+                    // Base cost could be minimum tier price
+                    data.price_per_person = Math.min(...ticketTiers.map((t: any) => Number(t.price)));
+                }
+            } catch (e) {
+                console.error("Failed to parse ticket tiers", e);
+            }
+        }
+
+        if (!data.title || !data.date || !data.community_id) {
+            return { success: false, error: 'Title, date, and community are required' };
+        }
+
+        const event = await EventService.createEvent(data);
+
+        // Insert ticket tiers if any
+        if (data.pricing_model === 'tiered' && ticketTiers.length > 0) {
+            const tiersToInsert = ticketTiers.map((t: any) => ({
+                event_id: event.id,
+                name: String(t.name),
+                capacity: Number(t.capacity),
+                price: Number(t.price),
+            }));
+            const { TicketTierRepository } = await import('@/lib/repositories/ticket-tier-repo');
+            await TicketTierRepository.insertTiers(tiersToInsert);
+        }
+
+        return { success: true, data: event };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to create event' };
+    }
+}
+
+export async function joinEventAction(
+    eventId: number
+): Promise<ActionResponse<{ status: string; position?: number }>> {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: 'Authentication required' };
+
+        const result = await EventService.joinEvent(eventId, user.id);
+        return { success: true, data: result };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to join event' };
+    }
+}
+
+export async function cancelEventRegistrationAction(
+    eventId: number
+): Promise<ActionResponse> {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: 'Authentication required' };
+
+        await EventService.cancelRegistration(eventId, user.id);
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to cancel registration' };
+    }
+}

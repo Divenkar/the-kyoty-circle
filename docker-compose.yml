@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  kyoty-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    # If using a .env file locally to pass env vars to the container uncomment the following
+    # env_file:
+    #   - .env
+    restart: always
