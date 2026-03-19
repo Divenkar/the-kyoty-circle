@@ -1,163 +1,197 @@
 import Link from 'next/link';
-import { MapPin, ArrowRight, Shield, Users, Calendar } from 'lucide-react';
-import Image from 'next/image';
+import { ArrowRight, Calendar, Compass, MapPin, Shield, Sparkles, Users } from 'lucide-react';
 
 const CITIES = [
-  { name: 'Noida', status: 'active' as const, image: null },
-  { name: 'Delhi', status: 'coming_soon' as const, image: null },
-  { name: 'Gurgaon', status: 'coming_soon' as const, image: null },
-  { name: 'Bangalore', status: 'coming_soon' as const, image: null },
+  { name: 'Noida', status: 'active' as const, href: '/explore?city=Noida', blurb: 'Live now with curated communities and meetups.' },
+  { name: 'Delhi', status: 'coming_soon' as const, href: '/communities?city=Delhi', blurb: 'Interest list open for launch partners.' },
+  { name: 'Gurgaon', status: 'coming_soon' as const, href: '/communities?city=Gurgaon', blurb: 'Great for founder, fitness, and hobby circles.' },
+  { name: 'Bangalore', status: 'coming_soon' as const, href: '/communities?city=Bangalore', blurb: 'Tech, creator, and culture communities next.' },
+];
+
+const VALUE_PROPS = [
+  {
+    icon: Shield,
+    title: 'Verified social proof',
+    desc: 'Profiles can include LinkedIn or Instagram proof so every meetup feels more trusted and intentional.',
+    gradient: 'from-primary-500 to-primary-700',
+  },
+  {
+    icon: Users,
+    title: 'Community-led experiences',
+    desc: 'Events come from actual communities, not random listings, which improves relevance and repeat engagement.',
+    gradient: 'from-violet-500 to-primary-600',
+  },
+  {
+    icon: Calendar,
+    title: 'Curated event discovery',
+    desc: 'Browse by interest, price, and date to quickly find experiences that fit your energy and schedule.',
+    gradient: 'from-amber-400 to-orange-500',
+  },
+];
+
+const STATS = [
+  { label: 'City launch focus', value: 'Noida first' },
+  { label: 'Discovery-first UX', value: 'Events + communities' },
+  { label: 'Designed for trust', value: 'Verified hosts' },
 ];
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white">
-        {/* Decorative blobs */}
+    <div className="min-h-screen bg-neutral-50 text-neutral-900">
+      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.25),_transparent_35%),linear-gradient(135deg,#111827_0%,#312e81_52%,#4338ca_100%)] text-white">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-primary-400/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] bg-primary-300/15 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute -top-32 right-[-6rem] h-80 w-80 rounded-full bg-primary-300/20 blur-3xl" />
+          <div className="absolute bottom-[-8rem] left-[-5rem] h-72 w-72 rounded-full bg-fuchsia-400/15 blur-3xl" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-32">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium mb-8 border border-white/10">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              Now live in Noida
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:py-28">
+          <div className="max-w-3xl">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
+              <Sparkles size={16} className="text-amber-300" />
+              Building the most trusted way to discover communities in your city
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6 tracking-tight">
-              Discover Real
-              <br />
-              Communities
-              <br />
-              <span className="text-primary-200">in Your City</span>
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+              Discover beautiful,
+              <span className="block text-primary-200">real-world communities and events.</span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-primary-100/90 mb-10 max-w-lg leading-relaxed">
-              Join curated events hosted by trusted communities. Meet real people, do real things.
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-primary-50/85 sm:text-xl">
+              Kyoty helps people find verified communities, join curated gatherings, and build an offline social life around shared interests.
             </p>
 
-            <Link
-              href="/explore"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 transition-all duration-300 shadow-lg hover:shadow-xl text-base group"
-            >
-              Explore Noida
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+              <Link
+                href="/explore?city=Noida"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-7 py-4 text-base font-semibold text-primary-700 shadow-xl shadow-primary-900/20 transition-all hover:-translate-y-0.5 hover:bg-primary-50"
+              >
+                Explore live events
+                <ArrowRight size={18} />
+              </Link>
+              <Link
+                href="/communities"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-7 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/15"
+              >
+                Browse communities
+                <Compass size={18} />
+              </Link>
+            </div>
+
+            <div className="mt-12 grid gap-4 sm:grid-cols-3">
+              {STATS.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
+                  <div className="text-lg font-bold text-white">{item.value}</div>
+                  <div className="mt-1 text-sm text-primary-100/80">{item.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {CITIES.map((city) => (
+              city.status === 'active' ? (
+                <Link
+                  key={city.name}
+                  href={city.href}
+                  className="group rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur-md transition-all hover:-translate-y-1 hover:bg-white/15"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-white">
+                    <MapPin size={22} />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-xl font-semibold">{city.name}</h2>
+                      <p className="mt-2 text-sm text-primary-100/80">{city.blurb}</p>
+                    </div>
+                    <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+                  </div>
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-green-400/20 px-3 py-1 text-xs font-semibold text-green-100">
+                    <span className="h-2 w-2 rounded-full bg-green-300" />
+                    Live now
+                  </div>
+                </Link>
+              ) : (
+                <div
+                  key={city.name}
+                  className="rounded-3xl border border-white/10 bg-white/5 p-5 text-white/80 backdrop-blur-sm"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+                    <MapPin size={22} />
+                  </div>
+                  <h2 className="text-xl font-semibold text-white">{city.name}</h2>
+                  <p className="mt-2 text-sm text-primary-100/70">{city.blurb}</p>
+                  <div className="mt-4 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-primary-100/85">
+                    Coming soon
+                  </div>
+                </div>
+              )
+            ))}
           </div>
         </div>
       </section>
 
-      {/* City Selection */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 -mt-10 relative z-10">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {CITIES.map((city) => (
-            <div key={city.name} className="relative group">
-              {city.status === 'active' ? (
-                <Link
-                  href="/explore"
-                  className="block bg-white p-5 rounded-2xl shadow-lg border border-neutral-200 hover:border-primary-300 hover:shadow-xl transition-all duration-300 text-center"
-                >
-                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mb-3 shadow-sm">
-                    <MapPin size={24} className="text-white" />
-                  </div>
-                  <span className="text-base font-semibold text-neutral-900 block">{city.name}</span>
-                  <span className="text-xs font-medium text-green-600 mt-1 flex items-center justify-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                    Active
-                  </span>
-                </Link>
-              ) : (
-                <div className="bg-white/80 p-5 rounded-2xl shadow-lg border border-neutral-200 text-center opacity-75">
-                  <div className="w-14 h-14 mx-auto rounded-2xl bg-neutral-200 flex items-center justify-center mb-3">
-                    <MapPin size={24} className="text-neutral-400" />
-                  </div>
-                  <span className="text-base font-semibold text-neutral-600 block">{city.name}</span>
-                  <span className="text-xs font-medium text-neutral-400 mt-1 block">Coming Soon</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Value Props */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24">
-        <div className="text-center mb-14">
-          <h2 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-3">
-            Why Kyoty?
-          </h2>
-          <p className="text-neutral-500 max-w-lg mx-auto">
-            A trusted platform for real community experiences.
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+        <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">Why Kyoty works</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-neutral-900">A calmer, cleaner way to discover offline social experiences</h2>
+          </div>
+          <p className="max-w-xl text-sm leading-7 text-neutral-500 sm:text-base">
+            The product already has the right foundations—communities, events, onboarding, and admin review. The biggest opportunity is making discovery feel premium and reducing dead ends in the browsing flow.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {[
-            {
-              icon: Shield,
-              title: 'Social Proof Verified',
-              desc: 'Every member shares LinkedIn or Instagram. Know who you\'re meeting.',
-              gradient: 'from-primary-500 to-primary-600',
-            },
-            {
-              icon: Users,
-              title: 'Community-First',
-              desc: 'Events are run by real, admin-approved communities. No random hosts.',
-              gradient: 'from-primary-400 to-primary-500',
-            },
-            {
-              icon: Calendar,
-              title: 'Curated Events',
-              desc: 'Every event goes through platform review before going live.',
-              gradient: 'from-primary-500 to-primary-700',
-            },
-          ].map((item, i) => (
-            <div
-              key={i}
-              className="p-6 bg-white border border-neutral-200 rounded-2xl hover:shadow-lg transition-all duration-300 group"
-            >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                <item.icon size={22} className="text-white" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          {VALUE_PROPS.map((item) => (
+            <div key={item.title} className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+              <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${item.gradient} text-white shadow-lg`}>
+                <item.icon size={24} />
               </div>
-              <h3 className="text-base font-semibold text-neutral-900 mb-2">{item.title}</h3>
-              <p className="text-sm text-neutral-500 leading-relaxed">{item.desc}</p>
+              <h3 className="text-xl font-semibold text-neutral-900">{item.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-neutral-600">{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
-        <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-3xl p-10 sm:p-14 text-center text-white relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/10 rounded-full blur-3xl" />
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 relative">
-            Ready to explore your city?
-          </h2>
-          <p className="text-primary-100 mb-8 max-w-md mx-auto relative">
-            Join thousands of people discovering new communities and events in Noida.
-          </p>
-          <Link
-            href="/explore"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 transition-all shadow-lg text-base relative group"
-          >
-            Get Started
-            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
+      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
+        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-[2rem] border border-neutral-200 bg-white p-8 shadow-sm sm:p-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">Current product strengths</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900">The core flows are already meaningful</h2>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {[
+                'Explore upcoming events by city and category',
+                'Join communities and RSVP for hosted experiences',
+                'Create communities and events through dashboard flows',
+                'Admin review and moderation tooling for safer launches',
+              ].map((item) => (
+                <div key={item} className="rounded-2xl bg-neutral-50 p-4 text-sm font-medium text-neutral-700">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] bg-gradient-to-br from-primary-600 to-primary-800 p-8 text-white shadow-xl shadow-primary-900/10 sm:p-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-100">Next step</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight">Open the app and start exploring Noida.</h2>
+            <p className="mt-4 text-sm leading-7 text-primary-100/85 sm:text-base">
+              The browse experience is the heart of the product. Once users can confidently search, compare, and join, the platform feels dramatically more complete.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link href="/explore?city=Noida" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3 font-semibold text-primary-700 transition hover:bg-primary-50">
+                Explore events
+                <ArrowRight size={18} />
+              </Link>
+              <Link href="/create-community" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 px-6 py-3 font-semibold text-white transition hover:bg-white/10">
+                Start a community
+                <Users size={18} />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-neutral-200 bg-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
-          <p className="text-sm text-neutral-400">
-            © {new Date().getFullYear()} Kyoty. Community events across India.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
