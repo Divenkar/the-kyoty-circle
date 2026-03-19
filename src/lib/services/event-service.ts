@@ -50,6 +50,10 @@ export const EventService = {
             throw new Error('This event is not open for registration');
         }
 
+        if (new Date(event.date) < new Date(new Date().toISOString().split('T')[0])) {
+            throw new Error('This event has already taken place');
+        }
+
         // Check if user is community member
         const isMember = await CommunityMemberRepository.isMember(event.community_id, userId);
         if (!isMember) {

@@ -11,7 +11,7 @@ import type { ActionResponse } from '@/types';
 export async function approveCommunityAction(communityId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || user.role !== 'kyoty_admin') {
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
             return { success: false, error: 'Admin access required' };
         }
         await CommunityService.approveCommunity(communityId, user.id);
@@ -24,7 +24,7 @@ export async function approveCommunityAction(communityId: number): Promise<Actio
 export async function rejectCommunityAction(communityId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || user.role !== 'kyoty_admin') {
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
             return { success: false, error: 'Admin access required' };
         }
         await CommunityService.rejectCommunity(communityId, user.id);
@@ -37,7 +37,7 @@ export async function rejectCommunityAction(communityId: number): Promise<Action
 export async function approveEventAction(eventId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || user.role !== 'kyoty_admin') {
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
             return { success: false, error: 'Admin access required' };
         }
         await EventService.approveEvent(eventId, user.id);
@@ -50,7 +50,7 @@ export async function approveEventAction(eventId: number): Promise<ActionRespons
 export async function rejectEventAction(eventId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || user.role !== 'kyoty_admin') {
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
             return { success: false, error: 'Admin access required' };
         }
         await EventService.rejectEvent(eventId, user.id);
@@ -63,7 +63,7 @@ export async function rejectEventAction(eventId: number): Promise<ActionResponse
 export async function approveMemberAction(memberId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'community_admin' && user.role !== 'kyoty_admin')) {
+        if (!user || (user.role !== 'community_admin' && (user.role !== 'kyoty_admin' && user.role !== 'admin'))) {
             return { success: false, error: 'Admin access required' };
         }
         await CommunityService.approveMember(memberId, user.id);
@@ -76,7 +76,7 @@ export async function approveMemberAction(memberId: number): Promise<ActionRespo
 export async function rejectMemberAction(memberId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'community_admin' && user.role !== 'kyoty_admin')) {
+        if (!user || (user.role !== 'community_admin' && (user.role !== 'kyoty_admin' && user.role !== 'admin'))) {
             return { success: false, error: 'Admin access required' };
         }
         await CommunityService.rejectMember(memberId, user.id);
@@ -89,7 +89,7 @@ export async function rejectMemberAction(memberId: number): Promise<ActionRespon
 export async function getPendingCommunitiesAction() {
     try {
         const user = await getCurrentUser();
-        if (!user || user.role !== 'kyoty_admin') {
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
             return { success: false, error: 'Admin access required' };
         }
         const data = await CommunityRepository.findPending();
@@ -102,7 +102,7 @@ export async function getPendingCommunitiesAction() {
 export async function getPendingEventsAction() {
     try {
         const user = await getCurrentUser();
-        if (!user || user.role !== 'kyoty_admin') {
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
             return { success: false, error: 'Admin access required' };
         }
         const data = await EventRepository.findPending();
@@ -115,7 +115,7 @@ export async function getPendingEventsAction() {
 export async function getPendingMembersAction() {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'community_admin' && user.role !== 'kyoty_admin')) {
+        if (!user || (user.role !== 'community_admin' && (user.role !== 'kyoty_admin' && user.role !== 'admin'))) {
             return { success: false, error: 'Admin access required' };
         }
         const data = await CommunityMemberRepository.listAllPending();

@@ -10,6 +10,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Amount and eventId are required' }, { status: 400 });
         }
 
+        if (!Number.isFinite(amount) || amount <= 0) {
+            return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 });
+        }
+
         let keyId = process.env.RAZORPAY_KEY_ID;
         let keySecret = process.env.RAZORPAY_KEY_SECRET;
 

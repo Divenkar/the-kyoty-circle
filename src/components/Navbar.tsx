@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, LogOut, User as UserIcon } from 'lucide-react';
+import Image from 'next/image';
 import { NotificationBell } from './NotificationBell';
 import { supabase } from '@/lib/supabase';
 
@@ -114,7 +115,7 @@ export function Navbar() {
                                 <div className="relative group">
                                     <button className="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden border border-neutral-200">
                                         {user.user_metadata?.avatar_url ? (
-                                            <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                            <Image src={user.user_metadata.avatar_url} alt="Profile" width={36} height={36} className="w-full h-full object-cover" unoptimized />
                                         ) : (
                                             <UserIcon size={20} className="text-neutral-600" />
                                         )}

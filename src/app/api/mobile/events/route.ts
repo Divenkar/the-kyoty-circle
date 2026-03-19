@@ -1,8 +1,9 @@
-import { supabase } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(req: NextRequest) {
     try {
+        const supabase = await createClient();
         const { data: events, error } = await supabase
             .from('events')
             .select('id,title,location_text,date,start_time,price_per_person,communities(name)')

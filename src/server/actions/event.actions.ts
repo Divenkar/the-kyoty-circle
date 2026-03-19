@@ -20,10 +20,10 @@ export async function createEventAction(
             description: (formData.get('description') as string) || undefined,
             community_id: Number(formData.get('community_id')),
             city_id: Number(formData.get('city_id')) || 6,
-            location_text: (formData.get('location_text') as string) || undefined,
-            date: formData.get('date') as string,
-            start_time: (formData.get('start_time') as string) || undefined,
-            end_time: (formData.get('end_time') as string) || undefined,
+            location_text: ((formData.get('location_text') || formData.get('location')) as string) || undefined,
+            date: ((formData.get('date') || formData.get('event_date')) as string) || '',
+            start_time: ((formData.get('start_time') || formData.get('event_time')) as string) || undefined,
+            end_time: (formData.get('end_time') as string) || ((formData.get('start_time') || formData.get('event_time')) as string) || undefined,
             max_participants: Number(formData.get('capacity')) || Number(formData.get('max_participants')) || 50,
             pricing_model: (formData.get('pricing_model') as string) || 'free',
             price_per_person: Number(formData.get('cost') || formData.get('price_per_person')) || 0,
@@ -48,6 +48,14 @@ export async function createEventAction(
 
         if (!data.title || !data.date || !data.community_id) {
             return { success: false, error: 'Title, date, and community are required' };
+        }
+
+        if (!data.start_time || !data.end_time) {
+            return { success: false, error: 'Start and end times are required' };
+        }
+
+        if (data.max_participants < 1) {
+            return { success: false, error: 'Capacity must be at least 1' };
         }
 
         const event = await EventService.createEvent(data);
