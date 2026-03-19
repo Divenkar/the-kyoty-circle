@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X, LogOut, User as UserIcon } from 'lucide-react';
+import { Compass, Home, LogOut, Menu, Sparkles, User as UserIcon, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import { NotificationBell } from './NotificationBell';
 import { supabase } from '@/lib/supabase';
@@ -32,6 +32,10 @@ export function Navbar() {
         return () => subscription.unsubscribe();
     }, []);
 
+    useEffect(() => {
+        setMobileOpen(false);
+    }, [pathname]);
+
     const handleSignOut = async () => {
         await supabase.auth.signOut();
         router.push('/');
@@ -39,58 +43,61 @@ export function Navbar() {
     };
 
     const navLinks = [
-        { href: '/explore', label: 'Explore' },
-        { href: '/communities', label: 'Communities' },
-        { href: '/#services', label: 'Services' },
-        { href: '/#support', label: 'Support' },
+        { href: '/', label: 'Home', icon: Home },
+        { href: '/explore', label: 'Explore', icon: Compass },
+        { href: '/communities', label: 'Communities', icon: Users },
+        { href: '/create-community', label: 'Start a community', icon: Sparkles },
     ];
 
-    const isActive = (href: string) => pathname === href;
+    const isActive = (href: string) => href === '/' ? pathname === href : pathname.startsWith(href);
 
     return (
-        <nav className="sticky top-0 z-50 bg-white border-b border-neutral-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                <div className="flex items-center justify-between h-16">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2.5 shrink-0">
-                        <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center shadow-sm">
-                            <span className="text-white font-extrabold text-base tracking-tight">K</span>
+        <nav className="sticky top-0 z-50 border-b border-white/60 bg-white/85 backdrop-blur-xl">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+                <div className="flex min-h-[72px] items-center justify-between gap-4 py-3">
+                    <Link href="/" className="flex shrink-0 items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-600/20">
+                            <span className="text-base font-extrabold tracking-tight text-white">K</span>
                         </div>
-                        <span className="text-xl font-bold text-neutral-900">Kyoty</span>
+                        <div>
+                            <span className="block text-lg font-bold text-neutral-900">Kyoty</span>
+                            <span className="block text-xs text-neutral-500">Verified communities & events</span>
+                        </div>
                     </Link>
 
-                    {/* Desktop Nav */}
-                    <div className="hidden md:flex items-center gap-1">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200
-                  ${isActive(link.href)
-                                        ? 'text-primary-600 bg-primary-50'
-                                        : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
-                                    }`}
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
+                    <div className="hidden items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 p-1 md:flex">
+                        {navLinks.map((link) => {
+                            const Icon = link.icon;
+                            return (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${isActive(link.href)
+                                        ? 'bg-white text-primary-700 shadow-sm'
+                                        : 'text-neutral-600 hover:text-neutral-900'
+                                        }`}
+                                >
+                                    <Icon size={15} />
+                                    {link.label}
+                                </Link>
+                            );
+                        })}
                     </div>
 
-                    {/* Auth Section */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {!loading && !user && (
                             <>
                                 <Link
                                     href="/login"
-                                    className="hidden sm:block px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors"
+                                    className="hidden rounded-full px-4 py-2 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 sm:block"
                                 >
                                     Login
                                 </Link>
                                 <Link
                                     href="/login"
-                                    className="px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                                    className="rounded-full bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md"
                                 >
-                                    Sign Up
+                                    Join Kyoty
                                 </Link>
                             </>
                         )}
@@ -99,34 +106,39 @@ export function Navbar() {
                             <>
                                 <Link
                                     href="/dashboard"
-                                    className={`hidden sm:flex px-4 py-2 text-sm font-medium rounded-lg transition-colors
-                    ${isActive('/dashboard') ? 'text-primary-600 bg-primary-50' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'}`}
+                                    className={`hidden rounded-full px-4 py-2 text-sm font-medium transition-colors sm:flex ${isActive('/dashboard')
+                                        ? 'bg-primary-50 text-primary-700'
+                                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                                        }`}
                                 >
                                     Dashboard
                                 </Link>
                                 <Link
                                     href="/admin"
-                                    className={`hidden sm:flex px-4 py-2 text-sm font-medium rounded-lg transition-colors
-                    ${isActive('/admin') ? 'text-primary-600 bg-primary-50' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'}`}
+                                    className={`hidden rounded-full px-4 py-2 text-sm font-medium transition-colors sm:flex ${isActive('/admin')
+                                        ? 'bg-primary-50 text-primary-700'
+                                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                                        }`}
                                 >
                                     Admin
                                 </Link>
                                 <NotificationBell />
                                 <div className="relative group">
-                                    <button className="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden border border-neutral-200">
+                                    <button className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100">
                                         {user.user_metadata?.avatar_url ? (
-                                            <Image src={user.user_metadata.avatar_url} alt="Profile" width={36} height={36} className="w-full h-full object-cover" unoptimized />
+                                            <Image src={user.user_metadata.avatar_url} alt="Profile" width={40} height={40} className="h-full w-full object-cover" unoptimized />
                                         ) : (
                                             <UserIcon size={20} className="text-neutral-600" />
                                         )}
                                     </button>
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-neutral-100 py-1 hidden group-hover:block animate-in fade-in zoom-in-95 duration-100">
-                                        <div className="px-4 py-2 border-b border-neutral-50">
-                                            <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                                    <div className="absolute right-0 mt-2 hidden w-56 overflow-hidden rounded-2xl border border-neutral-100 bg-white py-1 shadow-xl group-hover:block">
+                                        <div className="border-b border-neutral-100 px-4 py-3">
+                                            <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Signed in as</p>
+                                            <p className="mt-1 truncate text-sm text-neutral-700">{user.email}</p>
                                         </div>
                                         <button
                                             onClick={handleSignOut}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                            className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
                                         >
                                             <LogOut size={16} />
                                             Sign Out
@@ -136,10 +148,10 @@ export function Navbar() {
                             </>
                         )}
 
-                        {/* Mobile menu button */}
                         <button
-                            className="md:hidden p-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
+                            className="rounded-xl p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:hidden"
                             onClick={() => setMobileOpen(!mobileOpen)}
+                            aria-label="Toggle menu"
                         >
                             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
                         </button>
@@ -147,59 +159,53 @@ export function Navbar() {
                 </div>
             </div>
 
-            {/* Mobile Nav */}
             {mobileOpen && (
-                <div className="md:hidden border-t border-neutral-200 bg-white px-4 py-3 space-y-1 animate-in slide-in-from-top-2">
-                    {navLinks.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            onClick={() => setMobileOpen(false)}
-                            className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors
-                ${isActive(link.href)
-                                    ? 'text-primary-600 bg-primary-50'
-                                    : 'text-neutral-600 hover:bg-neutral-50'
-                                }`}
-                        >
-                            {link.label}
-                        </Link>
-                    ))}
+                <div className="border-t border-neutral-200 bg-white px-4 py-4 md:hidden">
+                    <div className="space-y-2">
+                        {navLinks.map((link) => {
+                            const Icon = link.icon;
+                            return (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${isActive(link.href)
+                                        ? 'bg-primary-50 text-primary-700'
+                                        : 'text-neutral-600 hover:bg-neutral-50'
+                                        }`}
+                                >
+                                    <Icon size={16} />
+                                    {link.label}
+                                </Link>
+                            );
+                        })}
 
-                    {user ? (
-                        <>
-                            <Link
-                                href="/dashboard"
-                                onClick={() => setMobileOpen(false)}
-                                className="block px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 rounded-lg"
-                            >
-                                Dashboard
-                            </Link>
-                            <Link
-                                href="/admin"
-                                onClick={() => setMobileOpen(false)}
-                                className="block px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 rounded-lg"
-                            >
-                                Admin Panel
-                            </Link>
-                            <button
-                                onClick={handleSignOut}
-                                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg"
-                            >
-                                <LogOut size={16} />
-                                Sign Out
-                            </button>
-                        </>
-                    ) : (
-                        <div className="pt-2 border-t border-neutral-100">
-                            <Link
-                                href="/login"
-                                onClick={() => setMobileOpen(false)}
-                                className="block w-full px-4 py-3 text-sm font-semibold text-center text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
-                            >
-                                Sign Up / Login
-                            </Link>
-                        </div>
-                    )}
+                        {user ? (
+                            <>
+                                <Link href="/dashboard" className="block rounded-2xl px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50">
+                                    Dashboard
+                                </Link>
+                                <Link href="/admin" className="block rounded-2xl px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50">
+                                    Admin Panel
+                                </Link>
+                                <button
+                                    onClick={handleSignOut}
+                                    className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+                                >
+                                    <LogOut size={16} />
+                                    Sign Out
+                                </button>
+                            </>
+                        ) : (
+                            <div className="border-t border-neutral-100 pt-3">
+                                <Link
+                                    href="/login"
+                                    className="block w-full rounded-2xl bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+                                >
+                                    Sign Up / Login
+                                </Link>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </nav>
