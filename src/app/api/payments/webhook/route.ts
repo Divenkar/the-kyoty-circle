@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 
 export async function POST(req: NextRequest) {
     try {
@@ -26,13 +26,18 @@ export async function POST(req: NextRequest) {
 
             // Handle the event
             if (event.event === 'payment.captured' || event.event === 'order.paid') {
-                const payment = event.payload.payment.entity;
-                const notes = payment.notes;
+                const payment = event.payload?.payment?.entity;
+                const notes = payment?.notes;
+
+                if (!payment) {
+                    return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 });
+                }
 
                 console.log(`Payment captured: ${payment.amount} INR for event ${notes?.eventId}`);
 
                 // In a real implementation using Supabase:
-                // const { error } = await supabase.from('event_participants').insert({ event_id: notes.eventId, ... })
+                const supabase = await createClient();
+                void supabase;
             }
 
             return NextResponse.json({ status: 'ok' });

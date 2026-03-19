@@ -145,22 +145,37 @@ export default function CreateEventPage() {
                             </label>
                             <input
                                 id="event_date"
-                                name="event_date"
+                                name="date"
                                 type="date"
                                 required
                                 className="w-full px-4 py-2.5 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all"
                             />
                         </div>
-                        <div>
-                            <label htmlFor="event_time" className="block text-sm font-medium text-neutral-700 mb-1.5">
-                                Time
-                            </label>
-                            <input
-                                id="event_time"
-                                name="event_time"
-                                type="time"
-                                className="w-full px-4 py-2.5 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all"
-                            />
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <label htmlFor="event_time" className="block text-sm font-medium text-neutral-700 mb-1.5">
+                                    Start Time <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="event_time"
+                                    name="start_time"
+                                    type="time"
+                                    required
+                                    className="w-full px-4 py-2.5 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="end_time" className="block text-sm font-medium text-neutral-700 mb-1.5">
+                                    End Time <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="end_time"
+                                    name="end_time"
+                                    type="time"
+                                    required
+                                    className="w-full px-4 py-2.5 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -171,7 +186,7 @@ export default function CreateEventPage() {
                         </label>
                         <input
                             id="location"
-                            name="location"
+                            name="location_text"
                             type="text"
                             placeholder="e.g. Sector 62, Noida"
                             className="w-full px-4 py-2.5 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all"

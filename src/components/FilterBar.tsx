@@ -100,6 +100,7 @@ export function FilterBar() {
                 <div className="flex items-center bg-neutral-100 rounded-xl p-0.5 self-start">
                     {['all', 'free', 'paid'].map((opt) => (
                         <button
+                            type="button"
                             key={opt}
                             onClick={() => handlePriceChange(opt)}
                             className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all capitalize ${priceFilter === opt
@@ -115,6 +116,7 @@ export function FilterBar() {
                 {/* Clear */}
                 {hasActiveFilters && (
                     <button
+                        type="button"
                         onClick={clearFilters}
                         className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors self-start"
                     >

@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET() {
     try {
         const user = await getCurrentUser();
         if (!user) return NextResponse.json([], { status: 401 });
 
+        const supabase = await createClient();
         const { data } = await supabase
             .from('notifications')
             .select('*')
@@ -25,6 +26,7 @@ export async function PUT() {
         const user = await getCurrentUser();
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+        const supabase = await createClient();
         await supabase
             .from('notifications')
             .update({ is_read: true })
