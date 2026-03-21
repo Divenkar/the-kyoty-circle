@@ -60,6 +60,7 @@ export async function ensureUser(profile: {
             auth_id: profile.authId,
             role: 'participant',
             default_city_id: 1, // Default city ID for Noida in Supabase (from schema)
+            interest_tags: [],
             avatar_url: profile.avatarUrl,
         })
         .select()

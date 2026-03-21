@@ -2,6 +2,7 @@ import { EventRepository } from '@/lib/repositories/event-repo';
 import { EventCard } from '@/components/EventCard';
 import { EVENT_CATEGORIES } from '@/types';
 import { FilterBar } from '@/components/FilterBar';
+import { ExploreMobileActionBar } from '@/components/ExploreMobileActionBar';
 import Link from 'next/link';
 import { CalendarRange, MapPin, Sparkles } from 'lucide-react';
 import { Suspense } from 'react';
@@ -14,6 +15,7 @@ interface ExplorePageProps {
         from?: string;
         to?: string;
         price?: string;
+        sort?: string;
     }>;
 }
 
@@ -21,6 +23,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
     const params = await searchParams;
     const city = params.city || 'Noida';
     const category = params.category || 'All';
+    const sort = params.sort || 'latest';
 
     const hasFilters = params.q || params.from || params.to || params.price;
     const events = hasFilters
@@ -36,6 +39,14 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
             ? await EventRepository.findAll(category)
             : await EventRepository.findByCity(city, category);
 
+    const sortedEvents = [...events].sort((a, b) => {
+        const left = new Date(a.date).getTime();
+        const right = new Date(b.date).getTime();
+
+        if (sort === 'oldest') return left - right;
+        return right - left;
+    });
+
     const buildCategoryHref = (cat: string) => {
         const nextParams = new URLSearchParams();
         nextParams.set('city', city);
@@ -44,6 +55,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
         if (params.from) nextParams.set('from', params.from);
         if (params.to) nextParams.set('to', params.to);
         if (params.price) nextParams.set('price', params.price);
+        if (params.sort) nextParams.set('sort', params.sort);
         return `/explore?${nextParams.toString()}`;
     };
 
@@ -94,6 +106,8 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
                         ))}
                     </div>
 
+                    <ExploreMobileActionBar />
+
                     <Suspense fallback={null}>
                         <FilterBar />
                     </Suspense>
@@ -101,15 +115,15 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
             </div>
 
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-                {events.length > 0 ? (
+                {sortedEvents.length > 0 ? (
                     <>
                         <div className="mb-5 flex items-center gap-2 text-sm text-neutral-500">
                             <MapPin size={15} className="text-primary-500" />
-                            Showing {events.length} result{events.length !== 1 ? 's' : ''} for {city === 'all' ? 'all cities' : city}
+                            Showing {sortedEvents.length} result{sortedEvents.length !== 1 ? 's' : ''} for {city === 'all' ? 'all cities' : city}
                             {category !== 'All' && <span>· {category}</span>}
                         </div>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                            {events.map((event) => (
+                            {sortedEvents.map((event) => (
                                 <EventCard key={event.id} event={event} />
                             ))}
                         </div>

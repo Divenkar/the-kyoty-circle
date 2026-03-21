@@ -10,7 +10,8 @@ import { CommunityRatingForm } from '@/components/CommunityRatingForm';
 import { JoinCommunityButton } from './JoinCommunityButton';
 import { ReportButton } from '@/components/ReportButton';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
-import { Calendar, Lock, MapPin, ArrowLeft, Star, Users, MessageCircle, Image } from 'lucide-react';
+import { DetailTrustSignals } from '@/components/DetailTrustSignals';
+import { Calendar, Lock, MapPin, ArrowLeft, Star, Users, MessageCircle, Image as ImageIcon, ShieldCheck, UserCheck } from 'lucide-react';
 import NextImage from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -63,6 +64,25 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
     if (currentUser && isMember) {
         existingRating = await CommunityRatingsRepository.findByUser(community.id, currentUser.id);
     }
+    const organizerName = community.organizer?.name || 'Community host';
+    const communityStatusLabel = community.status === 'approved'
+        ? 'Approved community'
+        : community.status.charAt(0).toUpperCase() + community.status.slice(1);
+    const accessStatusLabel = !currentUser
+        ? 'Sign in to apply'
+        : isOrganizer
+            ? 'Organizer access'
+            : isMember
+                ? 'Member access'
+                : hasPendingRequest
+                    ? 'Application pending'
+                    : 'Apply to join';
+    const ratingLabel = community.rating_count > 0
+        ? `${community.rating_avg.toFixed(1)}/5`
+        : 'No ratings yet';
+    const ratingHint = community.rating_count > 0
+        ? `${community.rating_count} review${community.rating_count !== 1 ? 's' : ''}`
+        : 'Be the first to leave feedback';
 
     return (
         <div className="min-h-screen bg-neutral-50">
@@ -118,6 +138,46 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                             </span>
                         )}
                     </div>
+                </div>
+            </div>
+
+            <div className="mx-auto max-w-4xl px-4 sm:px-6 -mt-4 relative z-10">
+                <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-lg sm:p-5">
+                    <DetailTrustSignals
+                        items={[
+                            {
+                                label: 'Host',
+                                icon: <ShieldCheck size={18} />,
+                                value: (
+                                    <>
+                                        <span className="truncate">{organizerName}</span>
+                                        {community.organizer?.social_proof_type && (
+                                            <VerifiedBadge type={community.organizer.social_proof_type} size="sm" />
+                                        )}
+                                    </>
+                                ),
+                                hint: 'Visible organizer identity',
+                            },
+                            {
+                                label: 'Members',
+                                icon: <Users size={18} />,
+                                value: `${memberCount} total`,
+                                hint: memberCount > 0 ? 'Active member base' : 'Membership building',
+                            },
+                            {
+                                label: 'Social proof',
+                                icon: <Star size={18} />,
+                                value: ratingLabel,
+                                hint: ratingHint,
+                            },
+                            {
+                                label: 'Approval status',
+                                icon: <UserCheck size={18} />,
+                                value: communityStatusLabel,
+                                hint: accessStatusLabel,
+                            },
+                        ]}
+                    />
                 </div>
             </div>
 
@@ -199,7 +259,7 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                                     href={`/community/${slug}/media`}
                                     className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
                                 >
-                                    <Image size={16} className="text-primary-500" />
+                                    <ImageIcon size={16} className="text-primary-500" />
                                     Photo Gallery
                                 </Link>
                                 <Link

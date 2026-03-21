@@ -162,7 +162,7 @@ export function Navbar({ initialUserRole, initialUserEmail, initialUserName, ini
                                 <div className="relative">
                                     <button
                                         onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
-                                        className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-neutral-200 bg-neutral-100 transition-colors hover:border-primary-300"
+                                        className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-neutral-200 bg-neutral-100 transition-colors hover:border-primary-300"
                                         aria-label="Account menu"
                                         aria-expanded={avatarMenuOpen}
                                     >
@@ -243,9 +243,10 @@ export function Navbar({ initialUserRole, initialUserEmail, initialUserName, ini
 
                         {/* Mobile hamburger */}
                         <button
-                            className="rounded-xl p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:hidden"
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:hidden"
                             onClick={() => setMobileOpen(!mobileOpen)}
                             aria-label="Toggle menu"
+                            aria-expanded={mobileOpen}
                         >
                             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
                         </button>
@@ -255,7 +256,7 @@ export function Navbar({ initialUserRole, initialUserEmail, initialUserName, ini
 
             {/* Mobile Menu */}
             {mobileOpen && (
-                <div className="border-t border-neutral-200 bg-white px-4 py-4 md:hidden">
+                <div className="border-t border-neutral-200 bg-white px-4 py-4 md:hidden max-h-[calc(100vh-4.5rem)] overflow-y-auto">
                     <div className="space-y-1">
                         {navLinks.map((link) => {
                             const Icon = link.icon;

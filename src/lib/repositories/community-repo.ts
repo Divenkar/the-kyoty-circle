@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import type { Community } from '@/types';
+import { getCurrentUserInterestTags } from '@/lib/interest-tags';
 
 export const CommunityRepository = {
     async create(data: {
@@ -113,6 +114,11 @@ export const CommunityRepository = {
         }
         if (params.category && params.category !== 'all') {
             q = q.ilike('category', params.category);
+        } else {
+            const interestTags = await getCurrentUserInterestTags();
+            if (interestTags.length > 0) {
+                q = q.in('category', interestTags);
+            }
         }
         if (params.city && params.city !== 'all') {
             const { data: cityData } = await supabase

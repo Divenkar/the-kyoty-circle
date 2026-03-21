@@ -62,15 +62,17 @@ export function FilterBar() {
         const params = new URLSearchParams();
         const city = searchParams.get('city');
         const category = searchParams.get('category');
+        const sort = searchParams.get('sort');
         if (city) params.set('city', city);
         if (category) params.set('category', category);
+        if (sort) params.set('sort', sort);
         router.push(`/explore?${params.toString()}`);
     };
 
     const hasActiveFilters = query || dateFrom || dateTo || priceFilter !== 'all';
 
     return (
-        <div className="mt-6 rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
+        <div id="explore-filters" className="mt-6 rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-neutral-800">
                 <SlidersHorizontal size={16} className="text-primary-500" />
                 Refine your event search

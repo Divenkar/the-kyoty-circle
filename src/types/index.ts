@@ -18,6 +18,7 @@ export interface User {
     auth_id: string;
     role: UserRole;
     default_city_id: number | null;
+    interest_tags: string[];
     verification_status: string;
     social_proof_type: 'linkedin' | 'instagram' | null;
     social_proof_link: string | null;

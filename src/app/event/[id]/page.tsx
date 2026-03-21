@@ -9,9 +9,10 @@ import { ReviewSection } from './ReviewSection';
 import { EventComments } from './EventComments';
 import { ReportButton } from '@/components/ReportButton';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { DetailTrustSignals } from '@/components/DetailTrustSignals';
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { SavedEventsRepository } from '@/lib/repositories/saved-events-repo';
-import { Calendar, MapPin, Users, Clock, ArrowLeft, IndianRupee, Settings, Ticket } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, ArrowLeft, IndianRupee, Settings, Ticket, ShieldCheck, UserCheck, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -87,6 +88,23 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     });
     const isPastEvent = new Date(event.date) < new Date();
     const isFull = participantCount >= event.max_participants;
+    const spotsLeft = Math.max(event.max_participants - participantCount, 0);
+    const hostName = organizer?.name || communityName;
+    const hostProof = organizer?.social_proof_type || null;
+    const entryStatus = isPastEvent
+        ? 'Completed'
+        : isRegistered
+            ? 'Registered'
+            : isWaitlisted
+                ? `Waitlist #${waitlistPosition || 1}`
+                : !isCommunityMember && !isOrganizer
+                    ? 'Members only'
+                    : 'Open to eligible members';
+    const availability = isPastEvent
+        ? 'Event ended'
+        : isFull
+            ? 'Full'
+            : `${spotsLeft} spots left`;
     const timeDisplay = event.start_time && event.end_time
         ? `${event.start_time} – ${event.end_time}`
         : event.start_time || null;
@@ -161,6 +179,49 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                             <span className="w-2 h-2 rounded-full bg-primary-500" />
                             {communityName}
                         </Link>
+
+                        <DetailTrustSignals
+                            className="mb-6"
+                            items={[
+                                {
+                                    label: 'Host',
+                                    icon: <ShieldCheck size={18} />,
+                                    value: (
+                                        <>
+                                            <span className="truncate">{hostName}</span>
+                                            {hostProof && organizer && (
+                                                <VerifiedBadge type={hostProof} size="sm" />
+                                            )}
+                                        </>
+                                    ),
+                                    hint: 'Community-organised event',
+                                },
+                                {
+                                    label: 'Going',
+                                    icon: <Users size={18} />,
+                                    value: `${participantCount} attending`,
+                                    hint: event.max_participants > 0 ? `${event.max_participants} total capacity` : 'Capacity not set',
+                                },
+                                {
+                                    label: 'Availability',
+                                    icon: <Sparkles size={18} />,
+                                    value: availability,
+                                    hint: isPastEvent ? 'This event has already taken place' : 'Based on current registrations',
+                                },
+                                {
+                                    label: 'Entry status',
+                                    icon: <UserCheck size={18} />,
+                                    value: entryStatus,
+                                    hint: isRegistered
+                                        ? 'You are already confirmed'
+                                        : isWaitlisted
+                                            ? 'You are in the queue'
+                                            : isCommunityMember || isOrganizer
+                                                ? 'Eligible to join'
+                                                : 'Community membership required',
+                                },
+                            ]}
+                        />
 
                         {/* Details Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">

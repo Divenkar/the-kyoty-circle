@@ -41,6 +41,7 @@ export const UserRepository = {
         auth_id: string;
         role?: string;
         city?: string;
+        interest_tags?: string[];
         social_proof_type?: string;
         social_proof_link?: string;
     }): Promise<User> {
@@ -69,6 +70,7 @@ export const UserRepository = {
     async updateProfile(id: number, updates: {
         name?: string;
         city?: string;
+        interest_tags?: string[];
         social_proof_type?: string;
         social_proof_link?: string;
         avatar_url?: string;

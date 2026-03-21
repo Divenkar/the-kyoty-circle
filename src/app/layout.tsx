@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './providers';
 import { Navbar } from '@/components/Navbar';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { OnboardingGuard } from '@/components/OnboardingGuard';
 import { Footer } from '@/components/Footer';
 
@@ -33,11 +34,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             initialAvatarUrl={user?.avatar_url ?? null}
             initialUserId={user?.id ?? null}
           />
-          <main className="flex-1">
+          <main className="flex-1 pb-24 md:pb-0">
             <OnboardingGuard user={user}>
               {children}
             </OnboardingGuard>
           </main>
+          <MobileBottomNav />
           <Footer />
           <Toaster richColors position="bottom-right" />
         </AuthProvider>

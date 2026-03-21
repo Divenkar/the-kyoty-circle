@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import type { KyotyEvent, EventWithCommunity } from '@/types';
+import { getCurrentUserInterestTags } from '@/lib/interest-tags';
 
 export const EventRepository = {
     async create(data: {
@@ -97,6 +98,11 @@ export const EventRepository = {
 
         if (category && category !== 'All') {
             query = query.eq('communities.category', category);
+        } else {
+            const interestTags = await getCurrentUserInterestTags();
+            if (interestTags.length > 0) {
+                query = query.in('communities.category', interestTags);
+            }
         }
 
         const { data, error } = await query;
@@ -120,6 +126,11 @@ export const EventRepository = {
 
         if (category && category !== 'All') {
             query = query.eq('communities.category', category);
+        } else {
+            const interestTags = await getCurrentUserInterestTags();
+            if (interestTags.length > 0) {
+                query = query.in('communities.category', interestTags);
+            }
         }
 
         const { data, error } = await query;
@@ -216,6 +227,11 @@ export const EventRepository = {
         // Category filter
         if (params.category && params.category !== 'All') {
             query = query.eq('communities.category', params.category);
+        } else {
+            const interestTags = await getCurrentUserInterestTags();
+            if (interestTags.length > 0) {
+                query = query.in('communities.category', interestTags);
+            }
         }
 
         // Keyword search

@@ -90,7 +90,9 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         <div className="relative">
             <button
                 onClick={() => { setOpen(!open); if (!open) fetchNotifications(); }}
-                className="relative p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+                className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+                aria-label="Notifications"
+                aria-expanded={open}
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -103,7 +105,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-80 max-h-96 bg-white rounded-2xl shadow-xl border border-neutral-200 z-50 overflow-hidden">
+                    <div className="fixed inset-x-4 top-20 z-50 max-h-[calc(100vh-6rem)] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-80 sm:inset-x-auto">
                         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
                             <h3 className="text-sm font-semibold text-neutral-900">Notifications</h3>
                             {unreadCount > 0 && (
@@ -120,28 +122,30 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                             {loading && notifications.length === 0 ? (
                                 <div className="p-4 text-sm text-neutral-500 text-center">Loading...</div>
                             ) : notifications.length > 0 ? (
-                                notifications.map((n) => (
-                                    <a
-                                        key={n.id}
-                                        href={n.link || '#'}
-                                        className={`flex items-start gap-3 px-4 py-3 border-b border-neutral-50 hover:bg-neutral-50 transition-colors ${!n.is_read ? 'bg-primary-50/50' : ''}`}
-                                        onClick={() => setOpen(false)}
-                                    >
-                                        <div className="mt-0.5 shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-neutral-100">
-                                            {TYPE_ICON[n.type] ?? <Bell size={14} className="text-neutral-500" />}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-neutral-900 leading-snug">{n.title}</p>
-                                            {n.body && <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2">{n.body}</p>}
-                                            <p className="text-xs text-neutral-400 mt-1">
-                                                {new Date(n.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                            </p>
-                                        </div>
-                                        {!n.is_read && (
-                                            <span className="mt-2 h-2 w-2 rounded-full bg-primary-500 shrink-0" />
-                                        )}
-                                    </a>
-                                ))
+                                <div className="max-h-[calc(100vh-11rem)] overflow-y-auto">
+                                    {notifications.map((n) => (
+                                        <a
+                                            key={n.id}
+                                            href={n.link || '#'}
+                                            className={`flex items-start gap-3 px-4 py-3 border-b border-neutral-50 hover:bg-neutral-50 transition-colors ${!n.is_read ? 'bg-primary-50/50' : ''}`}
+                                            onClick={() => setOpen(false)}
+                                        >
+                                            <div className="mt-0.5 shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100">
+                                                {TYPE_ICON[n.type] ?? <Bell size={14} className="text-neutral-500" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-neutral-900 leading-snug">{n.title}</p>
+                                                {n.body && <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2">{n.body}</p>}
+                                                <p className="text-xs text-neutral-400 mt-1">
+                                                    {new Date(n.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                                </p>
+                                            </div>
+                                            {!n.is_read && (
+                                                <span className="mt-2 h-2 w-2 rounded-full bg-primary-500 shrink-0" />
+                                            )}
+                                        </a>
+                                    ))}
+                                </div>
                             ) : (
                                 <div className="p-8 text-center">
                                     <Bell size={24} className="text-neutral-300 mx-auto mb-2" />

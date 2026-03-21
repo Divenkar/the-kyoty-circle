@@ -1,18 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { submitSocialProofAction, updateCityAction, completeOnboardingAction } from '@/server/actions/onboarding.actions';
+import { submitSocialProofAction, updateCityAction, completeOnboardingAction, updateInterestTagsAction } from '@/server/actions/onboarding.actions';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { MapPin, Shield, Users, ArrowRight, CheckCircle, Linkedin, Instagram, ChevronRight } from 'lucide-react';
+import { INTEREST_TAG_OPTIONS, MAX_INTEREST_TAGS } from '@/lib/interest-options';
 
 const CITIES = ['Noida', 'Delhi', 'Gurgaon', 'Bangalore'];
 
-const CITY_EMOJIS: Record<string, string> = {
-    Noida: '🏙️',
-    Delhi: '🕌',
-    Gurgaon: '🌆',
-    Bangalore: '🌳',
+const CITY_MARKS: Record<string, string> = {
+    Noida: 'N',
+    Delhi: 'D',
+    Gurgaon: 'G',
+    Bangalore: 'B',
 };
 
 type Step = 1 | 2 | 3;
@@ -21,8 +22,33 @@ export default function OnboardingPage() {
     const router = useRouter();
     const [step, setStep] = useState<Step>(1);
     const [selectedCity, setSelectedCity] = useState('');
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    const toggleInterest = (interest: string) => {
+        setSelectedInterests((current) => {
+            if (current.includes(interest)) {
+                return current.filter((item) => item !== interest);
+            }
+
+            if (current.length >= MAX_INTEREST_TAGS) {
+                return current;
+            }
+
+            return [...current, interest];
+        });
+    };
+
+    const saveInterestTags = async () => {
+        if (selectedInterests.length === 0) return;
+
+        try {
+            await updateInterestTagsAction(selectedInterests);
+        } catch {
+            // Non-fatal. Interests are optional.
+        }
+    };
 
     // Step 1: City selection
     const handleCitySelect = async (city: string) => {
@@ -32,17 +58,19 @@ export default function OnboardingPage() {
         try {
             await updateCityAction(city);
         } catch {
-            // non-fatal — continue regardless
+            // Non-fatal - continue regardless.
         }
         setLoading(false);
         setStep(2);
     };
 
-    // Step 2: Social proof
+    // Step 2: Interests + social proof
     const handleSocialProof = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        await saveInterestTags();
+
         const formData = new FormData(e.currentTarget);
         const result = await submitSocialProofAction(formData);
         if (result.success) {
@@ -55,7 +83,14 @@ export default function OnboardingPage() {
         setLoading(false);
     };
 
-    // Step 3: Navigate away — mark onboarding done first
+    const handleSkipToDiscover = async () => {
+        setLoading(true);
+        await saveInterestTags();
+        setLoading(false);
+        setStep(3);
+    };
+
+    // Step 3: Navigate away - mark onboarding done first
     const handleFinish = async () => {
         await completeOnboardingAction();
         const cityParam = selectedCity ? `?city=${encodeURIComponent(selectedCity)}` : '';
@@ -72,27 +107,28 @@ export default function OnboardingPage() {
         router.push('/dashboard');
     };
 
-    const stepLabels = ['Your city', 'Verify identity', 'Discover communities'];
+    const stepLabels = ['Your city', 'Your interests', 'Discover communities'];
 
     return (
         <div className="min-h-screen bg-neutral-50">
-            {/* Progress bar */}
-            <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-neutral-200">
+            <div className="fixed top-0 left-0 right-0 z-50 border-b border-neutral-200 bg-white">
                 <div className="mx-auto max-w-lg px-4 py-4">
                     <div className="flex items-center gap-3">
                         {[1, 2, 3].map((s) => (
                             <React.Fragment key={s}>
                                 <div className="flex items-center gap-2">
-                                    <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                                        step > s
-                                            ? 'bg-green-500 text-white'
-                                            : step === s
-                                            ? 'bg-primary-600 text-white'
-                                            : 'bg-neutral-200 text-neutral-500'
-                                    }`}>
+                                    <div
+                                        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                                            step > s
+                                                ? 'bg-green-500 text-white'
+                                                : step === s
+                                                    ? 'bg-primary-600 text-white'
+                                                    : 'bg-neutral-200 text-neutral-500'
+                                        }`}
+                                    >
                                         {step > s ? <CheckCircle size={14} /> : s}
                                     </div>
-                                    <span className={`hidden sm:block text-xs font-medium ${step === s ? 'text-neutral-900' : 'text-neutral-400'}`}>
+                                    <span className={`hidden text-xs font-medium sm:block ${step === s ? 'text-neutral-900' : 'text-neutral-400'}`}>
                                         {stepLabels[s - 1]}
                                     </span>
                                 </div>
@@ -107,8 +143,6 @@ export default function OnboardingPage() {
 
             <div className="flex min-h-screen items-center justify-center px-4 pt-20">
                 <div className="w-full max-w-lg">
-
-                    {/* ── Step 1: City ── */}
                     {step === 1 && (
                         <div className="rounded-[2rem] border border-neutral-200 bg-white p-8 shadow-sm">
                             <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-100">
@@ -127,7 +161,9 @@ export default function OnboardingPage() {
                                         disabled={loading}
                                         className="flex items-center gap-3 rounded-2xl border-2 border-neutral-200 bg-neutral-50 px-4 py-4 text-left transition-all hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50"
                                     >
-                                        <span className="text-2xl">{CITY_EMOJIS[city]}</span>
+                                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-semibold text-primary-600">
+                                            {CITY_MARKS[city]}
+                                        </span>
                                         <span className="text-sm font-semibold text-neutral-800">{city}</span>
                                     </button>
                                 ))}
@@ -135,14 +171,13 @@ export default function OnboardingPage() {
 
                             <button
                                 onClick={() => setStep(2)}
-                                className="mt-4 w-full text-center text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+                                className="mt-4 w-full text-center text-xs text-neutral-400 transition-colors hover:text-neutral-600"
                             >
-                                Skip for now →
+                                Skip for now {'->'}
                             </button>
                         </div>
                     )}
 
-                    {/* ── Step 2: Social proof ── */}
                     {step === 2 && (
                         <div className="rounded-[2rem] border border-neutral-200 bg-white p-8 shadow-sm">
                             <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100">
@@ -153,7 +188,35 @@ export default function OnboardingPage() {
                                 Kyoty is built on trust. A verified social profile helps organisers know you&apos;re a real person.
                             </p>
 
-                            {/* Trust badges */}
+                            <div className="mt-6">
+                                <div className="flex items-center justify-between gap-3">
+                                    <h2 className="text-sm font-semibold text-neutral-900">Pick your interests</h2>
+                                    <span className="text-xs text-neutral-400">Optional, up to {MAX_INTEREST_TAGS}</span>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {INTEREST_TAG_OPTIONS.map((interest) => {
+                                        const selected = selectedInterests.includes(interest);
+                                        const disabled = loading || (!selected && selectedInterests.length >= MAX_INTEREST_TAGS);
+
+                                        return (
+                                            <button
+                                                key={interest}
+                                                type="button"
+                                                onClick={() => toggleInterest(interest)}
+                                                disabled={disabled}
+                                                className={`rounded-full border px-3.5 py-2 text-sm font-medium transition ${
+                                                    selected
+                                                        ? 'border-primary-600 bg-primary-600 text-white'
+                                                        : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-primary-300 hover:text-primary-600'
+                                                } disabled:cursor-not-allowed disabled:opacity-50`}
+                                            >
+                                                {interest}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                             <div className="mt-5 flex gap-3">
                                 <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
                                     <Linkedin size={14} className="text-blue-600" />
@@ -167,7 +230,7 @@ export default function OnboardingPage() {
 
                             <form onSubmit={handleSocialProof} className="mt-6 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                                    <label className="mb-1.5 block text-sm font-medium text-neutral-700">
                                         Platform <span className="text-red-500">*</span>
                                     </label>
                                     <select
@@ -176,14 +239,16 @@ export default function OnboardingPage() {
                                         defaultValue=""
                                         className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition-all focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-500/20"
                                     >
-                                        <option value="" disabled>Select platform</option>
+                                        <option value="" disabled>
+                                            Select platform
+                                        </option>
                                         <option value="linkedin">LinkedIn</option>
                                         <option value="instagram">Instagram</option>
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                                    <label className="mb-1.5 block text-sm font-medium text-neutral-700">
                                         Profile link <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -206,20 +271,24 @@ export default function OnboardingPage() {
                                     disabled={loading}
                                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    {loading ? 'Saving…' : <>Continue <ArrowRight size={15} /></>}
+                                    {loading ? 'Saving...' : (
+                                        <>
+                                            Continue <ArrowRight size={15} />
+                                        </>
+                                    )}
                                 </button>
                             </form>
 
                             <button
-                                onClick={() => setStep(3)}
-                                className="mt-4 w-full text-center text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+                                onClick={handleSkipToDiscover}
+                                disabled={loading}
+                                className="mt-4 w-full text-center text-xs text-neutral-400 transition-colors hover:text-neutral-600"
                             >
-                                Skip for now →
+                                Skip for now {'->'}
                             </button>
                         </div>
                     )}
 
-                    {/* ── Step 3: Discover communities ── */}
                     {step === 3 && (
                         <div className="rounded-[2rem] border border-neutral-200 bg-white p-8 shadow-sm">
                             <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100">
@@ -255,9 +324,9 @@ export default function OnboardingPage() {
 
                                 <button
                                     onClick={handleGoToDashboard}
-                                    className="block w-full text-center py-3 text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+                                    className="block w-full py-3 text-center text-xs text-neutral-400 transition-colors hover:text-neutral-600"
                                 >
-                                    Go to dashboard →
+                                    Go to dashboard {'->'}
                                 </button>
                             </div>
                         </div>
