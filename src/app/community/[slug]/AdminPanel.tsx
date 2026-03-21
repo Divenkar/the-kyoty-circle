@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { updateCommunityAction } from '@/server/actions/community-admin.actions';
+import { CoverImageUploader } from '@/components/CoverImageUploader';
 import { Settings, Save, X, Pencil } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -112,15 +113,13 @@ export function AdminPanel({
                     />
                 </div>
 
-                {/* Cover Image URL */}
+                {/* Cover Photo */}
                 <div>
-                    <label className="block text-xs font-medium text-neutral-600 mb-1.5">Cover Image URL</label>
-                    <input
-                        type="url"
-                        value={coverImageUrl}
-                        onChange={(e) => setCoverImageUrl(e.target.value)}
-                        placeholder="https://images.unsplash.com/..."
-                        className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all"
+                    <label className="block text-xs font-medium text-neutral-600 mb-1.5">Cover Photo</label>
+                    <CoverImageUploader
+                        currentUrl={coverImageUrl || null}
+                        onUpload={(url) => setCoverImageUrl(url)}
+                        onRemove={() => setCoverImageUrl('')}
                     />
                 </div>
 

@@ -59,6 +59,8 @@ export interface CommunityMember {
     user_id: number;
     status: MemberStatus;
     approved_by: number | null;
+    join_reason?: string | null;
+    social_proof_link?: string | null;
     created_at: string;
 }
 
@@ -136,6 +138,60 @@ export interface AdminLog {
     target_id: number;
     metadata: Record<string, unknown> | null;
     created_at: string;
+}
+
+/* ───── Community Role (tier-2 permission) ───── */
+export type CommunityRoleLevel = 'owner' | 'admin' | 'moderator';
+
+export interface CommunityRole {
+    id: number;
+    community_id: number;
+    user_id: number;
+    role: CommunityRoleLevel;
+    assigned_by: number | null;
+    created_at: string;
+    /* joined */
+    kyoty_users?: Pick<User, 'id' | 'name' | 'email' | 'avatar_url'>;
+}
+
+/* ───── Community Message (chat) ───── */
+export type MessageType = 'text' | 'image' | 'link' | 'system';
+
+export interface CommunityMessage {
+    id: number;
+    community_id: number;
+    user_id: number;
+    content: string;
+    type: MessageType;
+    reply_to_id: number | null;
+    is_deleted: boolean;
+    edited_at: string | null;
+    created_at: string;
+    /* joined */
+    kyoty_users?: Pick<User, 'id' | 'name' | 'avatar_url'>;
+    reply_to?: Pick<CommunityMessage, 'id' | 'content' | 'user_id'>;
+    reactions?: MessageReaction[];
+}
+
+/* ───── Message Reaction ───── */
+export interface MessageReaction {
+    id: number;
+    message_id: number;
+    user_id: number;
+    emoji: string;
+    created_at: string;
+}
+
+/* ───── Community Media ───── */
+export interface CommunityMedia {
+    id: number;
+    community_id: number;
+    uploaded_by: number;
+    url: string;
+    caption: string | null;
+    created_at: string;
+    /* joined */
+    kyoty_users?: Pick<User, 'id' | 'name'>;
 }
 
 /* ───── Server Action Response ───── */

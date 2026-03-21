@@ -41,7 +41,7 @@ export const CommunityRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('communities')
-            .select('*, cities!inner(name), kyoty_users!communities_organizer_id_fkey(id, name, email)')
+            .select('*, cities!inner(name), kyoty_users!communities_organizer_id_fkey(id, name, email, social_proof_type, avatar_url)')
             .eq('slug', slug)
             .single();
         if (error) return null;
@@ -86,6 +86,59 @@ export const CommunityRepository = {
             .from('communities')
             .select('*, cities!inner(name)')
             .in('status', ['active', 'approved'])
+            .order('created_at', { ascending: false });
+        if (error) throw new Error(error.message);
+        return (data || []).map((c: any) => ({
+            ...c,
+            city_name: c.cities?.name,
+            cities: undefined,
+        })) as Community[];
+    },
+
+    /** Search communities by query, city, category */
+    async search(params: {
+        query?: string;
+        city?: string;
+        category?: string;
+    }): Promise<Community[]> {
+        const supabase = await createClient();
+        let q = supabase
+            .from('communities')
+            .select('*, cities(name)')
+            .in('status', ['active', 'approved'])
+            .order('member_count', { ascending: false });
+
+        if (params.query?.trim()) {
+            q = q.or(`name.ilike.%${params.query.trim()}%,description.ilike.%${params.query.trim()}%`);
+        }
+        if (params.category && params.category !== 'all') {
+            q = q.ilike('category', params.category);
+        }
+        if (params.city && params.city !== 'all') {
+            const { data: cityData } = await supabase
+                .from('cities')
+                .select('id')
+                .ilike('name', params.city)
+                .single();
+            if (cityData) q = q.eq('city_id', cityData.id);
+            else return [];
+        }
+
+        const { data, error } = await q;
+        if (error) return [];
+        return (data || []).map((c: any) => ({
+            ...c,
+            city_name: c.cities?.name,
+            cities: undefined,
+        })) as Community[];
+    },
+
+    /** Admin-only: fetch ALL communities regardless of status */
+    async findAllForAdmin(): Promise<Community[]> {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('communities')
+            .select('*, cities(name)')
             .order('created_at', { ascending: false });
         if (error) throw new Error(error.message);
         return (data || []).map((c: any) => ({

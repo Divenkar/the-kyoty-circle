@@ -17,7 +17,7 @@ export const CityRepository = {
         const { data, error } = await supabase
             .from('cities')
             .select('*')
-            .eq('status', 'active')
+            .eq('is_active', true)
             .order('name');
         if (error) throw new Error(error.message);
         return (data || []) as City[];

@@ -12,18 +12,29 @@ export async function getCurrentUserId(): Promise<string | null> {
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-    const authId = await getCurrentUserId();
-    if (!authId) return null;
+    try {
+        const supabase = await createClient();
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) return null;
 
-    const supabase = await createClient();
-    const { data, error } = await supabase
-        .from('kyoty_users')
-        .select('*')
-        .eq('auth_id', authId)
-        .single();
+        const { data } = await supabase
+            .from('kyoty_users')
+            .select('*')
+            .eq('auth_id', authUser.id)
+            .single();
 
-    if (error || !data) return null;
-    return data as User;
+        if (data) return data as User;
+
+        // Auto-create profile if authenticated but no row exists yet
+        return await ensureUser({
+            authId: authUser.id,
+            email: authUser.email ?? '',
+            name: authUser.user_metadata?.full_name ?? authUser.email?.split('@')[0] ?? 'User',
+            avatarUrl: authUser.user_metadata?.avatar_url,
+        });
+    } catch {
+        return null;
+    }
 }
 
 export async function ensureUser(profile: {

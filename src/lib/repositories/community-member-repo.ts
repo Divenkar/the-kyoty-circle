@@ -2,7 +2,11 @@ import { createClient } from '@/utils/supabase/server';
 import type { CommunityMember, CommunityMemberWithUser } from '@/types';
 
 export const CommunityMemberRepository = {
-    async createJoinRequest(communityId: number, userId: number): Promise<CommunityMember> {
+    async createJoinRequest(
+        communityId: number,
+        userId: number,
+        opts?: { joinReason?: string; socialProofLink?: string }
+    ): Promise<CommunityMember> {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('community_members')
@@ -10,6 +14,8 @@ export const CommunityMemberRepository = {
                 community_id: communityId,
                 user_id: userId,
                 status: 'pending',
+                join_reason: opts?.joinReason || null,
+                social_proof_link: opts?.socialProofLink || null,
             })
             .select()
             .single();
@@ -24,6 +30,17 @@ export const CommunityMemberRepository = {
             .select('*')
             .eq('community_id', communityId)
             .eq('user_id', userId)
+            .single();
+        if (error) return null;
+        return data as CommunityMember;
+    },
+
+    async findById(id: number): Promise<CommunityMember | null> {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('community_members')
+            .select('*')
+            .eq('id', id)
             .single();
         if (error) return null;
         return data as CommunityMember;
@@ -51,7 +68,7 @@ export const CommunityMemberRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('community_members')
-            .select('*, kyoty_users(*)')
+            .select('*, kyoty_users!user_id(*)')
             .eq('community_id', communityId)
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
@@ -63,7 +80,7 @@ export const CommunityMemberRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('community_members')
-            .select('*, kyoty_users(*)')
+            .select('*, kyoty_users!user_id(*)')
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
         if (error) throw new Error(error.message);
@@ -74,7 +91,7 @@ export const CommunityMemberRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('community_members')
-            .select('*, kyoty_users(*)')
+            .select('*, kyoty_users!user_id(*)')
             .eq('community_id', communityId)
             .eq('status', 'approved')
             .order('created_at', { ascending: false });
@@ -92,6 +109,15 @@ export const CommunityMemberRepository = {
             .eq('status', 'approved')
             .single();
         return !!data;
+    },
+
+    async bulkApprove(ids: number[], approvedBy: number): Promise<void> {
+        const supabase = await createClient();
+        const { error } = await supabase
+            .from('community_members')
+            .update({ status: 'approved', approved_by: approvedBy })
+            .in('id', ids);
+        if (error) throw new Error(error.message);
     },
 
     async listByUser(userId: number): Promise<any[]> {

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Users, Clock, Download, Mail } from 'lucide-react';
 import { ManageActions } from './ManageActions';
+import { DuplicateEventButton } from './DuplicateEventButton';
 
 export default async function ManageEventPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -44,6 +45,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
+                        <DuplicateEventButton eventId={Number(id)} />
                         <div className="text-right">
                             <div className="text-2xl font-bold text-primary-600">{checkInStats.checkedIn}/{checkInStats.total}</div>
                             <div className="text-xs text-neutral-500">Checked in</div>

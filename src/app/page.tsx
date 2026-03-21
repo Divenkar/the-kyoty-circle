@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Calendar, Compass, MapPin, Shield, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, Calendar, CheckCircle, Compass, MapPin, Shield, Sparkles, Users } from 'lucide-react';
 
 const CITIES = [
   { name: 'Noida', status: 'active' as const, href: '/explore?city=Noida', blurb: 'Live now with curated communities and meetups.' },
@@ -12,20 +12,38 @@ const VALUE_PROPS = [
   {
     icon: Shield,
     title: 'Verified social proof',
-    desc: 'Profiles can include LinkedIn or Instagram proof so every meetup feels more trusted and intentional.',
+    desc: 'Every organizer links their LinkedIn or Instagram, so you know exactly who is hosting before you show up.',
     gradient: 'from-primary-500 to-primary-700',
   },
   {
     icon: Users,
     title: 'Community-led experiences',
-    desc: 'Events come from actual communities, not random listings, which improves relevance and repeat engagement.',
+    desc: 'Events come from real communities with recurring members — not one-off listings from strangers.',
     gradient: 'from-violet-500 to-primary-600',
   },
   {
     icon: Calendar,
     title: 'Curated event discovery',
-    desc: 'Browse by interest, price, and date to quickly find experiences that fit your energy and schedule.',
+    desc: 'Filter by interest, price, and date to find events that match your schedule and energy — no noise.',
     gradient: 'from-amber-400 to-orange-500',
+  },
+];
+
+const HOW_IT_WORKS = [
+  {
+    step: '01',
+    title: 'Browse communities',
+    desc: 'Explore verified communities across categories like fitness, tech, arts, and more — all in your city.',
+  },
+  {
+    step: '02',
+    title: 'Apply to join',
+    desc: 'Request to join communities you love. Organizers review and approve members to keep quality high.',
+  },
+  {
+    step: '03',
+    title: 'Attend real events',
+    desc: 'RSVP for community-hosted events, meet like-minded people, and build your offline social life.',
   },
 ];
 
@@ -38,6 +56,7 @@ const STATS = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
+      {/* Hero */}
       <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.25),_transparent_35%),linear-gradient(135deg,#111827_0%,#312e81_52%,#4338ca_100%)] text-white">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-32 right-[-6rem] h-80 w-80 rounded-full bg-primary-300/20 blur-3xl" />
@@ -130,6 +149,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Why Kyoty */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -137,7 +157,7 @@ export default function LandingPage() {
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-neutral-900">A calmer, cleaner way to discover offline social experiences</h2>
           </div>
           <p className="max-w-xl text-sm leading-7 text-neutral-500 sm:text-base">
-            The product already has the right foundations—communities, events, onboarding, and admin review. The biggest opportunity is making discovery feel premium and reducing dead ends in the browsing flow.
+            We believe the best social experiences happen offline, in trusted spaces, with people who share your interests. Kyoty makes finding those people effortless.
           </p>
         </div>
 
@@ -154,38 +174,61 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
+      {/* How it works */}
+      <section className="bg-white border-y border-neutral-200">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+          <div className="text-center mb-14">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">Simple by design</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-neutral-900">How Kyoty works</h2>
+          </div>
+          <div className="grid gap-8 md:grid-cols-3">
+            {HOW_IT_WORKS.map((item) => (
+              <div key={item.step} className="flex flex-col items-center text-center">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 text-2xl font-extrabold text-primary-600">
+                  {item.step}
+                </div>
+                <h3 className="text-lg font-semibold text-neutral-900">{item.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-neutral-500">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-[2rem] border border-neutral-200 bg-white p-8 shadow-sm sm:p-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">Current product strengths</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900">The core flows are already meaningful</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">What you get</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900">Everything you need to build a great social life</h2>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               {[
-                'Explore upcoming events by city and category',
-                'Join communities and RSVP for hosted experiences',
-                'Create communities and events through dashboard flows',
-                'Admin review and moderation tooling for safer launches',
+                'Browse events by city and category',
+                'Join trusted, members-only communities',
+                'RSVP for curated, real-world gatherings',
+                'Start your own community and host events',
               ].map((item) => (
-                <div key={item} className="rounded-2xl bg-neutral-50 p-4 text-sm font-medium text-neutral-700">
-                  {item}
+                <div key={item} className="flex items-start gap-3 rounded-2xl bg-neutral-50 p-4">
+                  <CheckCircle size={18} className="mt-0.5 shrink-0 text-primary-500" />
+                  <span className="text-sm font-medium text-neutral-700">{item}</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="rounded-[2rem] bg-gradient-to-br from-primary-600 to-primary-800 p-8 text-white shadow-xl shadow-primary-900/10 sm:p-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-100">Next step</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight">Open the app and start exploring Noida.</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-100">Get started today</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight">Join Kyoty and find your people in Noida.</h2>
             <p className="mt-4 text-sm leading-7 text-primary-100/85 sm:text-base">
-              The browse experience is the heart of the product. Once users can confidently search, compare, and join, the platform feels dramatically more complete.
+              Explore live communities and events, RSVP instantly, or start your own community and shape local culture.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/explore?city=Noida" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3 font-semibold text-primary-700 transition hover:bg-primary-50">
-                Explore events
+              <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3 font-semibold text-primary-700 transition hover:bg-primary-50">
+                Create account
                 <ArrowRight size={18} />
               </Link>
-              <Link href="/create-community" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 px-6 py-3 font-semibold text-white transition hover:bg-white/10">
-                Start a community
+              <Link href="/communities" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 px-6 py-3 font-semibold text-white transition hover:bg-white/10">
+                Browse communities
                 <Users size={18} />
               </Link>
             </div>

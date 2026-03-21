@@ -3,7 +3,8 @@ import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { EventRepository } from '@/lib/repositories/event-repo';
 import { AdminActions } from './AdminActions';
 import { redirect } from 'next/navigation';
-import { Shield, Users, Calendar, AlertTriangle } from 'lucide-react';
+import { Shield, Users, Calendar, AlertTriangle, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function AdminPage() {
     const user = await getCurrentUser();
@@ -49,6 +50,25 @@ export default async function AdminPage() {
                         <p className="text-2xl font-bold text-neutral-900">{pendingEvents.length}</p>
                         <p className="text-xs text-neutral-500">Events Pending</p>
                     </div>
+                </div>
+
+                {/* Quick links */}
+                <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <Link
+                        href="/admin/communities"
+                        className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-5 transition hover:border-primary-300 hover:shadow-sm"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100">
+                                <Users size={18} className="text-primary-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-neutral-800">All Communities</p>
+                                <p className="text-xs text-neutral-500">View, manage, and moderate any community</p>
+                            </div>
+                        </div>
+                        <ExternalLink size={16} className="text-neutral-400" />
+                    </Link>
                 </div>
 
                 {/* Admin Actions (Client Component) */}

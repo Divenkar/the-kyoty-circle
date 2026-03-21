@@ -1,9 +1,9 @@
 -- Migration 004: Audit Fixes (Social Proof & Ticket Tiers)
 
--- 1. Add Social Proof fields to Users table
+-- 1. Add Social Proof fields to Users table (IF NOT EXISTS — columns may already exist from 001)
 ALTER TABLE public.kyoty_users
-ADD COLUMN social_proof_type TEXT, -- e.g. 'linkedin' or 'instagram'
-ADD COLUMN social_proof_link TEXT;
+ADD COLUMN IF NOT EXISTS social_proof_type TEXT, -- e.g. 'linkedin' or 'instagram'
+ADD COLUMN IF NOT EXISTS social_proof_link TEXT;
 
 -- 2. Create Ticket Tiers table for Events
 CREATE TABLE IF NOT EXISTS public.ticket_tiers (

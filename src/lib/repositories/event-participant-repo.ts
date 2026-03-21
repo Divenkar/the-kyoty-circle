@@ -41,7 +41,7 @@ export const EventParticipantRepository = {
         return data as EventParticipant;
     },
 
-    async promoteFromWaitlist(eventId: number): Promise<void> {
+    async promoteFromWaitlist(eventId: number): Promise<EventParticipant | null> {
         const supabase = await createClient();
         // Find the next person on the waitlist
         const { data } = await supabase
@@ -53,12 +53,14 @@ export const EventParticipantRepository = {
             .limit(1)
             .single();
 
-        if (data) {
-        const { error } = await supabase
-                .from('event_participants')
-                .update({ status: 'registered', waitlist_position: null })
-                .eq('id', data.id);
-        }
+        if (!data) return null;
+
+        await supabase
+            .from('event_participants')
+            .update({ status: 'registered', waitlist_position: null })
+            .eq('id', data.id);
+
+        return data as EventParticipant;
     },
 
     async getWaitlistPosition(eventId: number, userId: number): Promise<number> {

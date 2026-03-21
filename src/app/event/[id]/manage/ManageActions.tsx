@@ -10,8 +10,10 @@ interface ManageActionsProps {
     waitlisted: any[];
 }
 
-export function ManageActions({ eventId, attendees, waitlisted }: ManageActionsProps) {
+export function ManageActions({ eventId, attendees: initialAttendees, waitlisted: initialWaitlisted }: ManageActionsProps) {
     const [tab, setTab] = React.useState<'attendees' | 'waitlist' | 'message'>('attendees');
+    const [attendees, setAttendees] = React.useState<any[]>(initialAttendees);
+    const [waitlisted, setWaitlisted] = React.useState<any[]>(initialWaitlisted);
     const [loading, setLoading] = React.useState<number | null>(null);
     const [subject, setSubject] = React.useState('');
     const [body, setBody] = React.useState('');
@@ -21,7 +23,10 @@ export function ManageActions({ eventId, attendees, waitlisted }: ManageActionsP
         setLoading(participantId);
         const result = await removeAttendeeAction(participantId, eventId);
         if (result.success) {
-            window.location.reload();
+            setAttendees(prev => prev.filter(a => a.id !== participantId));
+            setWaitlisted(prev => prev.filter(w => w.id !== participantId));
+            setFeedback('Attendee removed');
+            setTimeout(() => setFeedback(''), 2000);
         }
         setLoading(null);
     };
@@ -30,6 +35,12 @@ export function ManageActions({ eventId, attendees, waitlisted }: ManageActionsP
         setLoading(userId);
         const result = await checkInAction(eventId, userId);
         if (result.success) {
+            // Optimistically mark as checked in without reload
+            setAttendees(prev => prev.map(a =>
+                a.user_id === userId
+                    ? { ...a, checked_in_at: new Date().toISOString() }
+                    : a
+            ));
             setFeedback('Checked in!');
             setTimeout(() => setFeedback(''), 2000);
         }
@@ -77,7 +88,7 @@ export function ManageActions({ eventId, attendees, waitlisted }: ManageActionsP
                 {[
                     { key: 'attendees', label: `Attendees (${attendees.length})`, icon: Users },
                     { key: 'waitlist', label: `Waitlist (${waitlisted.length})`, icon: Clock },
-                    { key: 'message', label: 'Send Message', icon: Mail },
+                    { key: 'message', label: 'Message All', icon: Mail },
                 ].map(({ key, label, icon: Icon }) => (
                     <button
                         key={key}

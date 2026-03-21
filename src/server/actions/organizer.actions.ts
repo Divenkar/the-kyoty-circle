@@ -3,6 +3,8 @@
 import { getCurrentUser } from '@/lib/auth-server';
 import { EventRepository } from '@/lib/repositories/event-repo';
 import { EventParticipantRepository } from '@/lib/repositories/event-participant-repo';
+import { UserRepository } from '@/lib/repositories/user-repo';
+import { sendEmail, organizerMessageEmail } from '@/lib/email';
 import type { ActionResponse } from '@/types';
 
 export async function getAttendeesAction(eventId: number): Promise<ActionResponse<any[]>> {
@@ -59,9 +61,22 @@ export async function sendMessageAction(
             return { success: false, error: 'Not authorized' };
         }
 
-        // Note: For production, integrate with an email service here.
-        // For now, log the message sent.
-        console.log(`[Event Message] Event ${eventId}: "${subject}" - "${body}" sent by user ${user.id}`);
+        // Send email to every registered attendee
+        const attendees = await EventParticipantRepository.listByEvent(eventId);
+        await Promise.all(
+            attendees.map(async (a: any) => {
+                const attendeeUser = a.kyoty_users
+                    ? a.kyoty_users
+                    : await UserRepository.findById(a.user_id);
+                if (attendeeUser?.email) {
+                    await sendEmail({
+                        to: attendeeUser.email,
+                        subject: `[${event.title}] ${subject}`,
+                        html: organizerMessageEmail(event.title, subject, body, eventId),
+                    });
+                }
+            })
+        );
 
         return { success: true };
     } catch (err) {

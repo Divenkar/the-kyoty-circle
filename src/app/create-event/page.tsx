@@ -5,6 +5,7 @@ import { createEventAction } from '@/server/actions/event.actions';
 import { getMyCommunitiesAction } from '@/server/actions/community.actions';
 import type { Community } from '@/types';
 import { EVENT_CATEGORIES } from '@/types';
+import { toast } from 'sonner';
 import { Calendar, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -45,6 +46,7 @@ export default function CreateEventPage() {
             setSuccess(true);
         } else {
             setError(result.error || 'Failed to create event');
+            toast.error(result.error || 'Failed to create event');
         }
         setLoading(false);
     };

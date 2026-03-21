@@ -3,17 +3,29 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Compass, Home, LogOut, Menu, Sparkles, User as UserIcon, Users, X } from 'lucide-react';
+import { Bell, Compass, Home, LogOut, Menu, Settings, Sparkles, User as UserIcon, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import { NotificationBell } from './NotificationBell';
 import { supabase } from '@/lib/supabase';
 
-export function Navbar() {
+interface NavbarProps {
+    initialUserRole?: string | null;
+    initialUserEmail?: string | null;
+    initialUserName?: string | null;
+    initialAvatarUrl?: string | null;
+    initialUserId?: number | null;
+}
+
+export function Navbar({ initialUserRole, initialUserEmail, initialUserName, initialAvatarUrl, initialUserId }: NavbarProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+
+    const effectiveRole = user ? initialUserRole : null;
+    const isAdminRole = effectiveRole === 'admin' || effectiveRole === 'kyoty_admin';
 
     useEffect(() => {
         const getUser = async () => {
@@ -34,6 +46,7 @@ export function Navbar() {
 
     useEffect(() => {
         setMobileOpen(false);
+        setAvatarMenuOpen(false);
     }, [pathname]);
 
     const handleSignOut = async () => {
@@ -42,30 +55,43 @@ export function Navbar() {
         router.refresh();
     };
 
-    const navLinks = [
+    const isActive = (href: string) => href === '/' ? pathname === href : pathname.startsWith(href);
+
+    // Public nav links (visible to everyone)
+    const publicNavLinks = [
         { href: '/', label: 'Home', icon: Home },
         { href: '/explore', label: 'Explore', icon: Compass },
         { href: '/communities', label: 'Communities', icon: Users },
+    ];
+
+    // Auth-only nav links (added after login)
+    const authNavLinks = [
         { href: '/create-community', label: 'Start a community', icon: Sparkles },
     ];
 
-    const isActive = (href: string) => href === '/' ? pathname === href : pathname.startsWith(href);
+    const navLinks = user ? [...publicNavLinks, ...authNavLinks] : publicNavLinks;
+
+    const displayEmail = user?.email || initialUserEmail;
+    const displayName = user?.user_metadata?.full_name || initialUserName;
+    const avatarUrl = user?.user_metadata?.avatar_url || initialAvatarUrl;
 
     return (
         <nav className="sticky top-0 z-50 border-b border-white/60 bg-white/85 backdrop-blur-xl">
             <div className="mx-auto max-w-7xl px-4 sm:px-6">
                 <div className="flex min-h-[72px] items-center justify-between gap-4 py-3">
+                    {/* Logo */}
                     <Link href="/" className="flex shrink-0 items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-600/20">
                             <span className="text-base font-extrabold tracking-tight text-white">K</span>
                         </div>
-                        <div>
+                        <div className="hidden sm:block">
                             <span className="block text-lg font-bold text-neutral-900">Kyoty</span>
                             <span className="block text-xs text-neutral-500">Verified communities & events</span>
                         </div>
                     </Link>
 
-                    <div className="hidden items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 p-1 md:flex">
+                    {/* Desktop Nav Pill */}
+                    <div className="hidden items-center gap-1 rounded-full border border-neutral-200 bg-neutral-50 p-1 md:flex">
                         {navLinks.map((link) => {
                             const Icon = link.icon;
                             return (
@@ -84,7 +110,9 @@ export function Navbar() {
                         })}
                     </div>
 
+                    {/* Right side */}
                     <div className="flex items-center gap-2 sm:gap-3">
+                        {/* Unauthenticated */}
                         {!loading && !user && (
                             <>
                                 <Link
@@ -102,52 +130,118 @@ export function Navbar() {
                             </>
                         )}
 
+                        {/* Authenticated */}
                         {!loading && user && (
                             <>
                                 <Link
                                     href="/dashboard"
-                                    className={`hidden rounded-full px-4 py-2 text-sm font-medium transition-colors sm:flex ${isActive('/dashboard')
+                                    className={`hidden rounded-full px-4 py-2 text-sm font-medium transition-colors sm:flex items-center gap-1.5 ${isActive('/dashboard')
                                         ? 'bg-primary-50 text-primary-700'
                                         : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                                         }`}
                                 >
                                     Dashboard
                                 </Link>
-                                <Link
-                                    href="/admin"
-                                    className={`hidden rounded-full px-4 py-2 text-sm font-medium transition-colors sm:flex ${isActive('/admin')
-                                        ? 'bg-primary-50 text-primary-700'
-                                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
-                                        }`}
-                                >
-                                    Admin
-                                </Link>
-                                <NotificationBell />
-                                <div className="relative group">
-                                    <button className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100">
-                                        {user.user_metadata?.avatar_url ? (
-                                            <Image src={user.user_metadata.avatar_url} alt="Profile" width={40} height={40} className="h-full w-full object-cover" unoptimized />
+
+                                {isAdminRole && (
+                                    <Link
+                                        href="/admin"
+                                        className={`hidden rounded-full px-4 py-2 text-sm font-medium transition-colors sm:flex items-center gap-1.5 ${isActive('/admin')
+                                            ? 'bg-primary-50 text-primary-700'
+                                            : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                                            }`}
+                                    >
+                                        <Settings size={14} />
+                                        Admin
+                                    </Link>
+                                )}
+
+                                <NotificationBell userId={initialUserId ?? null} />
+
+                                {/* Avatar dropdown */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
+                                        className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-neutral-200 bg-neutral-100 transition-colors hover:border-primary-300"
+                                        aria-label="Account menu"
+                                        aria-expanded={avatarMenuOpen}
+                                    >
+                                        {avatarUrl ? (
+                                            <Image src={avatarUrl} alt="Profile" width={40} height={40} className="h-full w-full object-cover" unoptimized />
                                         ) : (
-                                            <UserIcon size={20} className="text-neutral-600" />
+                                            <UserIcon size={18} className="text-neutral-600" />
                                         )}
                                     </button>
-                                    <div className="absolute right-0 mt-2 hidden w-56 overflow-hidden rounded-2xl border border-neutral-100 bg-white py-1 shadow-xl group-hover:block">
+                                    {avatarMenuOpen && (
+                                    <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-neutral-100 bg-white py-1 shadow-xl z-50">
                                         <div className="border-b border-neutral-100 px-4 py-3">
-                                            <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">Signed in as</p>
-                                            <p className="mt-1 truncate text-sm text-neutral-700">{user.email}</p>
+                                            {displayName && (
+                                                <p className="text-sm font-semibold text-neutral-900">{displayName}</p>
+                                            )}
+                                            <p className="mt-0.5 truncate text-xs text-neutral-500">{displayEmail}</p>
                                         </div>
-                                        <button
-                                            onClick={handleSignOut}
-                                            className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                                        >
-                                            <LogOut size={16} />
-                                            Sign Out
-                                        </button>
+                                        <div className="py-1">
+                                            <Link
+                                                href="/dashboard"
+                                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                                            >
+                                                <UserIcon size={15} className="text-neutral-400" />
+                                                My Dashboard
+                                            </Link>
+                                            <Link
+                                                href="/profile"
+                                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                                            >
+                                                <UserIcon size={15} className="text-neutral-400" />
+                                                My Profile
+                                            </Link>
+                                            <Link
+                                                href="/notifications"
+                                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                                            >
+                                                <Bell size={15} className="text-neutral-400" />
+                                                Notifications
+                                            </Link>
+                                            <Link
+                                                href="/create-community"
+                                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                                            >
+                                                <Sparkles size={15} className="text-neutral-400" />
+                                                Start a community
+                                            </Link>
+                                            <Link
+                                                href="/settings"
+                                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                                            >
+                                                <Settings size={15} className="text-neutral-400" />
+                                                Settings
+                                            </Link>
+                                            {isAdminRole && (
+                                                <Link
+                                                    href="/admin"
+                                                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                                                >
+                                                    <Settings size={15} className="text-neutral-400" />
+                                                    Admin panel
+                                                </Link>
+                                            )}
+                                        </div>
+                                        <div className="border-t border-neutral-100 pt-1">
+                                            <button
+                                                onClick={handleSignOut}
+                                                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                                            >
+                                                <LogOut size={15} />
+                                                Sign Out
+                                            </button>
+                                        </div>
                                     </div>
+                                    )}
                                 </div>
                             </>
                         )}
 
+                        {/* Mobile hamburger */}
                         <button
                             className="rounded-xl p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:hidden"
                             onClick={() => setMobileOpen(!mobileOpen)}
@@ -159,9 +253,10 @@ export function Navbar() {
                 </div>
             </div>
 
+            {/* Mobile Menu */}
             {mobileOpen && (
                 <div className="border-t border-neutral-200 bg-white px-4 py-4 md:hidden">
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         {navLinks.map((link) => {
                             const Icon = link.icon;
                             return (
@@ -180,21 +275,42 @@ export function Navbar() {
                         })}
 
                         {user ? (
-                            <>
-                                <Link href="/dashboard" className="block rounded-2xl px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50">
+                            <div className="border-t border-neutral-100 pt-3 space-y-1">
+                                <Link href="/dashboard" className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-primary-50 text-primary-700' : 'text-neutral-600 hover:bg-neutral-50'}`}>
+                                    <UserIcon size={16} />
                                     Dashboard
                                 </Link>
-                                <Link href="/admin" className="block rounded-2xl px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50">
-                                    Admin Panel
+                                <Link href="/profile" className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${isActive('/profile') ? 'bg-primary-50 text-primary-700' : 'text-neutral-600 hover:bg-neutral-50'}`}>
+                                    <UserIcon size={16} />
+                                    My Profile
                                 </Link>
-                                <button
-                                    onClick={handleSignOut}
-                                    className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
-                                >
-                                    <LogOut size={16} />
-                                    Sign Out
-                                </button>
-                            </>
+                                <Link href="/notifications" className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${isActive('/notifications') ? 'bg-primary-50 text-primary-700' : 'text-neutral-600 hover:bg-neutral-50'}`}>
+                                    <Bell size={16} />
+                                    Notifications
+                                </Link>
+                                <Link href="/settings" className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${isActive('/settings') ? 'bg-primary-50 text-primary-700' : 'text-neutral-600 hover:bg-neutral-50'}`}>
+                                    <Settings size={16} />
+                                    Settings
+                                </Link>
+                                {isAdminRole && (
+                                    <Link href="/admin" className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${isActive('/admin') ? 'bg-primary-50 text-primary-700' : 'text-neutral-600 hover:bg-neutral-50'}`}>
+                                        <Settings size={16} />
+                                        Admin Panel
+                                    </Link>
+                                )}
+                                <div className="border-t border-neutral-100 pt-1 mt-1">
+                                    <div className="px-4 py-2">
+                                        <p className="text-xs text-neutral-400 truncate">{displayEmail}</p>
+                                    </div>
+                                    <button
+                                        onClick={handleSignOut}
+                                        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                    >
+                                        <LogOut size={16} />
+                                        Sign Out
+                                    </button>
+                                </div>
+                            </div>
                         ) : (
                             <div className="border-t border-neutral-100 pt-3">
                                 <Link

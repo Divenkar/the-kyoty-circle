@@ -1,56 +1,22 @@
 'use client';
 
-import React from 'react';
-import { joinCommunityAction } from '@/server/actions/community.actions';
+import Link from 'next/link';
 
 interface JoinCommunityButtonProps {
     communityId: number;
+    communitySlug: string;
     isLoggedIn: boolean;
     isMember: boolean;
     hasPendingRequest: boolean;
 }
 
 export function JoinCommunityButton({
-    communityId,
+    communitySlug,
     isLoggedIn,
     isMember,
     hasPendingRequest,
 }: JoinCommunityButtonProps) {
-    const [loading, setLoading] = React.useState(false);
-    const [status, setStatus] = React.useState<'idle' | 'pending' | 'member'>(
-        isMember ? 'member' : hasPendingRequest ? 'pending' : 'idle'
-    );
-    const [error, setError] = React.useState('');
-
-    const handleJoin = async () => {
-        setLoading(true);
-        setError('');
-        try {
-            const result = await joinCommunityAction(communityId);
-            if (result.success) {
-                setStatus('pending');
-            } else {
-                setError(result.error || 'Failed to apply');
-            }
-        } catch {
-            setError('Something went wrong');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (!isLoggedIn) {
-        return (
-            <a
-                href="/login"
-                className="inline-flex px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
-            >
-                Sign in to Apply
-            </a>
-        );
-    }
-
-    if (status === 'member') {
+    if (isMember) {
         return (
             <div className="inline-flex px-6 py-3 text-sm font-semibold text-green-700 bg-green-50 rounded-xl border border-green-200">
                 ✓ You&apos;re a member
@@ -58,26 +24,31 @@ export function JoinCommunityButton({
         );
     }
 
-    if (status === 'pending') {
+    if (hasPendingRequest) {
         return (
             <div className="inline-flex px-6 py-3 text-sm font-semibold text-amber-700 bg-amber-50 rounded-xl border border-amber-200">
-                ⏳ Application pending
+                ⏳ Application pending review
             </div>
         );
     }
 
-    return (
-        <div>
-            <button
-                onClick={handleJoin}
-                disabled={loading}
-                className="inline-flex px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-sm disabled:opacity-50"
+    if (!isLoggedIn) {
+        return (
+            <Link
+                href={`/login?next=/community/${communitySlug}/join`}
+                className="inline-flex px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
             >
-                {loading ? 'Applying...' : 'Apply to Join'}
-            </button>
-            {error && (
-                <p className="mt-2 text-sm text-red-600">{error}</p>
-            )}
-        </div>
+                Sign in to Apply
+            </Link>
+        );
+    }
+
+    return (
+        <Link
+            href={`/community/${communitySlug}/join`}
+            className="inline-flex px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
+        >
+            Join Community
+        </Link>
     );
 }

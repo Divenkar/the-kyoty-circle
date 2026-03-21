@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
-import { Bell, X, Check } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Bell, Check, CheckCircle, XCircle, UserCheck, UserPlus, ArrowUp } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface Notification {
     id: number;
@@ -13,7 +14,21 @@ interface Notification {
     created_at: string;
 }
 
-export function NotificationBell() {
+const TYPE_ICON: Record<string, React.ReactNode> = {
+    event_approved:     <CheckCircle size={14} className="text-green-600" />,
+    event_rejected:     <XCircle size={14} className="text-red-500" />,
+    community_approved: <CheckCircle size={14} className="text-primary-600" />,
+    community_rejected: <XCircle size={14} className="text-red-500" />,
+    member_approved:    <UserCheck size={14} className="text-green-600" />,
+    join_request:       <UserPlus size={14} className="text-amber-500" />,
+    waitlist_promoted:  <ArrowUp size={14} className="text-blue-500" />,
+};
+
+interface NotificationBellProps {
+    userId: number | null;
+}
+
+export function NotificationBell({ userId }: NotificationBellProps) {
     const [open, setOpen] = React.useState(false);
     const [notifications, setNotifications] = React.useState<Notification[]>([]);
     const [loading, setLoading] = React.useState(false);
@@ -43,12 +58,33 @@ export function NotificationBell() {
         }
     };
 
-    React.useEffect(() => {
+    // Initial fetch
+    useEffect(() => {
         fetchNotifications();
-        // Poll every 30 seconds
-        const interval = setInterval(fetchNotifications, 30000);
-        return () => clearInterval(interval);
     }, []);
+
+    // Realtime subscription — re-fetch on new notification for this user
+    useEffect(() => {
+        if (!userId) return;
+
+        const channel = supabase
+            .channel(`notifications-${userId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `user_id=eq.${userId}`,
+                },
+                () => {
+                    fetchNotifications();
+                }
+            )
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [userId]);
 
     return (
         <div className="relative">
@@ -88,20 +124,22 @@ export function NotificationBell() {
                                     <a
                                         key={n.id}
                                         href={n.link || '#'}
-                                        className={`block px-4 py-3 border-b border-neutral-50 hover:bg-neutral-50 transition-colors ${!n.is_read ? 'bg-primary-50/50' : ''
-                                            }`}
+                                        className={`flex items-start gap-3 px-4 py-3 border-b border-neutral-50 hover:bg-neutral-50 transition-colors ${!n.is_read ? 'bg-primary-50/50' : ''}`}
                                         onClick={() => setOpen(false)}
                                     >
-                                        <div className="flex items-start gap-2">
-                                            {!n.is_read && <span className="w-2 h-2 mt-1.5 rounded-full bg-primary-500 flex-shrink-0" />}
-                                            <div className={!n.is_read ? '' : 'pl-4'}>
-                                                <p className="text-sm font-medium text-neutral-900">{n.title}</p>
-                                                {n.body && <p className="text-xs text-neutral-500 mt-0.5">{n.body}</p>}
-                                                <p className="text-xs text-neutral-400 mt-1">
-                                                    {new Date(n.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                                </p>
-                                            </div>
+                                        <div className="mt-0.5 shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-neutral-100">
+                                            {TYPE_ICON[n.type] ?? <Bell size={14} className="text-neutral-500" />}
                                         </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-neutral-900 leading-snug">{n.title}</p>
+                                            {n.body && <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2">{n.body}</p>}
+                                            <p className="text-xs text-neutral-400 mt-1">
+                                                {new Date(n.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                            </p>
+                                        </div>
+                                        {!n.is_read && (
+                                            <span className="mt-2 h-2 w-2 rounded-full bg-primary-500 shrink-0" />
+                                        )}
                                     </a>
                                 ))
                             ) : (

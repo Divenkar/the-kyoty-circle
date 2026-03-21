@@ -42,6 +42,41 @@ export const EventRepository = {
         return event as EventWithCommunity;
     },
 
+    async clone(eventId: number, createdBy: number): Promise<KyotyEvent> {
+        const supabase = await createClient();
+        const { data: original, error: fetchErr } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', eventId)
+            .single();
+        if (fetchErr || !original) throw new Error('Event not found');
+
+        const { data: cloned, error } = await supabase
+            .from('events')
+            .insert({
+                title: `[Copy] ${original.title}`,
+                description: original.description,
+                community_id: original.community_id,
+                city_id: original.city_id,
+                location_text: original.location_text,
+                date: original.date,
+                start_time: original.start_time,
+                end_time: original.end_time,
+                max_participants: original.max_participants,
+                pricing_model: original.pricing_model,
+                price_per_person: original.price_per_person,
+                total_fixed_cost: original.total_fixed_cost,
+                per_person_estimate: original.per_person_estimate,
+                is_paid: original.is_paid,
+                created_by: createdBy,
+                status: 'draft',
+            })
+            .select()
+            .single();
+        if (error) throw new Error(error.message);
+        return cloned as KyotyEvent;
+    },
+
     async findByCity(city: string, category?: string): Promise<EventWithCommunity[]> {
         const supabase = await createClient();
         // First, find the city id from the cities table

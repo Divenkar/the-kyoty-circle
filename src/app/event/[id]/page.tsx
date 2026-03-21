@@ -2,10 +2,16 @@ import { EventRepository } from '@/lib/repositories/event-repo';
 import { EventParticipantRepository } from '@/lib/repositories/event-participant-repo';
 import { getCurrentUser } from '@/lib/auth-server';
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
+import { UserRepository } from '@/lib/repositories/user-repo';
+import { EventCommentsRepository } from '@/lib/repositories/event-comments-repo';
 import { JoinEventButton } from './JoinEventButton';
 import { ReviewSection } from './ReviewSection';
+import { EventComments } from './EventComments';
 import { ReportButton } from '@/components/ReportButton';
-import { Calendar, MapPin, Users, Clock, ArrowLeft, IndianRupee, Settings } from 'lucide-react';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { BookmarkButton } from '@/components/BookmarkButton';
+import { SavedEventsRepository } from '@/lib/repositories/saved-events-repo';
+import { Calendar, MapPin, Users, Clock, ArrowLeft, IndianRupee, Settings, Ticket } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -43,15 +49,19 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     const event = await EventRepository.findById(Number(id));
     if (!event) notFound();
 
-    const participants = await EventParticipantRepository.listByEvent(event.id);
+    const [participants, organizer, currentUser] = await Promise.all([
+        EventParticipantRepository.listByEvent(event.id),
+        UserRepository.findById(event.created_by),
+        getCurrentUser(),
+    ]);
     const participantCount = participants.length;
-    const currentUser = await getCurrentUser();
 
     let isRegistered = false;
     let isWaitlisted = false;
     let waitlistPosition = 0;
     let isCommunityMember = false;
     let isOrganizer = false;
+    let isSaved = false;
 
     if (currentUser) {
         const existing = await EventParticipantRepository.findExisting(event.id, currentUser.id);
@@ -62,7 +72,10 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         }
         isCommunityMember = await CommunityMemberRepository.isMember(event.community_id, currentUser.id);
         isOrganizer = event.created_by === currentUser.id || currentUser.role === 'admin' || currentUser.role === 'kyoty_admin';
+        isSaved = await SavedEventsRepository.isSaved(currentUser.id, event.id);
     }
+
+    const comments = await EventCommentsRepository.list(event.id);
 
     const communityName = event.communities?.name || 'Community';
     const communitySlug = event.communities?.slug || String(event.community_id);
@@ -127,9 +140,14 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                                     </span>
                                 )}
                             </div>
-                            {currentUser && (
-                                <ReportButton targetType="event" targetId={event.id} />
-                            )}
+                            <div className="flex items-center gap-2">
+                                {currentUser && (
+                                    <BookmarkButton eventId={event.id} initialSaved={isSaved} />
+                                )}
+                                {currentUser && (
+                                    <ReportButton targetType="event" targetId={event.id} />
+                                )}
+                            </div>
                         </div>
 
                         <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-2">
@@ -221,6 +239,37 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                             />
                         )}
 
+                        {/* My Ticket — for registered users */}
+                        {isRegistered && (
+                            <Link
+                                href={`/event/${id}/ticket`}
+                                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-700 hover:bg-primary-100 transition-colors"
+                            >
+                                <Ticket size={15} />
+                                View My Ticket
+                            </Link>
+                        )}
+
+                        {/* Join Community CTA — shown to non-members */}
+                        {!isCommunityMember && !isOrganizer && (
+                            <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-primary-100 bg-primary-50 px-5 py-4">
+                                <div>
+                                    <p className="text-sm font-semibold text-primary-900">
+                                        Want to join {communityName}?
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-primary-700">
+                                        Members get early access to events and a private chat group.
+                                    </p>
+                                </div>
+                                <Link
+                                    href={currentUser ? `/community/${communitySlug}/join` : `/login?next=/community/${communitySlug}/join`}
+                                    className="flex-shrink-0 inline-flex items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
+                                >
+                                    Join community
+                                </Link>
+                            </div>
+                        )}
+
                         {/* Description */}
                         {event.description && (
                             <div className="mt-8 pt-6 border-t border-neutral-200">
@@ -240,15 +289,16 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                             </h3>
                             <div className="flex flex-wrap gap-3">
                                 {participants.slice(0, 8).map((p) => (
-                                    <div
+                                    <a
                                         key={p.id}
-                                        className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-neutral-200 text-sm"
+                                        href={`/profile/${p.user_id}`}
+                                        className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-neutral-200 text-sm hover:border-primary-300 hover:shadow-sm transition"
                                     >
                                         <div className="w-7 h-7 rounded-full bg-primary-200 flex items-center justify-center text-xs font-semibold text-primary-700">
                                             {(p.kyoty_users?.name || 'U')[0].toUpperCase()}
                                         </div>
                                         <span className="text-neutral-700 font-medium">{p.kyoty_users?.name || 'User'}</span>
-                                    </div>
+                                    </a>
                                 ))}
                                 {participantCount > 8 && (
                                     <div className="flex items-center px-3 py-2 text-sm text-neutral-500">
@@ -271,14 +321,32 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                         </div>
                     )}
 
+                    {/* Comments / Q&A */}
+                    <div className="border-t border-neutral-200 p-6 sm:p-8">
+                        <EventComments
+                            eventId={event.id}
+                            initialComments={comments}
+                            currentUserId={currentUser?.id ?? null}
+                            isMember={isCommunityMember || isOrganizer}
+                        />
+                    </div>
+
                     {/* Community Link */}
-                    <div className="border-t border-neutral-200 p-6 sm:p-8 flex items-center justify-between">
-                        <span className="text-sm text-neutral-500">
-                            Hosted by <span className="font-semibold text-neutral-900">{communityName}</span>
-                        </span>
+                    <div className="border-t border-neutral-200 p-6 sm:p-8 flex items-center justify-between gap-4">
+                        <div>
+                            <span className="text-sm text-neutral-500">
+                                Hosted by <span className="font-semibold text-neutral-900">{communityName}</span>
+                            </span>
+                            {organizer && (
+                                <div className="mt-1 flex items-center gap-2">
+                                    <span className="text-xs text-neutral-400">Organiser: {organizer.name}</span>
+                                    <VerifiedBadge type={organizer.social_proof_type} size="sm" />
+                                </div>
+                            )}
+                        </div>
                         <Link
                             href={`/community/${communitySlug}`}
-                            className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                            className="flex-shrink-0 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
                         >
                             View Community
                         </Link>

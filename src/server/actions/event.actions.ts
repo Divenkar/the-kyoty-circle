@@ -2,7 +2,29 @@
 
 import { getCurrentUser } from '@/lib/auth-server';
 import { EventService } from '@/lib/services/event-service';
+import { EventRepository } from '@/lib/repositories/event-repo';
 import type { ActionResponse, KyotyEvent } from '@/types';
+
+export async function cloneEventAction(eventId: number): Promise<ActionResponse<KyotyEvent>> {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: 'Authentication required' };
+
+        const event = await EventRepository.findById(eventId);
+        if (!event) return { success: false, error: 'Event not found' };
+
+        const isOrganizer = event.created_by === user.id;
+        const isPlatformAdmin = user.role === 'admin' || user.role === 'kyoty_admin';
+        if (!isOrganizer && !isPlatformAdmin) {
+            return { success: false, error: 'Only the event organiser can duplicate this event' };
+        }
+
+        const cloned = await EventRepository.clone(eventId, user.id);
+        return { success: true, data: cloned };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to duplicate event' };
+    }
+}
 
 export async function createEventAction(
     formData: FormData

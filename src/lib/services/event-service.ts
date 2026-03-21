@@ -2,6 +2,8 @@ import { EventRepository } from '@/lib/repositories/event-repo';
 import { EventParticipantRepository } from '@/lib/repositories/event-participant-repo';
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
 import { AdminLogRepository } from '@/lib/repositories/admin-log-repo';
+import { UserRepository } from '@/lib/repositories/user-repo';
+import { sendEmail, eventRegistrationEmail, waitlistPromotedEmail } from '@/lib/email';
 import type { KyotyEvent } from '@/types';
 
 export const EventService = {
@@ -76,12 +78,36 @@ export const EventService = {
         }
 
         await EventParticipantRepository.join(eventId, userId);
+        // Send registration confirmation email (non-blocking)
+        const user = await UserRepository.findById(userId);
+        if (user) {
+            const dateStr = new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+            sendEmail({
+                to: user.email,
+                subject: `You're registered for ${event.title}`,
+                html: eventRegistrationEmail(user.name, event.title, dateStr, eventId),
+            });
+        }
         return { status: 'registered' };
     },
 
     async cancelRegistration(eventId: number, userId: number): Promise<void> {
         await EventParticipantRepository.cancel(eventId, userId);
-        // Auto-promote from waitlist
-        await EventParticipantRepository.promoteFromWaitlist(eventId);
+        // Auto-promote from waitlist and notify
+        const promoted = await EventParticipantRepository.promoteFromWaitlist(eventId);
+        if (promoted) {
+            const [promotedUser, event] = await Promise.all([
+                UserRepository.findById(promoted.user_id),
+                EventRepository.findById(eventId),
+            ]);
+            if (promotedUser && event) {
+                const dateStr = new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+                sendEmail({
+                    to: promotedUser.email,
+                    subject: `You're off the waitlist for ${event.title}!`,
+                    html: waitlistPromotedEmail(promotedUser.name, event.title, dateStr, eventId),
+                });
+            }
+        }
     },
 };
