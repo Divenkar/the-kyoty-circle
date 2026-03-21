@@ -11,11 +11,12 @@ export const CommunityRepository = {
         city_id: number;
         organizer_id: number;
         cover_image_url?: string;
+        visibility?: string;
     }): Promise<Community> {
         const supabase = await createClient();
         const { data: community, error } = await supabase
             .from('communities')
-            .insert({ ...data, status: 'active', visibility: 'public' })
+            .insert({ ...data, status: 'active', visibility: data.visibility ?? 'public' })
             .select()
             .single();
         if (error) throw new Error(error.message);

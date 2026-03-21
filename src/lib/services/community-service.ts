@@ -14,6 +14,7 @@ export const CommunityService = {
         city_id: number;
         organizer_id: number;
         cover_image_url?: string;
+        visibility?: string;
     }): Promise<Community> {
         return CommunityRepository.create(data);
     },
