@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useRef } from 'react';
 import type { CommunityMedia } from '@/types';
 import { uploadMediaAction, deleteMediaAction } from '@/server/actions/community-manage.actions';
@@ -83,7 +84,13 @@ export function MediaGallery({ communityId, initialMedia, currentUserId, canMana
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {media.map(item => (
                         <div key={item.id} className="group relative aspect-square cursor-pointer overflow-hidden rounded-2xl bg-neutral-100" onClick={() => setPreview(item)}>
-                            <img src={item.url} alt={item.caption || ''} className="h-full w-full object-cover transition group-hover:scale-105" />
+                            <Image
+                                src={item.url}
+                                alt={item.caption || 'Community photo'}
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                className="object-cover transition group-hover:scale-105"
+                            />
                             {/* Delete button */}
                             {(item.uploaded_by === currentUserId || canManage) && (
                                 <button
@@ -107,7 +114,13 @@ export function MediaGallery({ communityId, initialMedia, currentUserId, canMana
             {preview && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setPreview(null)}>
                     <div className="relative max-h-[90vh] max-w-4xl" onClick={e => e.stopPropagation()}>
-                        <img src={preview.url} alt={preview.caption || ''} className="max-h-[85vh] rounded-2xl object-contain" />
+                        <Image
+                            src={preview.url}
+                            alt={preview.caption || 'Community photo preview'}
+                            width={1200}
+                            height={1200}
+                            className="max-h-[85vh] w-auto rounded-2xl object-contain"
+                        />
                         {preview.caption && (
                             <p className="mt-2 text-center text-sm text-neutral-300">{preview.caption}</p>
                         )}

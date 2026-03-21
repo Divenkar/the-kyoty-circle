@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MessageCircle, Image, Settings, Users, LayoutGrid } from 'lucide-react';
+import { MessageCircle, ImageIcon, Settings, Users, LayoutGrid } from 'lucide-react';
 
 interface Tab {
     label: string;
@@ -24,7 +24,7 @@ export function CommunityTabNav({ slug, isMember, canManage }: CommunityTabNavPr
         { label: 'Overview', href: base, icon: <LayoutGrid size={15} /> },
         ...(isMember ? [
             { label: 'Chat', href: `${base}/chat`, icon: <MessageCircle size={15} /> },
-            { label: 'Media', href: `${base}/media`, icon: <Image size={15} /> },
+            { label: 'Media', href: `${base}/media`, icon: <ImageIcon size={15} /> },
             { label: 'Members', href: `${base}/members`, icon: <Users size={15} /> },
         ] : []),
         ...(canManage ? [

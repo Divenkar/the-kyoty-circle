@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useState, useRef } from 'react';
 import { updateProfileAction, uploadAvatarAction } from '@/server/actions/profile.actions';
 import { toast } from 'sonner';
@@ -67,7 +68,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 <div className="relative">
                     <div className="h-20 w-20 overflow-hidden rounded-2xl border-2 border-neutral-200 bg-primary-100">
                         {avatarUrl ? (
-                            <img src={avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                            <Image
+                                src={avatarUrl}
+                                alt={user.name}
+                                width={80}
+                                height={80}
+                                className="h-full w-full object-cover"
+                            />
                         ) : (
                             <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-primary-600">
                                 {initials}

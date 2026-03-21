@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { addCommentAction, deleteCommentAction } from '@/server/actions/event-comments.actions';
@@ -81,7 +82,13 @@ export function EventComments({ eventId, initialComments, currentUserId, isMembe
                             <div key={comment.id} className="flex items-start gap-3">
                                 <Link href={`/profile/${comment.user_id}`} className="shrink-0">
                                     {user?.avatar_url ? (
-                                        <img src={user.avatar_url} alt={user.name} className="h-8 w-8 rounded-full object-cover hover:opacity-80 transition" />
+                                        <Image
+                                            src={user.avatar_url}
+                                            alt={user.name}
+                                            width={32}
+                                            height={32}
+                                            className="h-8 w-8 rounded-full object-cover transition hover:opacity-80"
+                                        />
                                     ) : (
                                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 hover:opacity-80 transition">
                                             {initials}

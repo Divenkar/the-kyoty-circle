@@ -117,7 +117,7 @@ export default async function TicketPage({ params }: Props) {
                         <div className="mx-6 mb-4 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
                             <Clock3 size={15} className="text-amber-600 shrink-0" />
                             <span className="text-sm font-medium text-amber-700">
-                                You're on the waitlist
+                                You&apos;re on the waitlist
                                 {participant.waitlist_position ? ` · Position #${participant.waitlist_position}` : ''}
                             </span>
                         </div>

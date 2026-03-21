@@ -28,7 +28,8 @@ export function ChatRoom({
     const [replyTo, setReplyTo] = useState<CommunityMessage | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const topRef = useRef<HTMLDivElement>(null);
-    const supabase = createClient();
+    const supabaseRef = useRef(createClient());
+    const supabase = supabaseRef.current;
 
     // Scroll to bottom on mount & new messages
     useEffect(() => {
@@ -78,7 +79,7 @@ export function ChatRoom({
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [communityId]);
+    }, [communityId, supabase]);
 
     const loadOlder = useCallback(async () => {
         if (loadingOlder || !hasMore || messages.length === 0) return;

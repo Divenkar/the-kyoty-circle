@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { UserRepository } from '@/lib/repositories/user-repo';
@@ -38,7 +39,13 @@ export default async function PublicProfilePage({ params }: Props) {
                         {/* Avatar */}
                         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-neutral-200 bg-primary-100">
                             {profileUser.avatar_url ? (
-                                <img src={profileUser.avatar_url} alt={profileUser.name} className="h-full w-full object-cover" />
+                                <Image
+                                    src={profileUser.avatar_url}
+                                    alt={profileUser.name}
+                                    width={80}
+                                    height={80}
+                                    className="h-full w-full object-cover"
+                                />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-primary-600">
                                     {initials}
@@ -97,7 +104,13 @@ export default async function PublicProfilePage({ params }: Props) {
                                         className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-4 transition hover:border-primary-300 hover:shadow-sm"
                                     >
                                         {c.cover_image_url ? (
-                                            <img src={c.cover_image_url} alt={c.name} className="h-10 w-10 rounded-xl object-cover shrink-0" />
+                                            <Image
+                                                src={c.cover_image_url}
+                                                alt={c.name}
+                                                width={40}
+                                                height={40}
+                                                className="h-10 w-10 shrink-0 rounded-xl object-cover"
+                                            />
                                         ) : (
                                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-100">
                                                 <Users size={16} className="text-primary-600" />

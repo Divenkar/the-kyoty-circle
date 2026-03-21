@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
@@ -87,7 +88,13 @@ export default async function MembersPage({ params }: Props) {
                             <div key={member.id} className={`flex items-center gap-3 px-5 py-4 ${i > 0 ? 'border-t border-neutral-100' : ''}`}>
                                 <Link href={`/profile/${member.user_id}`} className="shrink-0">
                                     {user?.avatar_url ? (
-                                        <img src={user.avatar_url} alt={user.name} className="h-10 w-10 rounded-full object-cover hover:opacity-80 transition" />
+                                        <Image
+                                            src={user.avatar_url}
+                                            alt={user.name}
+                                            width={40}
+                                            height={40}
+                                            className="h-10 w-10 rounded-full object-cover transition hover:opacity-80"
+                                        />
                                     ) : (
                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 hover:opacity-80 transition">
                                             {initials}

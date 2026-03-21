@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import type { CommunityMessage } from '@/types';
 import { Trash2, Edit2, CornerUpLeft, SmilePlus, Check } from 'lucide-react';
@@ -78,7 +79,13 @@ export function MessageBubble({
             {/* Avatar */}
             <div className="shrink-0 mt-0.5">
                 {avatar?.avatar_url ? (
-                    <img src={avatar.avatar_url} alt={avatar.name} className="h-8 w-8 rounded-full object-cover" />
+                    <Image
+                        src={avatar.avatar_url}
+                        alt={avatar.name}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-full object-cover"
+                    />
                 ) : (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
                         {initials}

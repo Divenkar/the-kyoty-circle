@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
 import { uploadCoverImageAction } from '@/server/actions/community-manage.actions';
@@ -57,7 +58,13 @@ export function CoverImageUploader({ currentUrl, onUpload, onRemove }: CoverImag
 
             {preview ? (
                 <div className="relative h-40 w-full overflow-hidden rounded-2xl border border-neutral-200">
-                    <img src={preview} alt="Cover" className="h-full w-full object-cover" />
+                    <Image
+                        src={preview}
+                        alt="Cover preview"
+                        fill
+                        unoptimized
+                        className="object-cover"
+                    />
                     <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/30 opacity-0 transition hover:opacity-100">
                         <button
                             type="button"
