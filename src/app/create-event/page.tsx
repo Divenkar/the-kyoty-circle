@@ -3,10 +3,11 @@
 import React from 'react';
 import { createEventAction } from '@/server/actions/event.actions';
 import { getMyCommunitiesAction } from '@/server/actions/community.actions';
+import { CoverImageUploader } from '@/components/CoverImageUploader';
 import type { Community } from '@/types';
 import { EVENT_CATEGORIES } from '@/types';
 import { toast } from 'sonner';
-import { Calendar, ArrowLeft } from 'lucide-react';
+import { Calendar, ArrowLeft, Globe, Lock } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CreateEventPage() {
@@ -14,6 +15,8 @@ export default function CreateEventPage() {
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState('');
     const [success, setSuccess] = React.useState(false);
+    const [coverImageUrl, setCoverImageUrl] = React.useState('');
+    const [visibility, setVisibility] = React.useState('public');
 
     // Dynamic Ticket State
     const [pricingModel, setPricingModel] = React.useState('free');
@@ -40,6 +43,8 @@ export default function CreateEventPage() {
         setError('');
 
         const formData = new FormData(e.currentTarget);
+        if (coverImageUrl) formData.set('cover_image_url', coverImageUrl);
+        formData.set('visibility', visibility);
         const result = await createEventAction(formData);
 
         if (result.success) {
@@ -90,6 +95,18 @@ export default function CreateEventPage() {
                 </p>
 
                 <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 sm:p-8 space-y-5">
+                    {/* Cover Photo */}
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                            Cover Photo <span className="text-neutral-400 font-normal">(optional)</span>
+                        </label>
+                        <CoverImageUploader
+                            currentUrl={null}
+                            onUpload={url => setCoverImageUrl(url)}
+                            onRemove={() => setCoverImageUrl('')}
+                        />
+                    </div>
+
                     {/* Title */}
                     <div>
                         <label htmlFor="title" className="block text-sm font-medium text-neutral-700 mb-1.5">
@@ -329,6 +346,37 @@ export default function CreateEventPage() {
                             placeholder="Tell people what to expect..."
                             className="w-full px-4 py-2.5 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all resize-none"
                         />
+                    </div>
+
+                    {/* Visibility */}
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                            Visibility
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setVisibility('public')}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm transition-all ${visibility === 'public' ? 'border-primary-400 bg-primary-50 text-primary-700 font-semibold' : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-300'}`}
+                            >
+                                <Globe size={16} />
+                                <div className="text-left">
+                                    <div className="font-medium">Public</div>
+                                    <div className="text-xs text-neutral-400 font-normal">Anyone can see it</div>
+                                </div>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setVisibility('members_only')}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm transition-all ${visibility === 'members_only' ? 'border-primary-400 bg-primary-50 text-primary-700 font-semibold' : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-300'}`}
+                            >
+                                <Lock size={16} />
+                                <div className="text-left">
+                                    <div className="font-medium">Members only</div>
+                                    <div className="text-xs text-neutral-400 font-normal">Community members only</div>
+                                </div>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Hidden city field */}

@@ -21,6 +21,7 @@ export async function createCommunityAction(
             category: (formData.get('category') as string) || 'Sports',
             city: formData.get('city') as string,
             cover_image_url: formData.get('cover_image_url') as string || undefined,
+            visibility: (formData.get('visibility') as string) || 'public',
         };
 
         const parsed = createCommunitySchema.safeParse(raw);
@@ -41,6 +42,7 @@ export async function createCommunityAction(
             city_id: city.id,
             organizer_id: user.id,
             cover_image_url: raw.cover_image_url,
+            visibility: raw.visibility,
         });
 
         // Auto-assign owner role to the creator

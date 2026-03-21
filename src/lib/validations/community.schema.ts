@@ -5,6 +5,7 @@ export const createCommunitySchema = z.object({
     description: z.string().max(2000).optional(),
     city: z.string().min(1, 'City is required'),
     cover_image: z.string().url().optional(),
+    visibility: z.enum(['public', 'private']).default('public'),
 });
 
 export type CreateCommunityInput = z.infer<typeof createCommunitySchema>;

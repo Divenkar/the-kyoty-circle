@@ -95,6 +95,8 @@ export interface KyotyEvent {
     total_fixed_cost: number | null;
     per_person_estimate: number | null;
     is_paid: boolean;
+    cover_image_url: string | null;
+    visibility: string;
     created_by: number;
     created_at: string;
 }

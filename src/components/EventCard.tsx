@@ -26,9 +26,9 @@ export function EventCard({ event }: EventCardProps) {
     return (
         <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:border-primary-300 hover:shadow-cardHover">
                 <Link href={`/event/${event.id}`} className="relative block h-48 overflow-hidden bg-gradient-to-br from-primary-100 via-primary-200 to-primary-300">
-                    {event.communities?.cover_image_url ? (
+                    {(event.cover_image_url || event.communities?.cover_image_url) ? (
                         <Image
-                            src={event.communities.cover_image_url}
+                            src={event.cover_image_url || event.communities!.cover_image_url!}
                             alt={event.title}
                             fill
                             className="object-cover transition-transform duration-500 group-hover:scale-105"

@@ -15,6 +15,8 @@ export const EventRepository = {
         max_participants: number;
         pricing_model?: string;
         price_per_person?: number;
+        cover_image_url?: string;
+        visibility?: string;
         created_by: number;
     }): Promise<KyotyEvent> {
         const supabase = await createClient();
@@ -69,6 +71,8 @@ export const EventRepository = {
                 total_fixed_cost: original.total_fixed_cost,
                 per_person_estimate: original.per_person_estimate,
                 is_paid: original.is_paid,
+                cover_image_url: original.cover_image_url,
+                visibility: original.visibility,
                 created_by: createdBy,
                 status: 'draft',
             })

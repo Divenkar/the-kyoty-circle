@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { createCommunityAction } from '@/server/actions/community.actions';
 import { CoverImageUploader } from '@/components/CoverImageUploader';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle, Users } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Users, Globe, Lock } from 'lucide-react';
 import Link from 'next/link';
 
 const CATEGORIES = [
@@ -20,6 +20,7 @@ export function CreateCommunityForm() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [coverImageUrl, setCoverImageUrl] = useState('');
+    const [visibility, setVisibility] = useState('public');
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -30,6 +31,7 @@ export function CreateCommunityForm() {
         if (coverImageUrl) {
             formData.set('cover_image_url', coverImageUrl);
         }
+        formData.set('visibility', visibility);
 
         const result = await createCommunityAction(formData);
 
@@ -174,6 +176,38 @@ export function CreateCommunityForm() {
                                     <option key={city} value={city}>{city}</option>
                                 ))}
                             </select>
+                        </div>
+                    </div>
+
+                    {/* Visibility */}
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-700">
+                            Visibility
+                        </label>
+                        <p className="mt-0.5 text-xs text-neutral-400">Control who can find and join your community.</p>
+                        <div className="mt-2 grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setVisibility('public')}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm transition-all ${visibility === 'public' ? 'border-primary-400 bg-primary-50 text-primary-700 font-semibold' : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-300'}`}
+                            >
+                                <Globe size={16} />
+                                <div className="text-left">
+                                    <div className="font-medium">Public</div>
+                                    <div className="text-xs text-neutral-400 font-normal">Anyone can find &amp; join</div>
+                                </div>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setVisibility('private')}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm transition-all ${visibility === 'private' ? 'border-primary-400 bg-primary-50 text-primary-700 font-semibold' : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:border-neutral-300'}`}
+                            >
+                                <Lock size={16} />
+                                <div className="text-left">
+                                    <div className="font-medium">Private</div>
+                                    <div className="text-xs text-neutral-400 font-normal">Invite only</div>
+                                </div>
+                            </button>
                         </div>
                     </div>
 

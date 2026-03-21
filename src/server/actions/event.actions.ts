@@ -49,6 +49,8 @@ export async function createEventAction(
             max_participants: Number(formData.get('capacity')) || Number(formData.get('max_participants')) || 50,
             pricing_model: (formData.get('pricing_model') as string) || 'free',
             price_per_person: Number(formData.get('cost') || formData.get('price_per_person')) || 0,
+            cover_image_url: (formData.get('cover_image_url') as string) || undefined,
+            visibility: (formData.get('visibility') as string) || 'public',
             created_by: user.id,
         };
 

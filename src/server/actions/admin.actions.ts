@@ -6,7 +6,11 @@ import { EventService } from '@/lib/services/event-service';
 import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { EventRepository } from '@/lib/repositories/event-repo';
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
+import { CommunityMediaRepository } from '@/lib/repositories/community-media-repo';
+import { AdminLogRepository } from '@/lib/repositories/admin-log-repo';
+import { createClient } from '@/utils/supabase/server';
 import type { ActionResponse } from '@/types';
+import { revalidatePath } from 'next/cache';
 
 export async function approveCommunityAction(communityId: number): Promise<ActionResponse> {
     try {
@@ -122,5 +126,199 @@ export async function getPendingMembersAction() {
         return { success: true, data };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to fetch' };
+    }
+}
+
+/* ─────────────────────────────────────────────
+   Community management actions
+───────────────────────────────────────────── */
+
+export async function deleteCommunityAction(communityId: number): Promise<ActionResponse> {
+    try {
+        const user = await getCurrentUser();
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+            return { success: false, error: 'Admin access required' };
+        }
+        const supabase = await createClient();
+        const { error } = await supabase.from('communities').delete().eq('id', communityId);
+        if (error) throw new Error(error.message);
+        await AdminLogRepository.create({
+            admin_id: user.id,
+            action: 'delete_community',
+            target_type: 'community',
+            target_id: communityId,
+        });
+        revalidatePath('/admin/communities');
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to delete community' };
+    }
+}
+
+export async function toggleCommunityStatusAction(
+    communityId: number,
+    newStatus: 'active' | 'disabled'
+): Promise<ActionResponse> {
+    try {
+        const user = await getCurrentUser();
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+            return { success: false, error: 'Admin access required' };
+        }
+        await CommunityRepository.updateStatus(communityId, newStatus);
+        await AdminLogRepository.create({
+            admin_id: user.id,
+            action: newStatus === 'disabled' ? 'disable_community' : 'enable_community',
+            target_type: 'community',
+            target_id: communityId,
+        });
+        revalidatePath('/admin/communities');
+        revalidatePath(`/admin/community/${communityId}`);
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to update community status' };
+    }
+}
+
+export async function updateCommunityInfoAction(
+    communityId: number,
+    data: { name?: string; description?: string; cover_image_url?: string; category?: string }
+): Promise<ActionResponse> {
+    try {
+        const user = await getCurrentUser();
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+            return { success: false, error: 'Admin access required' };
+        }
+        await CommunityRepository.update(communityId, data);
+        await AdminLogRepository.create({
+            admin_id: user.id,
+            action: 'update_community',
+            target_type: 'community',
+            target_id: communityId,
+            metadata: { fields: Object.keys(data) },
+        });
+        revalidatePath(`/admin/community/${communityId}`);
+        revalidatePath('/admin/communities');
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to update community' };
+    }
+}
+
+/* ─────────────────────────────────────────────
+   Member management actions
+───────────────────────────────────────────── */
+
+export async function removeMemberAction(memberId: number): Promise<ActionResponse> {
+    try {
+        const user = await getCurrentUser();
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+            return { success: false, error: 'Admin access required' };
+        }
+        const supabase = await createClient();
+        const { data: member } = await supabase
+            .from('community_members')
+            .select('community_id')
+            .eq('id', memberId)
+            .single();
+        const { error } = await supabase.from('community_members').delete().eq('id', memberId);
+        if (error) throw new Error(error.message);
+        if (member?.community_id) {
+            await AdminLogRepository.create({
+                admin_id: user.id,
+                action: 'remove_member',
+                target_type: 'community_member',
+                target_id: memberId,
+                metadata: { community_id: member.community_id },
+            });
+            revalidatePath(`/admin/community/${member.community_id}`);
+        }
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to remove member' };
+    }
+}
+
+/* ─────────────────────────────────────────────
+   Media management actions
+───────────────────────────────────────────── */
+
+export async function deleteMediaAction(mediaId: number): Promise<ActionResponse> {
+    try {
+        const user = await getCurrentUser();
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+            return { success: false, error: 'Admin access required' };
+        }
+        const media = await CommunityMediaRepository.findById(mediaId);
+        await CommunityMediaRepository.delete(mediaId);
+        if (media) {
+            await AdminLogRepository.create({
+                admin_id: user.id,
+                action: 'delete_media',
+                target_type: 'community_media',
+                target_id: mediaId,
+                metadata: { community_id: media.community_id },
+            });
+            revalidatePath(`/admin/community/${media.community_id}`);
+        }
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to delete media' };
+    }
+}
+
+/* ─────────────────────────────────────────────
+   Event management actions
+───────────────────────────────────────────── */
+
+export async function updateEventStatusAction(
+    eventId: number,
+    status: string
+): Promise<ActionResponse> {
+    try {
+        const user = await getCurrentUser();
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+            return { success: false, error: 'Admin access required' };
+        }
+        await EventRepository.updateStatus(eventId, status);
+        await AdminLogRepository.create({
+            admin_id: user.id,
+            action: `set_event_status_${status}`,
+            target_type: 'event',
+            target_id: eventId,
+        });
+        revalidatePath('/admin/events');
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to update event status' };
+    }
+}
+
+/* ─────────────────────────────────────────────
+   User management actions
+───────────────────────────────────────────── */
+
+export async function updateUserRoleAction(
+    targetUserId: number,
+    role: string
+): Promise<ActionResponse> {
+    try {
+        const user = await getCurrentUser();
+        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+            return { success: false, error: 'Admin access required' };
+        }
+        const supabase = await createClient();
+        const { error } = await supabase.from('kyoty_users').update({ role }).eq('id', targetUserId);
+        if (error) throw new Error(error.message);
+        await AdminLogRepository.create({
+            admin_id: user.id,
+            action: 'update_user_role',
+            target_type: 'user',
+            target_id: targetUserId,
+            metadata: { new_role: role },
+        });
+        revalidatePath('/admin/users');
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to update user role' };
     }
 }

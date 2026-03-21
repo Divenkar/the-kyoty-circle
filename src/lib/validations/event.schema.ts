@@ -10,7 +10,8 @@ export const createEventSchema = z.object({
     event_time: z.string().optional(),
     capacity: z.number().int().min(1, 'Capacity must be at least 1').max(500),
     cost: z.number().min(0).default(0),
-    image_url: z.string().url().optional(),
+    cover_image: z.string().url().optional(),
+    visibility: z.enum(['public', 'members_only']).default('public'),
     category: z.string().default('All'),
 });
 
