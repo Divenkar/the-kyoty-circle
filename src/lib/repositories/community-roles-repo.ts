@@ -50,6 +50,17 @@ export const CommunityRolesRepository = {
         return (data || []) as CommunityRole[];
     },
 
+    /** List all communities a user has a role in */
+    async listByUser(userId: number): Promise<CommunityRole[]> {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('community_roles')
+            .select('*')
+            .eq('user_id', userId);
+        if (error) return [];
+        return (data || []) as CommunityRole[];
+    },
+
     /** Remove a user's community role */
     async remove(communityId: number, userId: number): Promise<void> {
         const supabase = await createClient();

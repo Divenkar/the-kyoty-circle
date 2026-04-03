@@ -43,12 +43,25 @@ export const CommunityService = {
         communityId: number,
         userId: number,
         opts?: { joinReason?: string; socialProofLink?: string }
-    ): Promise<void> {
+    ): Promise<{ status: 'approved' | 'pending' }> {
         const existing = await CommunityMemberRepository.findExisting(communityId, userId);
         if (existing) {
+            if (existing.status === 'approved') return { status: 'approved' };
             throw new Error('You have already applied to this community');
         }
+
+        const community = await CommunityRepository.findById(communityId);
+        if (!community) throw new Error('Community not found');
+
+        // Public communities: auto-approve so users can access immediately
+        // Private communities: keep pending for organizer review
+        if (community.visibility !== 'private') {
+            await CommunityMemberRepository.createAndApprove(communityId, userId, opts);
+            return { status: 'approved' };
+        }
+
         await CommunityMemberRepository.createJoinRequest(communityId, userId, opts);
+        return { status: 'pending' };
     },
 
     async approveMember(memberId: number, approvedBy: number): Promise<void> {

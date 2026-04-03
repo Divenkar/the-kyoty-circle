@@ -19,7 +19,10 @@ export const EventService = {
         max_participants: number;
         pricing_model?: string;
         price_per_person?: number;
+        cover_image_url?: string;
+        visibility?: string;
         created_by: number;
+        initialStatus?: string;
     }): Promise<KyotyEvent> {
         return EventRepository.create(data);
     },

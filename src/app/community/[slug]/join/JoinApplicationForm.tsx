@@ -34,6 +34,11 @@ export function JoinApplicationForm({ communityId, communitySlug, communityName,
                 socialProofLink: socialProofLink.trim() || undefined,
             });
             if (result.success) {
+                // Auto-approved (public community) → go straight to the feed
+                if (result.data?.memberStatus === 'approved') {
+                    router.push(`/community/${communitySlug}/feed`);
+                    return;
+                }
                 setSubmitted(true);
             } else {
                 setError(result.error || 'Failed to submit application');

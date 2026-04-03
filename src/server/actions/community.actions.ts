@@ -83,13 +83,13 @@ export async function createCommunityAction(
 export async function joinCommunityAction(
     communityId: number,
     opts?: { joinReason?: string; socialProofLink?: string }
-): Promise<ActionResponse> {
+): Promise<ActionResponse<{ memberStatus: 'approved' | 'pending' }>> {
     try {
         const user = await getCurrentUser();
         if (!user) return { success: false, error: 'Authentication required' };
 
-        await CommunityService.requestToJoin(communityId, user.id, opts);
-        return { success: true };
+        const result = await CommunityService.requestToJoin(communityId, user.id, opts);
+        return { success: true, data: { memberStatus: result.status } };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to join community' };
     }
@@ -100,8 +100,29 @@ export async function getMyCommunitiesAction(): Promise<ActionResponse<Community
         const user = await getCurrentUser();
         if (!user) return { success: false, error: 'Authentication required' };
 
-        const communities = await CommunityRepository.findByCreator(user.id);
-        return { success: true, data: communities };
+        // Return communities where user is the organizer OR has a community-level role (owner/admin)
+        const [organizedCommunities, communityRoles] = await Promise.all([
+            CommunityRepository.findByCreator(user.id),
+            CommunityRolesRepository.listByUser(user.id),
+        ]);
+
+        // Merge: start with organizer communities, add role-based ones if not already included
+        const seen = new Set(organizedCommunities.map((c) => c.id));
+        const roleBasedCommunityIds = communityRoles
+            .filter((r) => r.role === 'owner' || r.role === 'admin')
+            .map((r) => r.community_id)
+            .filter((id) => !seen.has(id));
+
+        const roleBasedCommunities = roleBasedCommunityIds.length > 0
+            ? await Promise.all(roleBasedCommunityIds.map((id) => CommunityRepository.findById(id)))
+            : [];
+
+        const merged = [
+            ...organizedCommunities,
+            ...(roleBasedCommunities.filter(Boolean) as Community[]),
+        ];
+
+        return { success: true, data: merged };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to fetch communities' };
     }

@@ -18,7 +18,7 @@ const CITIES = ['Noida', 'Delhi', 'Gurgaon', 'Bangalore'];
 export function CreateCommunityForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState(false);
+    const [createdSlug, setCreatedSlug] = useState<string | null>(null);
     const [coverImageUrl, setCoverImageUrl] = useState('');
     const [visibility, setVisibility] = useState('public');
 
@@ -35,8 +35,8 @@ export function CreateCommunityForm() {
 
         const result = await createCommunityAction(formData);
 
-        if (result.success) {
-            setSuccess(true);
+        if (result.success && result.data) {
+            setCreatedSlug(result.data.slug);
         } else {
             setError(result.error || 'Failed to create community');
             toast.error(result.error || 'Failed to create community');
@@ -44,7 +44,7 @@ export function CreateCommunityForm() {
         setLoading(false);
     };
 
-    if (success) {
+    if (createdSlug) {
         return (
             <div className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-neutral-50 px-4">
                 <div className="w-full max-w-md rounded-[2rem] border border-neutral-200 bg-white p-10 text-center shadow-lg">
@@ -57,16 +57,16 @@ export function CreateCommunityForm() {
                     </p>
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                         <Link
-                            href="/dashboard"
+                            href={`/community/${createdSlug}/feed`}
                             className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary-700"
                         >
-                            Go to Dashboard
+                            Go to my community
                         </Link>
                         <Link
-                            href="/communities"
+                            href="/create-event"
                             className="inline-flex items-center justify-center rounded-xl border border-neutral-200 px-6 py-3 text-sm font-semibold text-neutral-700 transition hover:border-neutral-300 hover:bg-neutral-50"
                         >
-                            Browse communities
+                            Create first event
                         </Link>
                     </div>
                 </div>

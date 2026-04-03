@@ -33,14 +33,28 @@ export async function createEventAction(
         const user = await getCurrentUser();
         if (!user) return { success: false, error: 'Authentication required' };
 
-        if (user.role !== 'community_admin' && user.role !== 'kyoty_admin' && user.role !== 'admin') {
-            return { success: false, error: 'Only community admins can create events' };
+        const communityId = Number(formData.get('community_id'));
+
+        // Allow: platform admins, community organizers, community-level owners/admins
+        const isPlatformAdmin = user.role === 'kyoty_admin' || user.role === 'admin' || user.role === 'community_admin';
+        if (!isPlatformAdmin && communityId) {
+            const { CommunityRepository } = await import('@/lib/repositories/community-repo');
+            const { CommunityRolesRepository } = await import('@/lib/repositories/community-roles-repo');
+            const [community, communityRole] = await Promise.all([
+                CommunityRepository.findById(communityId),
+                CommunityRolesRepository.getUserRole(communityId, user.id),
+            ]);
+            const isOrganizer = community?.organizer_id === user.id;
+            const hasCommunityAdminRole = communityRole === 'owner' || communityRole === 'admin';
+            if (!isOrganizer && !hasCommunityAdminRole) {
+                return { success: false, error: 'Only the community organizer or admins can create events' };
+            }
         }
 
         const data = {
             title: formData.get('title') as string,
             description: (formData.get('description') as string) || undefined,
-            community_id: Number(formData.get('community_id')),
+            community_id: communityId,
             city_id: Number(formData.get('city_id')) || 6,
             location_text: ((formData.get('location_text') || formData.get('location')) as string) || undefined,
             date: ((formData.get('date') || formData.get('event_date')) as string) || '',
@@ -82,7 +96,15 @@ export async function createEventAction(
             return { success: false, error: 'Capacity must be at least 1' };
         }
 
-        const event = await EventService.createEvent(data);
+        // Events created by organizers/admins go live immediately ('open')
+        // Events created by anyone else stay pending for review
+        const initialStatus = isPlatformAdmin ? 'open' : (() => {
+            // We already validated above that they are an organizer or community admin,
+            // so grant open status directly
+            return 'open';
+        })();
+
+        const event = await EventService.createEvent({ ...data, initialStatus });
 
         // Insert ticket tiers if any
         if (data.pricing_model === 'tiered' && ticketTiers.length > 0) {

@@ -2,6 +2,29 @@ import { createClient } from '@/utils/supabase/server';
 import type { CommunityMember, CommunityMemberWithUser } from '@/types';
 
 export const CommunityMemberRepository = {
+    /** Create and immediately approve (for public communities) */
+    async createAndApprove(
+        communityId: number,
+        userId: number,
+        opts?: { joinReason?: string; socialProofLink?: string }
+    ): Promise<CommunityMember> {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('community_members')
+            .insert({
+                community_id: communityId,
+                user_id: userId,
+                status: 'approved',
+                join_reason: opts?.joinReason || null,
+                social_proof_link: opts?.socialProofLink || null,
+                approved_by: userId, // self-approved for public communities
+            })
+            .select()
+            .single();
+        if (error) throw new Error(error.message);
+        return data as CommunityMember;
+    },
+
     async createJoinRequest(
         communityId: number,
         userId: number,

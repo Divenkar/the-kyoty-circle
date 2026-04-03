@@ -31,8 +31,9 @@ export default function CreateEventPage() {
     React.useEffect(() => {
         getMyCommunitiesAction().then(res => {
             if (res.success && res.data) {
-                const approved = res.data.filter(c => c.status === 'approved');
-                setCommunities(approved);
+                // Accept communities that are live ('active' is the default after creation, 'approved' is after admin approval)
+                const live = res.data.filter(c => ['active', 'approved', 'open'].includes(c.status));
+                setCommunities(live);
             }
         });
     }, []);
@@ -63,16 +64,24 @@ export default function CreateEventPage() {
                     <div className="w-16 h-16 mx-auto rounded-2xl bg-green-100 flex items-center justify-center mb-4">
                         <Calendar size={28} className="text-green-600" />
                     </div>
-                    <h2 className="text-xl font-bold text-neutral-900 mb-2">Event Created!</h2>
+                    <h2 className="text-xl font-bold text-neutral-900 mb-2">Event is live!</h2>
                     <p className="text-neutral-500 text-sm mb-6">
-                        Your event has been submitted for review. You&apos;ll be notified when it&apos;s approved.
+                        Your event is now visible to the community. Share it to get RSVPs.
                     </p>
-                    <Link
-                        href="/dashboard"
-                        className="inline-flex px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors"
-                    >
-                        Back to Dashboard
-                    </Link>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                        <Link
+                            href="/communities"
+                            className="inline-flex px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors"
+                        >
+                            View communities
+                        </Link>
+                        <Link
+                            href="/create-event"
+                            className="inline-flex px-6 py-3 text-sm font-semibold text-neutral-700 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
+                        >
+                            Create another event
+                        </Link>
+                    </div>
                 </div>
             </div>
         );

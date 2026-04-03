@@ -18,11 +18,13 @@ export const EventRepository = {
         cover_image_url?: string;
         visibility?: string;
         created_by: number;
+        initialStatus?: string;
     }): Promise<KyotyEvent> {
         const supabase = await createClient();
+        const { initialStatus, ...insertData } = data;
         const { data: event, error } = await supabase
             .from('events')
-            .insert({ ...data, status: 'pending' })
+            .insert({ ...insertData, status: initialStatus ?? 'open' })
             .select()
             .single();
         if (error) throw new Error(error.message);
