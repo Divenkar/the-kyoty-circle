@@ -15,8 +15,7 @@ import {
     Sparkles,
     Users,
 } from 'lucide-react';
-import { useSignIn, useSignUp } from '@clerk/nextjs/legacy';
-import { useUser } from '@clerk/nextjs';
+import { useSignIn, useSignUp, useUser } from '@clerk/nextjs';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -94,6 +93,8 @@ function LoginPageContent() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [confirmationEmail, setConfirmationEmail] = useState('');
+    const [verificationCode, setVerificationCode] = useState('');
+    const [verifying, setVerifying] = useState(false);
 
     const rawNext = searchParams.get('next') ?? '';
     const intent = searchParams.get('intent') ?? '';
@@ -177,9 +178,55 @@ function LoginPageContent() {
                 router.refresh();
             }
         } catch (err: any) {
-            toast.error(err.errors?.[0]?.message || 'Something went wrong.');
+            const code = err.errors?.[0]?.code;
+            if (code === 'form_password_incorrect') {
+                toast.error("That password isn't right. Try again or reset it.");
+            } else if (code === 'form_identifier_not_found') {
+                toast.error('No account found with that email. Want to sign up?');
+            } else if (code === 'too_many_requests') {
+                toast.error('Too many attempts. Please wait a minute and try again.');
+            } else {
+                toast.error(err.errors?.[0]?.message || 'Something went wrong.');
+            }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleVerifyCode = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!signUpLoaded) return;
+        setVerifying(true);
+        try {
+            const result = await signUp.attemptEmailAddressVerification({ code: verificationCode });
+            if (result.status === 'complete') {
+                await setSignUpActive({ session: result.createdSessionId });
+                router.push(next || '/onboarding');
+                router.refresh();
+            } else {
+                toast.error('Verification incomplete. Please try again.');
+            }
+        } catch (err: any) {
+            const code = err.errors?.[0]?.code;
+            if (code === 'form_code_incorrect') {
+                toast.error('Incorrect code. Double-check your email and try again.');
+            } else if (code === 'verification_expired') {
+                toast.error('Code expired. Request a new one below.');
+            } else {
+                toast.error(err.errors?.[0]?.message || 'Verification failed.');
+            }
+        } finally {
+            setVerifying(false);
+        }
+    };
+
+    const handleResendCode = async () => {
+        if (!signUpLoaded) return;
+        try {
+            await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+            toast.success('New code sent — check your inbox.');
+        } catch (err: any) {
+            toast.error(err.errors?.[0]?.message || 'Could not resend code.');
         }
     };
 
@@ -236,21 +283,59 @@ function LoginPageContent() {
                                     <CheckCircle2 size={26} />
                                 </div>
                                 <p className="mt-6 text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">Check your inbox</p>
-                                <h2 className="mt-3 font-serif text-3xl font-semibold text-neutral-900">Confirm your account to continue.</h2>
+                                <h2 className="mt-3 font-serif text-3xl font-semibold text-neutral-900">Enter your verification code.</h2>
                                 <p className="mt-4 text-sm leading-7 text-neutral-600">
-                                    We sent a confirmation link to <span className="font-semibold text-neutral-900">{confirmationEmail}</span>.
-                                    Once you confirm, we will guide you through a short welcome setup and bring you back to Kyoty.
+                                    We sent a 6-digit code to <span className="font-semibold text-neutral-900">{confirmationEmail}</span>.
+                                    Enter it below to activate your account.
                                 </p>
-                                <div className="mt-8 rounded-2xl bg-[#f7f2ea] p-4 text-sm text-neutral-700">
-                                    After confirmation you will choose your city, pick interests, and decide whether to add social proof now or later.
+
+                                <form onSubmit={handleVerifyCode} className="mt-8 space-y-4">
+                                    <div>
+                                        <label htmlFor="verification-code" className="block text-sm font-medium text-neutral-700">
+                                            Verification code
+                                        </label>
+                                        <input
+                                            id="verification-code"
+                                            type="text"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            maxLength={6}
+                                            value={verificationCode}
+                                            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                                            className="mt-1.5 w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3.5 text-center text-2xl font-bold tracking-[0.4em] text-neutral-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/15"
+                                            placeholder="······"
+                                            autoComplete="one-time-code"
+                                            autoFocus
+                                            required
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={verifying || verificationCode.length < 6}
+                                        className="w-full rounded-2xl bg-primary-600 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        {verifying ? 'Verifying...' : 'Confirm account'}
+                                    </button>
+                                </form>
+
+                                <div className="mt-6 flex flex-wrap items-center gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={handleResendCode}
+                                        className="text-sm font-medium text-primary-600 transition hover:text-primary-700"
+                                    >
+                                        Resend code
+                                    </button>
+                                    <span className="text-neutral-300">·</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setConfirmationEmail(''); setVerificationCode(''); }}
+                                        className="text-sm font-medium text-neutral-500 transition hover:text-neutral-700"
+                                    >
+                                        Use a different email
+                                    </button>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setConfirmationEmail('')}
-                                    className="mt-6 text-sm font-medium text-primary-600 transition hover:text-primary-700"
-                                >
-                                    Use a different email
-                                </button>
                             </div>
                         ) : (
                             <>

@@ -1,22 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { apiOk, apiError } from '@/lib/api-response';
 
-export async function GET(req: NextRequest) {
-    try {
-        const supabase = await createClient();
-        const { data: events, error } = await supabase
-            .from('events')
-            .select('id,title,location_text,date,start_time,price_per_person,communities(name)')
-            .eq('status', 'approved')
-            .order('date', { ascending: true })
-            .limit(10);
+export async function GET(_req: NextRequest) {
+    const supabase = await createClient();
+    const { data: events, error } = await supabase
+        .from('events')
+        .select('id,title,location_text,date,start_time,price_per_person,communities(name)')
+        .eq('status', 'approved')
+        .order('date', { ascending: true })
+        .limit(10);
 
-        if (error) {
-            return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-        }
+    if (error) return apiError(error.message, 500);
 
-        return NextResponse.json({ success: true, data: events });
-    } catch (err: any) {
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
-    }
+    return apiOk(events ?? []);
 }

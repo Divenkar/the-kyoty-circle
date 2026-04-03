@@ -2,8 +2,14 @@ node_modules
 npm-debug.log
 .next
 .git
+
+# Never bake secrets into the image — pass env vars at runtime via docker-compose env_file
+.env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+
 *.log

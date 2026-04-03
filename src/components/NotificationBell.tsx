@@ -2,7 +2,9 @@
 
 import React, { useEffect } from 'react';
 import { Bell, Check, CheckCircle, XCircle, UserCheck, UserPlus, ArrowUp } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
+
+const supabase = createClient();
 
 interface Notification {
     id: number;

@@ -56,7 +56,8 @@ export default function DiscoveryFeed() {
 
     const fetchEvents = async () => {
         try {
-            const res = await fetch('http://localhost:3000/api/mobile/events');
+            const apiBase = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+            const res = await fetch(`${apiBase}/api/mobile/events`);
             const json = await res.json();
             if (json.success && json.data?.length > 0) {
                 const mapped = json.data.map((e: any, i: number) => ({

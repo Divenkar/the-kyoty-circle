@@ -1,48 +1,43 @@
 import Razorpay from 'razorpay';
-import { NextRequest, NextResponse } from 'next/server';
-
+import { NextRequest } from 'next/server';
+import { apiOk, apiError } from '@/lib/api-response';
 
 export async function POST(req: NextRequest) {
     try {
         const { amount, eventId, ticketTierId } = await req.json();
 
         if (!amount || !eventId) {
-            return NextResponse.json({ error: 'Amount and eventId are required' }, { status: 400 });
+            return apiError('Amount and eventId are required', 400);
         }
 
         if (!Number.isFinite(amount) || amount <= 0) {
-            return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 });
+            return apiError('Amount must be a positive number', 400);
         }
 
-        let keyId = process.env.RAZORPAY_KEY_ID;
-        let keySecret = process.env.RAZORPAY_KEY_SECRET;
+        const keyId = process.env.RAZORPAY_KEY_ID;
+        const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
         if (!keyId || !keySecret) {
-            // Fallback or warning if no keys
-            console.warn('Razorpay keys missing from environment. Using dummy mode.');
-            return NextResponse.json({ error: 'Payment gateway not configured' }, { status: 501 });
+            console.error('Razorpay keys missing from environment');
+            return apiError('Payment gateway not configured', 501);
         }
 
-        const razorpay = new Razorpay({
-            key_id: keyId,
-            key_secret: keySecret,
-        });
+        const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
-        const options = {
-            amount: amount * 100, // amount in smallest currency unit (paise)
-            currency: "INR",
+        const order = await razorpay.orders.create({
+            amount: amount * 100, // rupees → paise
+            currency: 'INR',
             receipt: `receipt_evt_${eventId}_${Date.now()}`,
             notes: {
                 eventId: eventId.toString(),
-                ticketTierId: ticketTierId?.toString() || 'general'
-            }
-        };
+                ticketTierId: ticketTierId?.toString() ?? 'general',
+            },
+        });
 
-        const order = await razorpay.orders.create(options);
-
-        return NextResponse.json({ success: true, order });
-    } catch (error: any) {
-        console.error('Razorpay Order error:', error);
-        return NextResponse.json({ error: error.message || 'Failed to create order' }, { status: 500 });
+        return apiOk({ order });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to create order';
+        console.error('Razorpay order error:', error);
+        return apiError(message, 500);
     }
 }

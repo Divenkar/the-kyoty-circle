@@ -6,9 +6,19 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
+      // Supabase storage (user uploads, community media, event covers)
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "*.supabase.co",
+      },
+      // Clerk hosted profile images
+      {
+        protocol: "https",
+        hostname: "img.clerk.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.clerk.dev",
       },
     ],
   },
