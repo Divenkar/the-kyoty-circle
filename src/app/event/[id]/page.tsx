@@ -11,6 +11,7 @@ import { ReportButton } from '@/components/ReportButton';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { DetailTrustSignals } from '@/components/DetailTrustSignals';
 import { BookmarkButton } from '@/components/BookmarkButton';
+import { ShareButton } from '@/components/ShareButton';
 import { SavedEventsRepository } from '@/lib/repositories/saved-events-repo';
 import { Calendar, MapPin, Users, Clock, ArrowLeft, IndianRupee, Settings, Ticket, ShieldCheck, UserCheck, Sparkles } from 'lucide-react';
 import Image from 'next/image';
@@ -78,6 +79,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
     const comments = await EventCommentsRepository.list(event.id);
 
+    const isPublicEvent = event.visibility !== 'members_only';
+
     const communityName = event.communities?.name || 'Community';
     const communitySlug = event.communities?.slug || String(event.community_id);
     const dateStr = new Date(event.date).toLocaleDateString('en-IN', {
@@ -97,9 +100,11 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             ? 'Registered'
             : isWaitlisted
                 ? `Waitlist #${waitlistPosition || 1}`
-                : !isCommunityMember && !isOrganizer
+                : !isCommunityMember && !isOrganizer && !isPublicEvent
                     ? 'Members only'
-                    : 'Open to eligible members';
+                    : isPublicEvent
+                        ? 'Open to everyone'
+                        : 'Open to eligible members';
     const availability = isPastEvent
         ? 'Event ended'
         : isFull
@@ -159,6 +164,10 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
+                                <ShareButton
+                                    title={event.title}
+                                    text={`Check out ${event.title} on Kyoty`}
+                                />
                                 {currentUser && (
                                     <BookmarkButton eventId={event.id} initialSaved={isSaved} />
                                 )}
@@ -216,7 +225,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                                         ? 'You are already confirmed'
                                         : isWaitlisted
                                             ? 'You are in the queue'
-                                            : isCommunityMember || isOrganizer
+                                            : isCommunityMember || isOrganizer || isPublicEvent
                                                 ? 'Eligible to join'
                                                 : 'Community membership required',
                                 },
@@ -294,6 +303,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                                 isWaitlisted={isWaitlisted}
                                 waitlistPosition={waitlistPosition}
                                 isCommunityMember={isCommunityMember}
+                                isPublicEvent={isPublicEvent}
                                 isFull={isFull}
                                 isPaid={event.is_paid}
                                 price={event.price_per_person || 0}
@@ -311,8 +321,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                             </Link>
                         )}
 
-                        {/* Join Community CTA — shown to non-members */}
-                        {!isCommunityMember && !isOrganizer && (
+                        {/* Join Community CTA — shown to non-members of members-only events */}
+                        {!isCommunityMember && !isOrganizer && !isPublicEvent && (
                             <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-primary-100 bg-primary-50 px-5 py-4">
                                 <div>
                                     <p className="text-sm font-semibold text-primary-900">

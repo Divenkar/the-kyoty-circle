@@ -1,11 +1,11 @@
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@/utils/supabase/server';
 import type { User, UserRole } from '@/types';
 
 export async function getCurrentUserId(): Promise<string | null> {
     try {
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        return user?.id || null;
+        const { userId } = await auth();
+        return userId;
     } catch {
         return null;
     }
@@ -13,24 +13,25 @@ export async function getCurrentUserId(): Promise<string | null> {
 
 export async function getCurrentUser(): Promise<User | null> {
     try {
-        const supabase = await createClient();
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (!authUser) return null;
+        const { userId } = await auth();
+        if (!userId) return null;
 
+        const supabase = await createClient();
         const { data } = await supabase
             .from('kyoty_users')
             .select('*')
-            .eq('auth_id', authUser.id)
+            .eq('auth_id', userId)
             .single();
 
         if (data) return data as User;
 
-        // Auto-create profile if authenticated but no row exists yet
+        // Fallback: create row if the Clerk webhook hasn't fired yet (race condition safety net)
+        const clerkUser = await currentUser();
         return await ensureUser({
-            authId: authUser.id,
-            email: authUser.email ?? '',
-            name: authUser.user_metadata?.full_name ?? authUser.email?.split('@')[0] ?? 'User',
-            avatarUrl: authUser.user_metadata?.avatar_url,
+            authId: userId,
+            email: clerkUser?.emailAddresses[0]?.emailAddress ?? '',
+            name: clerkUser?.fullName ?? clerkUser?.firstName ?? clerkUser?.emailAddresses[0]?.emailAddress?.split('@')[0] ?? 'User',
+            avatarUrl: clerkUser?.imageUrl,
         });
     } catch {
         return null;
@@ -41,7 +42,7 @@ export async function ensureUser(profile: {
     authId: string;
     email: string;
     name: string;
-    avatarUrl?: string;
+    avatarUrl?: string | null;
 }): Promise<User> {
     const supabase = await createClient();
     const { data: existing } = await supabase
@@ -59,8 +60,9 @@ export async function ensureUser(profile: {
             email: profile.email,
             auth_id: profile.authId,
             role: 'participant',
-            default_city_id: 1, // Default city ID for Noida in Supabase (from schema)
+            default_city_id: 1,
             interest_tags: [],
+            onboarding_completed: false,
             avatar_url: profile.avatarUrl,
         })
         .select()

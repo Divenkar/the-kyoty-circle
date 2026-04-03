@@ -10,6 +10,8 @@ interface JoinEventButtonProps {
     isWaitlisted?: boolean;
     waitlistPosition?: number;
     isCommunityMember: boolean;
+    /** True when event.visibility === 'public' — allows non-members to join */
+    isPublicEvent?: boolean;
     isFull: boolean;
     isPaid?: boolean;
     price?: number;
@@ -22,6 +24,7 @@ export function JoinEventButton({
     isWaitlisted = false,
     waitlistPosition = 0,
     isCommunityMember,
+    isPublicEvent = false,
     isFull,
     isPaid = false,
     price = 0,
@@ -128,7 +131,7 @@ export function JoinEventButton({
         );
     }
 
-    if (!isCommunityMember) {
+    if (!isCommunityMember && !isPublicEvent) {
         return (
             <div className="w-full py-3.5 text-center text-sm text-neutral-600 bg-neutral-100 rounded-xl">
                 Join the community first to register for this event

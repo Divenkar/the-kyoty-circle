@@ -120,14 +120,15 @@ export const CommunityMemberRepository = {
         if (error) throw new Error(error.message);
     },
 
-    async listByUser(userId: number): Promise<any[]> {
+    async listByUser(userId: number, limit = 30): Promise<any[]> {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('community_members')
             .select('*, communities(id, name, slug, cover_image_url, category, member_count, status)')
             .eq('user_id', userId)
             .eq('status', 'approved')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(limit);
         if (error) return [];
         return (data || []) as any[];
     },

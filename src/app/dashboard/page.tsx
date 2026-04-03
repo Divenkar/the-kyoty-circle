@@ -206,6 +206,9 @@ export default async function DashboardPage() {
         const authId = await getCurrentUserId();
         redirect(authId ? '/onboarding' : '/login');
     }
+    if (!user.onboarding_completed) {
+        redirect('/onboarding');
+    }
 
     const [myCommunities, myEvents, upcomingRSVPs, myMemberships, savedEvents] = await Promise.all([
         CommunityRepository.findByCreator(user.id),

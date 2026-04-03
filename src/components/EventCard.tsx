@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowUpRight, Calendar, Clock3, MapPin, Users } from 'lucide-react';
+import { ArrowUpRight, Calendar, Clock3, MapPin, Users, CheckCircle2 } from 'lucide-react';
 import type { EventWithCommunity } from '@/types';
 
 interface EventCardProps {
@@ -121,10 +121,31 @@ export function EventCard({ event }: EventCardProps) {
                         )}
                     </div>
                     <div className="mt-4">
-                        <Link href={`/event/${event.id}`} className="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700">
-                            View event
-                            <ArrowUpRight size={14} />
-                        </Link>
+                        {isPast ? (
+                            <Link
+                                href={`/event/${event.id}`}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-600 transition-colors hover:border-primary-300 hover:text-primary-600"
+                            >
+                                View Details
+                                <ArrowUpRight size={14} />
+                            </Link>
+                        ) : spotsLeft === 0 ? (
+                            <Link
+                                href={`/event/${event.id}`}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100"
+                            >
+                                Join Waitlist
+                                <ArrowUpRight size={14} />
+                            </Link>
+                        ) : (
+                            <Link
+                                href={`/event/${event.id}`}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+                            >
+                                <CheckCircle2 size={15} />
+                                Join Event
+                            </Link>
+                        )}
                     </div>
                 </div>
             </article>

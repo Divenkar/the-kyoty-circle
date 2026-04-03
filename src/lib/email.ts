@@ -87,6 +87,24 @@ export function eventRegistrationEmail(
     `);
 }
 
+export function waitlistJoinedEmail(
+    userName: string,
+    eventTitle: string,
+    eventDate: string,
+    position: number,
+    eventId: number,
+) {
+    return base(`
+      <h2 style="margin:0 0 8px;font-size:20px">You're on the waitlist ⏳</h2>
+      <p style="color:#4b5563;line-height:1.6">Hi ${userName},</p>
+      <p style="color:#4b5563;line-height:1.6">
+        <strong>${eventTitle}</strong> on <strong>${eventDate}</strong> is currently full, but you've been added to the waitlist at position <strong>#${position}</strong>.
+        We'll automatically move you to <strong>registered</strong> if a spot opens up — no action needed.
+      </p>
+      ${btn(`${APP_URL}/event/${eventId}`, 'View Event')}
+    `);
+}
+
 export function waitlistPromotedEmail(
     userName: string,
     eventTitle: string,

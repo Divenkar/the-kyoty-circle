@@ -29,7 +29,28 @@ export async function createCommunityAction(
             return { success: false, error: parsed.error.issues[0]?.message || 'Invalid input' };
         }
 
-        const slug = raw.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const baseSlug = raw.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        // ── Resolve a unique slug ─────────────────────────────────────────────
+        // If "my-community" is taken, try "my-community-2", "my-community-3", etc.
+        const { createClient } = await import('@/utils/supabase/server');
+        const supabase = await createClient();
+
+        let slug = baseSlug;
+        let attempt = 1;
+        while (true) {
+            const { data: existing } = await supabase
+                .from('communities')
+                .select('id')
+                .eq('slug', slug)
+                .maybeSingle();
+
+            if (!existing) break; // slug is available
+
+            attempt += 1;
+            slug = `${baseSlug}-${attempt}`;
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         const city = await CityRepository.getByName(raw.city);
         if (!city) return { success: false, error: `City "${raw.city}" not found` };

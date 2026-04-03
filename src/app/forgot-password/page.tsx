@@ -1,27 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { ArrowLeft, Mail } from 'lucide-react';
+import { useSignIn } from '@clerk/nextjs/legacy';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [sent, setSent] = useState(false);
 
+    const { isLoaded, signIn } = useSignIn();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!isLoaded) return;
         setLoading(true);
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/auth/reset-password`,
-        });
-        setLoading(false);
-        if (error) {
-            toast.error(error.message);
-        } else {
+        try {
+            await signIn.create({
+                strategy: 'reset_password_email_code',
+                identifier: email,
+            });
             setSent(true);
+        } catch (err: any) {
+            toast.error(err.errors?.[0]?.message || 'Failed to send reset email.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -45,8 +50,11 @@ export default function ForgotPasswordPage() {
                         <div>
                             <h1 className="text-2xl font-bold text-neutral-900">Check your email</h1>
                             <p className="mt-3 text-sm leading-6 text-neutral-500">
-                                We sent a password reset link to <span className="font-medium text-neutral-700">{email}</span>.
-                                Check your inbox and follow the link to set a new password.
+                                We sent a password reset code to <span className="font-medium text-neutral-700">{email}</span>.
+                                Check your inbox and use the code to set a new password at{' '}
+                                <Link href="/auth/reset-password" className="font-medium text-primary-600 hover:underline">
+                                    reset password
+                                </Link>.
                             </p>
                             <p className="mt-4 text-xs text-neutral-400">
                                 Didn&apos;t receive it? Check your spam folder or{' '}
@@ -64,7 +72,7 @@ export default function ForgotPasswordPage() {
                         <>
                             <h1 className="text-2xl font-bold text-neutral-900">Forgot your password?</h1>
                             <p className="mt-2 text-sm leading-6 text-neutral-500">
-                                Enter your email and we&apos;ll send you a link to reset your password.
+                                Enter your email and we&apos;ll send you a code to reset your password.
                             </p>
 
                             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -89,7 +97,7 @@ export default function ForgotPasswordPage() {
                                     disabled={loading}
                                     className="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    {loading ? 'Sending…' : 'Send reset link'}
+                                    {loading ? 'Sending…' : 'Send reset code'}
                                 </button>
                             </form>
                         </>

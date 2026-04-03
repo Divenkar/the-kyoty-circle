@@ -12,10 +12,24 @@ import { createClient } from '@/utils/supabase/server';
 import type { ActionResponse } from '@/types';
 import { revalidatePath } from 'next/cache';
 
+// ─── Auth helpers ─────────────────────────────────────────────────────────────
+
+type UserRole = string;
+
+/** Returns true when the user holds any platform-level admin role. */
+function isPlatformAdmin(role: UserRole): boolean {
+    return role === 'kyoty_admin' || role === 'admin';
+}
+
+/** Returns true when the user can manage community members (own platform admin or community admin). */
+function canManageMembers(role: UserRole): boolean {
+    return isPlatformAdmin(role) || role === 'community_admin';
+}
+
 export async function approveCommunityAction(communityId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         await CommunityService.approveCommunity(communityId, user.id);
@@ -28,7 +42,7 @@ export async function approveCommunityAction(communityId: number): Promise<Actio
 export async function rejectCommunityAction(communityId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         await CommunityService.rejectCommunity(communityId, user.id);
@@ -41,7 +55,7 @@ export async function rejectCommunityAction(communityId: number): Promise<Action
 export async function approveEventAction(eventId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         await EventService.approveEvent(eventId, user.id);
@@ -54,7 +68,7 @@ export async function approveEventAction(eventId: number): Promise<ActionRespons
 export async function rejectEventAction(eventId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         await EventService.rejectEvent(eventId, user.id);
@@ -67,9 +81,32 @@ export async function rejectEventAction(eventId: number): Promise<ActionResponse
 export async function approveMemberAction(memberId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'community_admin' && (user.role !== 'kyoty_admin' && user.role !== 'admin'))) {
+        if (!user || !canManageMembers(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
+
+        // Community admins may only act on their own communities.
+        if (!isPlatformAdmin(user.role)) {
+            const supabase = await createClient();
+            const { data: member } = await supabase
+                .from('community_members')
+                .select('community_id')
+                .eq('id', memberId)
+                .single();
+
+            if (!member) return { success: false, error: 'Member record not found' };
+
+            const { data: community } = await supabase
+                .from('communities')
+                .select('organizer_id')
+                .eq('id', member.community_id)
+                .single();
+
+            if (community?.organizer_id !== user.id) {
+                return { success: false, error: 'You can only manage members of your own communities' };
+            }
+        }
+
         await CommunityService.approveMember(memberId, user.id);
         return { success: true };
     } catch (err) {
@@ -80,9 +117,32 @@ export async function approveMemberAction(memberId: number): Promise<ActionRespo
 export async function rejectMemberAction(memberId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'community_admin' && (user.role !== 'kyoty_admin' && user.role !== 'admin'))) {
+        if (!user || !canManageMembers(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
+
+        // Community admins may only act on their own communities.
+        if (!isPlatformAdmin(user.role)) {
+            const supabase = await createClient();
+            const { data: member } = await supabase
+                .from('community_members')
+                .select('community_id')
+                .eq('id', memberId)
+                .single();
+
+            if (!member) return { success: false, error: 'Member record not found' };
+
+            const { data: community } = await supabase
+                .from('communities')
+                .select('organizer_id')
+                .eq('id', member.community_id)
+                .single();
+
+            if (community?.organizer_id !== user.id) {
+                return { success: false, error: 'You can only manage members of your own communities' };
+            }
+        }
+
         await CommunityService.rejectMember(memberId, user.id);
         return { success: true };
     } catch (err) {
@@ -93,7 +153,7 @@ export async function rejectMemberAction(memberId: number): Promise<ActionRespon
 export async function getPendingCommunitiesAction() {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         const data = await CommunityRepository.findPending();
@@ -106,7 +166,7 @@ export async function getPendingCommunitiesAction() {
 export async function getPendingEventsAction() {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         const data = await EventRepository.findPending();
@@ -119,7 +179,7 @@ export async function getPendingEventsAction() {
 export async function getPendingMembersAction() {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'community_admin' && (user.role !== 'kyoty_admin' && user.role !== 'admin'))) {
+        if (!user || !canManageMembers(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         const data = await CommunityMemberRepository.listAllPending();
@@ -136,7 +196,7 @@ export async function getPendingMembersAction() {
 export async function deleteCommunityAction(communityId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         const supabase = await createClient();
@@ -161,7 +221,7 @@ export async function toggleCommunityStatusAction(
 ): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         await CommunityRepository.updateStatus(communityId, newStatus);
@@ -185,7 +245,7 @@ export async function updateCommunityInfoAction(
 ): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         await CommunityRepository.update(communityId, data);
@@ -211,7 +271,7 @@ export async function updateCommunityInfoAction(
 export async function removeMemberAction(memberId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         const supabase = await createClient();
@@ -245,7 +305,7 @@ export async function removeMemberAction(memberId: number): Promise<ActionRespon
 export async function deleteMediaAction(mediaId: number): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         const media = await CommunityMediaRepository.findById(mediaId);
@@ -276,7 +336,7 @@ export async function updateEventStatusAction(
 ): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         await EventRepository.updateStatus(eventId, status);
@@ -303,7 +363,7 @@ export async function updateUserRoleAction(
 ): Promise<ActionResponse> {
     try {
         const user = await getCurrentUser();
-        if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) {
+        if (!user || !isPlatformAdmin(user.role)) {
             return { success: false, error: 'Admin access required' };
         }
         const supabase = await createClient();

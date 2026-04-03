@@ -19,6 +19,7 @@ export interface User {
     role: UserRole;
     default_city_id: number | null;
     interest_tags: string[];
+    onboarding_completed: boolean;
     verification_status: string;
     social_proof_type: 'linkedin' | 'instagram' | null;
     social_proof_link: string | null;

@@ -7,14 +7,16 @@ import type { User } from '@/types';
 export function OnboardingGuard({ user, children }: { user: User | null, children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
+    const authFreePaths = ['/onboarding', '/login', '/forgot-password'];
+    const shouldRedirect = !!user && !user.onboarding_completed && !authFreePaths.includes(pathname);
 
     useEffect(() => {
-        if (user && !user.social_proof_link && pathname !== '/onboarding') {
+        if (shouldRedirect) {
             router.push('/onboarding');
         }
-    }, [user, pathname, router]);
+    }, [router, shouldRedirect]);
 
-    if (user && !user.social_proof_link && pathname !== '/onboarding') {
+    if (shouldRedirect) {
         return null; // Prevent flashing protected content
     }
 

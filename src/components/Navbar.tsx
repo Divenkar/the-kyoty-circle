@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Compass, Home, LogOut, Menu, Settings, Sparkles, User as UserIcon, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import { NotificationBell } from './NotificationBell';
-import { supabase } from '@/lib/supabase';
+import { useClerk, useUser } from '@clerk/nextjs';
 
 interface NavbarProps {
     initialUserRole?: string | null;
@@ -21,28 +21,12 @@ export function Navbar({ initialUserRole, initialUserEmail, initialUserName, ini
     const router = useRouter();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
-    const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
 
-    const effectiveRole = user ? initialUserRole : null;
+    const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+    const { signOut } = useClerk();
+
+    const effectiveRole = isSignedIn ? initialUserRole : null;
     const isAdminRole = effectiveRole === 'admin' || effectiveRole === 'kyoty_admin';
-
-    useEffect(() => {
-        const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
-            setLoading(false);
-        };
-
-        getUser();
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
 
     useEffect(() => {
         setMobileOpen(false);
@@ -50,30 +34,30 @@ export function Navbar({ initialUserRole, initialUserEmail, initialUserName, ini
     }, [pathname]);
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
+        await signOut();
         router.push('/');
         router.refresh();
     };
 
     const isActive = (href: string) => href === '/' ? pathname === href : pathname.startsWith(href);
 
-    // Public nav links (visible to everyone)
     const publicNavLinks = [
         { href: '/', label: 'Home', icon: Home },
         { href: '/explore', label: 'Explore', icon: Compass },
         { href: '/communities', label: 'Communities', icon: Users },
     ];
 
-    // Auth-only nav links (added after login)
     const authNavLinks = [
         { href: '/create-community', label: 'Start a community', icon: Sparkles },
     ];
 
-    const navLinks = user ? [...publicNavLinks, ...authNavLinks] : publicNavLinks;
+    const navLinks = isSignedIn ? [...publicNavLinks, ...authNavLinks] : publicNavLinks;
 
-    const displayEmail = user?.email || initialUserEmail;
-    const displayName = user?.user_metadata?.full_name || initialUserName;
-    const avatarUrl = user?.user_metadata?.avatar_url || initialAvatarUrl;
+    const displayEmail = clerkUser?.primaryEmailAddress?.emailAddress || initialUserEmail;
+    const displayName = clerkUser?.fullName || initialUserName;
+    const avatarUrl = clerkUser?.imageUrl || initialAvatarUrl;
+
+    const loading = !isLoaded;
 
     return (
         <nav className="sticky top-0 z-50 border-b border-white/60 bg-white/85 backdrop-blur-xl">
@@ -113,7 +97,7 @@ export function Navbar({ initialUserRole, initialUserEmail, initialUserName, ini
                     {/* Right side */}
                     <div className="flex items-center gap-2 sm:gap-3">
                         {/* Unauthenticated */}
-                        {!loading && !user && (
+                        {!loading && !isSignedIn && (
                             <>
                                 <Link
                                     href="/login"
@@ -131,7 +115,7 @@ export function Navbar({ initialUserRole, initialUserEmail, initialUserName, ini
                         )}
 
                         {/* Authenticated */}
-                        {!loading && user && (
+                        {!loading && isSignedIn && (
                             <>
                                 <Link
                                     href="/dashboard"
@@ -275,7 +259,7 @@ export function Navbar({ initialUserRole, initialUserEmail, initialUserName, ini
                             );
                         })}
 
-                        {user ? (
+                        {isSignedIn ? (
                             <div className="border-t border-neutral-100 pt-3 space-y-1">
                                 <Link href="/dashboard" className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-primary-50 text-primary-700' : 'text-neutral-600 hover:bg-neutral-50'}`}>
                                     <UserIcon size={16} />

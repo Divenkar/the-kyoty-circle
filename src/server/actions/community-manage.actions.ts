@@ -5,6 +5,7 @@ import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { CommunityRolesRepository } from '@/lib/repositories/community-roles-repo';
 import { CommunityMediaRepository } from '@/lib/repositories/community-media-repo';
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
+import { InviteTokenRepository, type InviteToken } from '@/lib/repositories/invite-token-repo';
 import { CommunityService } from '@/lib/services/community-service';
 import { createClient } from '@/utils/supabase/server';
 import type { ActionResponse, CommunityMedia } from '@/types';
@@ -198,6 +199,49 @@ export async function uploadMediaAction(
         return { success: true, data: media };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Upload failed' };
+    }
+}
+
+export async function generateInviteTokenAction(
+    communityId: number
+): Promise<ActionResponse<InviteToken>> {
+    try {
+        const check = await canManage(communityId);
+        if (!check.ok) return { success: false, error: check.error };
+
+        const token = await InviteTokenRepository.create(communityId, check.userId!);
+        return { success: true, data: token };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to generate invite link' };
+    }
+}
+
+export async function listInviteTokensAction(
+    communityId: number
+): Promise<ActionResponse<InviteToken[]>> {
+    try {
+        const check = await canManage(communityId);
+        if (!check.ok) return { success: false, error: check.error };
+
+        const tokens = await InviteTokenRepository.listByCommunity(communityId);
+        return { success: true, data: tokens };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to fetch invite links' };
+    }
+}
+
+export async function deleteInviteTokenAction(
+    communityId: number,
+    tokenId: number
+): Promise<ActionResponse> {
+    try {
+        const check = await canManage(communityId);
+        if (!check.ok) return { success: false, error: check.error };
+
+        await InviteTokenRepository.delete(tokenId);
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to revoke invite link' };
     }
 }
 

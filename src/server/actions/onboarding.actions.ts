@@ -5,6 +5,37 @@ import { sanitizeInterestTags } from '@/lib/interest-tags';
 import { UserRepository } from '@/lib/repositories/user-repo';
 import { createClient } from '@/utils/supabase/server';
 
+// Allowed hostname patterns per proof type.
+const SOCIAL_PROOF_HOSTS: Record<string, RegExp> = {
+    linkedin: /^(www\.)?linkedin\.com$/i,
+    instagram: /^(www\.)?instagram\.com$/i,
+};
+
+function validateSocialProofUrl(type: string, link: string): string | null {
+    let url: URL;
+    try {
+        url = new URL(link.trim());
+    } catch {
+        return 'Please enter a valid URL (e.g. https://linkedin.com/in/yourname)';
+    }
+
+    if (url.protocol !== 'https:') {
+        return 'URL must use HTTPS';
+    }
+
+    const allowedHost = SOCIAL_PROOF_HOSTS[type];
+    if (!allowedHost) {
+        return `Unsupported social proof type: ${type}`;
+    }
+
+    if (!allowedHost.test(url.hostname)) {
+        const expected = type === 'linkedin' ? 'linkedin.com' : 'instagram.com';
+        return `URL must be from ${expected}`;
+    }
+
+    return null; // valid
+}
+
 export async function submitSocialProofAction(formData: FormData) {
     try {
         const user = await getCurrentUser();
@@ -17,6 +48,11 @@ export async function submitSocialProofAction(formData: FormData) {
 
         if (!type || !link) {
             return { success: false, error: 'Type and Link are required' };
+        }
+
+        const validationError = validateSocialProofUrl(type, link);
+        if (validationError) {
+            return { success: false, error: validationError };
         }
 
         const supabase = await createClient();
@@ -43,16 +79,12 @@ export async function completeOnboardingAction() {
         const user = await getCurrentUser();
         if (!user) return { success: false, error: 'Authentication required' };
 
-        // Only set the placeholder if they skipped social proof.
-        // Users who already provided a real link should keep it as-is.
-        if (!user.social_proof_link) {
-            const supabase = await createClient();
-            const { error } = await supabase
-                .from('kyoty_users')
-                .update({ social_proof_link: 'skipped' })
-                .eq('id', user.id);
-            if (error) throw new Error(error.message);
-        }
+        const supabase = await createClient();
+        const { error } = await supabase
+            .from('kyoty_users')
+            .update({ onboarding_completed: true })
+            .eq('id', user.id);
+        if (error) throw new Error(error.message);
 
         return { success: true };
     } catch (err) {

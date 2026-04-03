@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Trash2, PowerOff, Power, Settings, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -25,9 +26,16 @@ export function CommunityRowActions({ communityId, slug, status }: Props) {
     const handleToggle = async () => {
         setLoading('toggle');
         const newStatus = isDisabled ? 'active' : 'disabled';
-        await toggleCommunityStatusAction(communityId, newStatus);
+        const result = await toggleCommunityStatusAction(communityId, newStatus);
         setLoading(null);
-        router.refresh();
+
+        if (result.success) {
+            toast.success(newStatus === 'disabled' ? 'Community disabled' : 'Community enabled');
+            router.refresh();
+            return;
+        }
+
+        toast.error(result.error ?? 'Failed to update community status');
     };
 
     const handleDelete = async () => {
@@ -37,15 +45,25 @@ export function CommunityRowActions({ communityId, slug, status }: Props) {
             return;
         }
         setLoading('delete');
-        await deleteCommunityAction(communityId);
+        const result = await deleteCommunityAction(communityId);
         setLoading(null);
-        router.refresh();
+
+        if (result.success) {
+            toast.success('Community deleted');
+            router.refresh();
+            return;
+        }
+
+        toast.error(result.error ?? 'Failed to delete community');
+        setConfirmDelete(false);
     };
 
     return (
         <div className="flex items-center gap-1">
             <Link
                 href={`/community/${slug}`}
+                target="_blank"
+                rel="noreferrer"
                 className="p-1.5 rounded-lg text-neutral-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
                 title="View"
             >

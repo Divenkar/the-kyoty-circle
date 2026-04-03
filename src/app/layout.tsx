@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from 'sonner';
-import { AuthProvider } from './providers';
 import { Navbar } from '@/components/Navbar';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { OnboardingGuard } from '@/components/OnboardingGuard';
@@ -24,9 +24,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const user = await getCurrentUser();
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-neutral-50 flex flex-col" suppressHydrationWarning>
-        <AuthProvider>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className="min-h-screen bg-neutral-50 flex flex-col" suppressHydrationWarning>
           <Navbar
             initialUserRole={user?.role ?? null}
             initialUserEmail={user?.email ?? null}
@@ -42,8 +42,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <MobileBottomNav />
           <Footer />
           <Toaster richColors position="bottom-right" />
-        </AuthProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

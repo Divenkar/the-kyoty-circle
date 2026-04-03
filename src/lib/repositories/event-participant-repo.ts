@@ -174,7 +174,7 @@ export const EventParticipantRepository = {
         return (data || []) as any[];
     },
 
-    async listUpcomingByUser(userId: number): Promise<any[]> {
+    async listUpcomingByUser(userId: number, limit = 20): Promise<any[]> {
         const supabase = await createClient();
         const today = new Date().toISOString().split('T')[0];
         const { data, error } = await supabase
@@ -183,7 +183,8 @@ export const EventParticipantRepository = {
             .eq('user_id', userId)
             .in('status', ['registered', 'waitlisted'])
             .gte('events.date', today)
-            .order('joined_at', { ascending: false });
+            .order('joined_at', { ascending: false })
+            .limit(limit);
         if (error) return [];
         return (data || []) as any[];
     },

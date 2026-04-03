@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import type { Community, CommunityMemberWithUser, CommunityRole, CommunityRoleLevel } from '@/types';
-import { updateCommunitySettingsAction, removeMemberAction, approveMemberAction, rejectMemberAction, bulkApproveMembersAction } from '@/server/actions/community-manage.actions';
+import { updateCommunitySettingsAction, removeMemberAction, approveMemberAction, rejectMemberAction, bulkApproveMembersAction, generateInviteTokenAction, listInviteTokensAction, deleteInviteTokenAction } from '@/server/actions/community-manage.actions';
+import type { InviteToken } from '@/lib/repositories/invite-token-repo';
 import { assignRoleAction, removeRoleAction } from '@/server/actions/community-roles.actions';
 import { toast } from 'sonner';
-import { Settings, Users, Shield, Check, Loader2, Trash2, Crown, ChevronDown, Clock, ExternalLink, CheckCircle, XCircle, CheckSquare, Square } from 'lucide-react';
+import { Settings, Users, Shield, Check, Loader2, Trash2, Crown, ChevronDown, Clock, ExternalLink, CheckCircle, XCircle, CheckSquare, Square, Link2, Copy, RefreshCw } from 'lucide-react';
 
-type Tab = 'settings' | 'members' | 'roles' | 'requests';
+type Tab = 'settings' | 'members' | 'roles' | 'requests' | 'invite';
 
 interface ManageClientProps {
     community: Community;
@@ -25,6 +26,9 @@ export function ManageClient({ community, members, pendingMembers, roles: initia
     const [pendingList, setPendingList] = useState<CommunityMemberWithUser[]>(pendingMembers);
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [bulkApproving, setBulkApproving] = useState(false);
+    const [inviteTokens, setInviteTokens] = useState<InviteToken[]>([]);
+    const [inviteLoading, setInviteLoading] = useState(false);
+    const [copiedTokenId, setCopiedTokenId] = useState<number | null>(null);
 
     // Settings form state
     const [name, setName] = useState(community.name);
@@ -134,10 +138,47 @@ export function ManageClient({ community, members, pendingMembers, roles: initia
         }
     };
 
+    const loadInviteTokens = async () => {
+        setInviteLoading(true);
+        const result = await listInviteTokensAction(community.id);
+        if (result.success && result.data) setInviteTokens(result.data);
+        setInviteLoading(false);
+    };
+
+    const handleGenerateInvite = async () => {
+        setInviteLoading(true);
+        const result = await generateInviteTokenAction(community.id);
+        if (result.success && result.data) {
+            setInviteTokens(prev => [result.data!, ...prev]);
+            toast.success('Invite link created');
+        } else {
+            toast.error(result.error || 'Failed to create invite link');
+        }
+        setInviteLoading(false);
+    };
+
+    const handleCopyInvite = async (token: InviteToken) => {
+        const url = `${window.location.origin}/api/invite/${token.token}`;
+        await navigator.clipboard.writeText(url);
+        setCopiedTokenId(token.id);
+        setTimeout(() => setCopiedTokenId(null), 2000);
+    };
+
+    const handleRevokeInvite = async (tokenId: number) => {
+        const result = await deleteInviteTokenAction(community.id, tokenId);
+        if (result.success) {
+            setInviteTokens(prev => prev.filter(t => t.id !== tokenId));
+            toast.success('Invite link revoked');
+        } else {
+            toast.error(result.error || 'Failed to revoke link');
+        }
+    };
+
     const roleMap = new Map(roles.map(r => [r.user_id, r.role]));
 
     const TABS = [
         { id: 'requests' as Tab, label: 'Requests', icon: <Clock size={15} />, badge: pendingList.length },
+        { id: 'invite' as Tab, label: 'Invite', icon: <Link2 size={15} /> },
         { id: 'settings' as Tab, label: 'Settings', icon: <Settings size={15} /> },
         { id: 'members' as Tab, label: 'Members', icon: <Users size={15} /> },
         { id: 'roles' as Tab, label: 'Roles', icon: <Shield size={15} /> },
@@ -150,7 +191,7 @@ export function ManageClient({ community, members, pendingMembers, roles: initia
                 {TABS.map(t => (
                     <button
                         key={t.id}
-                        onClick={() => setTab(t.id)}
+                        onClick={() => { setTab(t.id); if (t.id === 'invite') loadInviteTokens(); }}
                         className={[
                             'relative flex flex-1 items-center justify-center gap-1.5 border-b-2 py-3.5 text-sm font-medium transition-colors',
                             tab === t.id
@@ -266,6 +307,65 @@ export function ManageClient({ community, members, pendingMembers, roles: initia
                                                     <CheckCircle size={13} /> Approve
                                                 </button>
                                             </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* INVITE TAB */}
+                {tab === 'invite' && (
+                    <div>
+                        <div className="mb-4 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-base font-semibold text-neutral-900">Invite Links</h3>
+                                <p className="mt-0.5 text-xs text-neutral-500">Share a link — anyone who clicks it joins automatically.</p>
+                            </div>
+                            <button
+                                onClick={handleGenerateInvite}
+                                disabled={inviteLoading}
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-60 transition"
+                            >
+                                {inviteLoading ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
+                                New link
+                            </button>
+                        </div>
+
+                        {inviteLoading && inviteTokens.length === 0 ? (
+                            <div className="py-8 text-center text-sm text-neutral-400">Loading…</div>
+                        ) : inviteTokens.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-neutral-300 py-10 text-center text-sm text-neutral-400">
+                                No invite links yet — create one above.
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {inviteTokens.map(t => {
+                                    const url = `${window.location.origin}/api/invite/${t.token}`;
+                                    const isCopied = copiedTokenId === t.id;
+                                    return (
+                                        <div key={t.id} className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="truncate text-xs font-mono text-neutral-600">{url}</p>
+                                                <p className="mt-0.5 text-xs text-neutral-400">
+                                                    {t.use_count}/{t.max_uses} uses
+                                                    {t.expires_at && ` · expires ${new Date(t.expires_at).toLocaleDateString()}`}
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => handleCopyInvite(t)}
+                                                className="flex items-center gap-1 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 hover:bg-white transition"
+                                            >
+                                                {isCopied ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
+                                                {isCopied ? 'Copied!' : 'Copy'}
+                                            </button>
+                                            <button
+                                                onClick={() => handleRevokeInvite(t.id)}
+                                                className="flex items-center gap-1 rounded-lg border border-red-100 px-2.5 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition"
+                                            >
+                                                <Trash2 size={12} /> Revoke
+                                            </button>
                                         </div>
                                     );
                                 })}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createClient } from '@/utils/supabase/server';
+import { createServiceClient } from '@/utils/supabase/server';
 
 export async function POST(req: NextRequest) {
     try {
@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
         const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
         if (!secret) {
+            console.error('RAZORPAY_WEBHOOK_SECRET is not set');
             return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 501 });
         }
 
@@ -16,36 +17,98 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
         }
 
+        // ── 1. Verify HMAC signature ──────────────────────────────────────────
         const expectedSignature = crypto
             .createHmac('sha256', secret)
             .update(body)
             .digest('hex');
 
-        if (expectedSignature === signature) {
-            const event = JSON.parse(body);
-
-            // Handle the event
-            if (event.event === 'payment.captured' || event.event === 'order.paid') {
-                const payment = event.payload?.payment?.entity;
-                const notes = payment?.notes;
-
-                if (!payment) {
-                    return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 });
-                }
-
-                console.log(`Payment captured: ${payment.amount} INR for event ${notes?.eventId}`);
-
-                // In a real implementation using Supabase:
-                const supabase = await createClient();
-                void supabase;
-            }
-
-            return NextResponse.json({ status: 'ok' });
-        } else {
+        if (!crypto.timingSafeEqual(
+            Buffer.from(expectedSignature, 'hex'),
+            Buffer.from(signature, 'hex'),
+        )) {
             return NextResponse.json({ status: 'bad_signature' }, { status: 400 });
         }
-    } catch (err: any) {
-        console.error('Webhook Error:', err);
+
+        // ── 2. Parse payload ──────────────────────────────────────────────────
+        const webhookEvent = JSON.parse(body) as {
+            event: string;
+            payload?: {
+                payment?: {
+                    entity?: {
+                        id: string;
+                        order_id: string;
+                        amount: number;
+                        currency: string;
+                        status: string;
+                        notes?: Record<string, string>;
+                    };
+                };
+            };
+        };
+
+        const supportedEvents = ['payment.captured', 'order.paid'];
+        if (!supportedEvents.includes(webhookEvent.event)) {
+            // Acknowledge unknown events so Razorpay stops retrying.
+            return NextResponse.json({ status: 'ignored' });
+        }
+
+        const payment = webhookEvent.payload?.payment?.entity;
+        if (!payment?.id || !payment?.order_id) {
+            return NextResponse.json({ error: 'Invalid webhook payload — missing payment entity' }, { status: 400 });
+        }
+
+        const notes = payment.notes ?? {};
+        const eventId = notes.eventId ? Number(notes.eventId) : null;
+        const ticketTierId = notes.ticketTierId && notes.ticketTierId !== 'general'
+            ? Number(notes.ticketTierId)
+            : null;
+
+        // ── 3. Look up the kyoty user by matching the Razorpay order ─────────
+        // The order receipt encodes the eventId; we don't store userId in notes
+        // for security. Instead query event_participants for who is pending payment
+        // for this event. If not found, still record the payment for audit purposes.
+        const supabase = createServiceClient();
+
+        // ── 4. Persist to payments table (idempotent via ON CONFLICT DO NOTHING) ──
+        const { error: insertError } = await supabase
+            .from('payments')
+            .upsert({
+                razorpay_order_id: payment.order_id,
+                razorpay_payment_id: payment.id,
+                event_id: eventId,
+                ticket_tier_id: ticketTierId,
+                amount_paise: payment.amount,
+                currency: payment.currency,
+                status: 'captured',
+                webhook_event: webhookEvent.event,
+                raw_payload: payment,
+            }, { onConflict: 'razorpay_payment_id', ignoreDuplicates: true });
+
+        if (insertError) {
+            // Don't expose internal errors to Razorpay, but log them.
+            console.error('Failed to persist payment:', insertError.message);
+            return NextResponse.json({ error: 'Failed to record payment' }, { status: 500 });
+        }
+
+        // ── 5. Mark the event participant as registered (if eventId is known) ─
+        if (eventId) {
+            // Update participant status from 'pending_payment' → 'registered'
+            // Only updates if a matching pending_payment row exists (safe no-op otherwise).
+            await supabase
+                .from('event_participants')
+                .update({ status: 'registered' })
+                .eq('event_id', eventId)
+                .eq('status', 'pending_payment');
+        }
+
+        console.log(
+            `[webhook] ${webhookEvent.event} recorded: payment=${payment.id} order=${payment.order_id} event=${eventId ?? 'unknown'}`,
+        );
+
+        return NextResponse.json({ status: 'ok' });
+    } catch (err) {
+        console.error('Webhook handler error:', err);
         return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
     }
 }

@@ -3,7 +3,7 @@ import { EventParticipantRepository } from '@/lib/repositories/event-participant
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
 import { AdminLogRepository } from '@/lib/repositories/admin-log-repo';
 import { UserRepository } from '@/lib/repositories/user-repo';
-import { sendEmail, eventRegistrationEmail, waitlistPromotedEmail } from '@/lib/email';
+import { sendEmail, eventRegistrationEmail, waitlistJoinedEmail, waitlistPromotedEmail } from '@/lib/email';
 import type { KyotyEvent } from '@/types';
 
 export const EventService = {
@@ -56,10 +56,12 @@ export const EventService = {
             throw new Error('This event has already taken place');
         }
 
-        // Check if user is community member
-        const isMember = await CommunityMemberRepository.isMember(event.community_id, userId);
-        if (!isMember) {
-            throw new Error('You must be a community member to join this event');
+        // Check if user is community member (members_only events enforce this)
+        if (event.visibility === 'members_only') {
+            const isMember = await CommunityMemberRepository.isMember(event.community_id, userId);
+            if (!isMember) {
+                throw new Error('You must be a community member to join this event');
+            }
         }
 
         // Check if already registered or waitlisted
@@ -71,9 +73,18 @@ export const EventService = {
         // Check capacity
         const currentCount = await EventParticipantRepository.countByEvent(eventId);
         if (currentCount >= event.max_participants) {
-            // Waitlist the user instead of rejecting
             await EventParticipantRepository.joinWaitlist(eventId, userId);
             const position = await EventParticipantRepository.getWaitlistPosition(eventId, userId);
+            // Send waitlist confirmation email (non-blocking)
+            const user = await UserRepository.findById(userId);
+            if (user) {
+                const dateStr = new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+                sendEmail({
+                    to: user.email,
+                    subject: `You're on the waitlist for ${event.title}`,
+                    html: waitlistJoinedEmail(user.name, event.title, dateStr, position, eventId),
+                });
+            }
             return { status: 'waitlisted', position };
         }
 

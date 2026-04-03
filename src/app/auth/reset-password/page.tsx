@@ -1,78 +1,51 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Eye, EyeOff, KeyRound, Loader2 } from 'lucide-react';
+import { useSignIn } from '@clerk/nextjs/legacy';
 
 function ResetPasswordForm() {
     const router = useRouter();
-    const searchParams = useSearchParams();
+    const [code, setCode] = useState('');
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [exchanging, setExchanging] = useState(true);
-    const [ready, setReady] = useState(false);
 
-    useEffect(() => {
-        // Supabase sends the user to this page with ?code=xxx (PKCE flow)
-        const code = searchParams.get('code');
-        if (code) {
-            supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-                if (error) {
-                    toast.error('Reset link is invalid or has expired. Please request a new one.');
-                    router.replace('/forgot-password');
-                } else {
-                    setReady(true);
-                }
-                setExchanging(false);
-            });
-        } else {
-            // No code — might be an old-style hash link; just show the form if a session exists
-            supabase.auth.getSession().then(({ data }) => {
-                if (data.session) {
-                    setReady(true);
-                } else {
-                    toast.error('Reset link is invalid or has expired.');
-                    router.replace('/forgot-password');
-                }
-                setExchanging(false);
-            });
-        }
-    }, [router, searchParams]);
+    const { isLoaded, signIn, setActive } = useSignIn();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!isLoaded) return;
         if (password !== confirm) {
             toast.error('Passwords do not match');
             return;
         }
-        if (password.length < 6) {
-            toast.error('Password must be at least 6 characters');
+        if (password.length < 8) {
+            toast.error('Password must be at least 8 characters');
             return;
         }
         setLoading(true);
-        const { error } = await supabase.auth.updateUser({ password });
-        setLoading(false);
-        if (error) {
-            toast.error(error.message);
-        } else {
-            toast.success('Password updated! Signing you in…');
-            router.replace('/dashboard');
+        try {
+            const result = await signIn.attemptFirstFactor({
+                strategy: 'reset_password_email_code',
+                code,
+                password,
+            });
+
+            if (result.status === 'complete') {
+                await setActive({ session: result.createdSessionId });
+                toast.success('Password updated! Signing you in…');
+                router.replace('/dashboard');
+            }
+        } catch (err: any) {
+            toast.error(err.errors?.[0]?.message || 'Invalid or expired code.');
+        } finally {
+            setLoading(false);
         }
     };
-
-    if (exchanging) {
-        return (
-            <div className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-neutral-50">
-                <Loader2 size={28} className="animate-spin text-primary-600" />
-            </div>
-        );
-    }
-
-    if (!ready) return null;
 
     return (
         <div className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-neutral-50 px-4">
@@ -84,10 +57,26 @@ function ResetPasswordForm() {
 
                     <h1 className="text-2xl font-bold text-neutral-900">Set a new password</h1>
                     <p className="mt-2 text-sm leading-6 text-neutral-500">
-                        Choose a strong password you haven&apos;t used before.
+                        Enter the code from your email and choose a new password.
                     </p>
 
                     <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                        <div>
+                            <label htmlFor="code" className="block text-sm font-medium text-neutral-700">
+                                Reset code
+                            </label>
+                            <input
+                                id="code"
+                                type="text"
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                required
+                                autoComplete="one-time-code"
+                                placeholder="6-digit code from email"
+                                className="mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 outline-none transition-all focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                            />
+                        </div>
+
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-neutral-700">
                                 New password
@@ -99,9 +88,9 @@ function ResetPasswordForm() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    minLength={6}
+                                    minLength={8}
                                     autoComplete="new-password"
-                                    placeholder="Min. 6 characters"
+                                    placeholder="Min. 8 characters"
                                     className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 pr-11 text-sm text-neutral-900 placeholder-neutral-400 outline-none transition-all focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                                 />
                                 <button

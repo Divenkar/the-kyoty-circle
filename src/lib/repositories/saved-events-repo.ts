@@ -32,13 +32,14 @@ export const SavedEventsRepository = {
         return !!data;
     },
 
-    async listByUser(userId: number): Promise<EventWithCommunity[]> {
+    async listByUser(userId: number, limit = 20): Promise<EventWithCommunity[]> {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('saved_events')
             .select('event_id, events(*, communities(*, cities!inner(name)))')
             .eq('user_id', userId)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(limit);
         if (error) return [];
         return (data || []).map((row: any) => {
             const event = row.events as any;

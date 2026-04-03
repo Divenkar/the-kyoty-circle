@@ -1,7 +1,8 @@
 'use server';
 
-import { getCurrentUser } from '@/lib/auth-server';
+import { getCurrentUser, getCurrentUserId } from '@/lib/auth-server';
 import { createClient } from '@/utils/supabase/server';
+import { clerkClient } from '@clerk/nextjs/server';
 import type { ActionResponse } from '@/types';
 
 export async function updateProfileAction(formData: FormData): Promise<ActionResponse> {
@@ -97,13 +98,16 @@ export async function updateSocialProofAction(formData: FormData): Promise<Actio
 
 export async function changePasswordAction(formData: FormData): Promise<ActionResponse> {
     try {
-        const supabase = await createClient();
+        const userId = await getCurrentUserId();
+        if (!userId) return { success: false, error: 'Authentication required' };
+
         const newPassword = formData.get('new_password') as string;
         if (!newPassword || newPassword.length < 8) {
             return { success: false, error: 'Password must be at least 8 characters' };
         }
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        if (error) throw new Error(error.message);
+
+        const client = await clerkClient();
+        await client.users.updateUser(userId, { password: newPassword });
         return { success: true };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to change password' };

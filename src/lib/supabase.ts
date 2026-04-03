@@ -10,6 +10,9 @@ function getBrowserClient(): BrowserSupabaseClient {
   }
 
   if (!browserClient) {
+    // Anon client for public/read-only queries.
+    // For write operations that require RLS, use createClient(token) directly
+    // with a Clerk token from useAuth(): const { getToken } = useAuth();
     browserClient = createClient();
   }
 
