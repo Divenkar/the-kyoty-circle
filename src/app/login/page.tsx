@@ -15,7 +15,8 @@ import {
     Sparkles,
     Users,
 } from 'lucide-react';
-import { useSignIn, useSignUp, useUser } from '@clerk/nextjs';
+import { useSignIn, useSignUp } from '@clerk/nextjs/legacy';
+import { useUser } from '@clerk/nextjs';
 
 type AuthMode = 'signin' | 'signup';
 
