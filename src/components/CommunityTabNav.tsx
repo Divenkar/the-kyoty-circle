@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MessageCircle, ImageIcon, Settings, Users, LayoutGrid } from 'lucide-react';
+import { MessageCircle, ImageIcon, Settings, Users, LayoutGrid, Rss } from 'lucide-react';
 
 interface Tab {
     label: string;
@@ -21,6 +21,9 @@ export function CommunityTabNav({ slug, isMember, canManage }: CommunityTabNavPr
     const base = `/community/${slug}`;
 
     const tabs: Tab[] = [
+        ...(isMember ? [
+            { label: 'Feed', href: `${base}/feed`, icon: <Rss size={15} /> },
+        ] : []),
         { label: 'Overview', href: base, icon: <LayoutGrid size={15} /> },
         ...(isMember ? [
             { label: 'Chat', href: `${base}/chat`, icon: <MessageCircle size={15} /> },
@@ -35,7 +38,8 @@ export function CommunityTabNav({ slug, isMember, canManage }: CommunityTabNavPr
     return (
         <div className="flex gap-1 overflow-x-auto border-b border-neutral-200 bg-white px-4 sm:px-8 scrollbar-none">
             {tabs.map(tab => {
-                const isActive = tab.href === base
+                const isExact = tab.href === base;
+                const isActive = isExact
                     ? pathname === base
                     : pathname.startsWith(tab.href);
 

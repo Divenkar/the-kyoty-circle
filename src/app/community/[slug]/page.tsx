@@ -7,11 +7,15 @@ import { getCurrentUser } from '@/lib/auth-server';
 import { EventCard } from '@/components/EventCard';
 import { CommunityTabNav } from '@/components/CommunityTabNav';
 import { CommunityRatingForm } from '@/components/CommunityRatingForm';
+import { CommunitySidebar } from '@/components/CommunitySidebar';
 import { JoinCommunityButton } from './JoinCommunityButton';
 import { ReportButton } from '@/components/ReportButton';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { DetailTrustSignals } from '@/components/DetailTrustSignals';
-import { Calendar, Lock, MapPin, ArrowLeft, Star, Users, MessageCircle, Image as ImageIcon, ShieldCheck, UserCheck } from 'lucide-react';
+import {
+    Calendar, Lock, MapPin, ArrowLeft, Star, Users, MessageCircle,
+    Image as ImageIcon, ShieldCheck, UserCheck, Rss,
+} from 'lucide-react';
 import NextImage from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -60,10 +64,13 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
 
     const showMemberFeatures = isMember || isOrganizer;
 
-    let existingRating: { rating: number; review: string | null } | null = null;
-    if (currentUser && isMember) {
-        existingRating = await CommunityRatingsRepository.findByUser(community.id, currentUser.id);
-    }
+    const [existingRating, moderators] = await Promise.all([
+        currentUser && isMember
+            ? CommunityRatingsRepository.findByUser(community.id, currentUser.id)
+            : Promise.resolve(null),
+        CommunityRolesRepository.listByCommunity(community.id),
+    ]);
+
     const organizerName = community.organizer?.name || 'Community host';
     const communityStatusLabel = community.status === 'approved'
         ? 'Approved community'
@@ -141,7 +148,8 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                 </div>
             </div>
 
-            <div className="mx-auto max-w-4xl px-4 sm:px-6 -mt-4 relative z-10">
+            {/* Trust signals strip */}
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 -mt-4 relative z-10">
                 <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-lg sm:p-5">
                     <DetailTrustSignals
                         items={[
@@ -184,135 +192,167 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
             {/* Tab nav */}
             <CommunityTabNav slug={slug} isMember={showMemberFeatures} canManage={canManage} />
 
-            <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-                <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-                    <div className="p-6 sm:p-8">
-                        {/* Report + description */}
-                        <div className="mb-5 flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                                {community.description && (
-                                    <p className="text-sm leading-7 text-neutral-600">{community.description}</p>
-                                )}
-                                {community.organizer && (
-                                    <div className="mt-3 flex items-center gap-2 text-xs text-neutral-500">
-                                        <span>Organised by</span>
-                                        <span className="font-medium text-neutral-700">{community.organizer.name}</span>
-                                        <VerifiedBadge type={(community.organizer as any).social_proof_type} size="sm" />
-                                    </div>
-                                )}
-                            </div>
-                            {currentUser && (
-                                <ReportButton targetType="community" targetId={community.id} />
-                            )}
-                        </div>
+            {/* ── 2-column layout ────────────────────────────────────────── */}
+            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+                <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
 
-                        {/* Join / auth gate */}
-                        {!currentUser ? (
-                            <div className="rounded-2xl border border-primary-100 bg-primary-50 p-5">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-100">
-                                        <Lock size={18} className="text-primary-600" />
-                                    </div>
+                    {/* ── LEFT SIDEBAR ─────────────────────────────── */}
+                    <div className="hidden lg:block">
+                        <CommunitySidebar
+                            community={community}
+                            memberCount={memberCount}
+                            moderators={moderators}
+                            isMember={showMemberFeatures}
+                            canManage={canManage}
+                            communitySlug={slug}
+                        />
+                    </div>
+
+                    {/* ── MAIN CONTENT ──────────────────────────────── */}
+                    <main className="min-w-0 space-y-5">
+                        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                            <div className="p-6 sm:p-7">
+                                {/* Description + report */}
+                                <div className="mb-5 flex items-start justify-between gap-3">
                                     <div className="flex-1">
-                                        <p className="text-sm font-semibold text-primary-900">Sign in to join this community</p>
-                                        <p className="mt-1 text-xs leading-5 text-primary-700">
-                                            Create a free Kyoty account to apply for membership, RSVP to events, and connect with community members.
-                                        </p>
-                                        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                                            <Link
-                                                href="/login"
-                                                className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
-                                            >
-                                                Sign in to apply
-                                            </Link>
-                                            <Link
-                                                href="/login"
-                                                className="inline-flex items-center justify-center rounded-xl border border-primary-200 bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-50"
-                                            >
-                                                Create account
-                                            </Link>
+                                        {community.description && (
+                                            <p className="text-sm leading-7 text-neutral-600">{community.description}</p>
+                                        )}
+                                        {community.organizer && (
+                                            <div className="mt-3 flex items-center gap-2 text-xs text-neutral-500">
+                                                <span>Organised by</span>
+                                                <span className="font-medium text-neutral-700">{community.organizer.name}</span>
+                                                <VerifiedBadge type={(community.organizer as any).social_proof_type} size="sm" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    {currentUser && (
+                                        <ReportButton targetType="community" targetId={community.id} />
+                                    )}
+                                </div>
+
+                                {/* Join / auth gate */}
+                                {!currentUser ? (
+                                    <div className="rounded-2xl border border-primary-100 bg-primary-50 p-5">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-100">
+                                                <Lock size={18} className="text-primary-600" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-semibold text-primary-900">Sign in to join this community</p>
+                                                <p className="mt-1 text-xs leading-5 text-primary-700">
+                                                    Create a free Kyoty account to apply for membership, RSVP to events, and connect with community members.
+                                                </p>
+                                                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                                                    <Link
+                                                        href="/login"
+                                                        className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
+                                                    >
+                                                        Sign in to apply
+                                                    </Link>
+                                                    <Link
+                                                        href="/login"
+                                                        className="inline-flex items-center justify-center rounded-xl border border-primary-200 bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-50"
+                                                    >
+                                                        Create account
+                                                    </Link>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <JoinCommunityButton
-                                communityId={community.id}
-                                communitySlug={slug}
-                                isLoggedIn={true}
-                                isMember={isMember}
-                                hasPendingRequest={hasPendingRequest}
-                            />
-                        )}
-
-                        {/* Member quick-links */}
-                        {showMemberFeatures && (
-                            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                <Link
-                                    href={`/community/${slug}/chat`}
-                                    className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
-                                >
-                                    <MessageCircle size={16} className="text-primary-500" />
-                                    Community Chat
-                                </Link>
-                                <Link
-                                    href={`/community/${slug}/media`}
-                                    className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
-                                >
-                                    <ImageIcon size={16} className="text-primary-500" />
-                                    Photo Gallery
-                                </Link>
-                                <Link
-                                    href={`/community/${slug}/members`}
-                                    className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
-                                >
-                                    <Users size={16} className="text-primary-500" />
-                                    Members
-                                </Link>
-                            </div>
-                        )}
-
-                        {/* Rating form — approved members only */}
-                        {isMember && (
-                            <div className="mt-5">
-                                <CommunityRatingForm
-                                    communityId={community.id}
-                                    existingRating={existingRating?.rating ?? null}
-                                    existingReview={existingRating?.review ?? null}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Events section */}
-                    <div className="border-t border-neutral-200 bg-neutral-50 p-6 sm:p-8">
-                        <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-neutral-900">
-                            <Calendar size={18} className="text-primary-600" />
-                            Community Events
-                            {approvedEvents.length > 0 && (
-                                <span className="ml-1 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700">
-                                    {approvedEvents.length}
-                                </span>
-                            )}
-                        </h2>
-
-                        {approvedEvents.length > 0 ? (
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                {approvedEvents.map((event) => (
-                                    <EventCard
-                                        key={event.id}
-                                        event={{ ...event, communities: community } as any}
+                                ) : (
+                                    <JoinCommunityButton
+                                        communityId={community.id}
+                                        communitySlug={slug}
+                                        isLoggedIn={true}
+                                        isMember={isMember}
+                                        hasPendingRequest={hasPendingRequest}
                                     />
-                                ))}
+                                )}
+
+                                {/* Member quick-links (mobile only — sidebar handles desktop) */}
+                                {showMemberFeatures && (
+                                    <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:hidden">
+                                        <Link
+                                            href={`/community/${slug}/feed`}
+                                            className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                                        >
+                                            <Rss size={16} className="text-primary-500" />
+                                            Feed
+                                        </Link>
+                                        <Link
+                                            href={`/community/${slug}/chat`}
+                                            className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                                        >
+                                            <MessageCircle size={16} className="text-primary-500" />
+                                            Chat
+                                        </Link>
+                                        <Link
+                                            href={`/community/${slug}/media`}
+                                            className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                                        >
+                                            <ImageIcon size={16} className="text-primary-500" />
+                                            Gallery
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {/* If member, show a prompt to go to the feed */}
+                                {showMemberFeatures && (
+                                    <div className="mt-5 hidden lg:flex items-center gap-3 rounded-xl border border-primary-100 bg-primary-50 px-4 py-3">
+                                        <Rss size={16} className="text-primary-600 shrink-0" />
+                                        <p className="text-sm text-primary-800">
+                                            You're a member.{' '}
+                                            <Link href={`/community/${slug}/feed`} className="font-semibold underline hover:text-primary-900">
+                                                Go to the community feed →
+                                            </Link>
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Rating form — approved members only */}
+                                {isMember && (
+                                    <div className="mt-5">
+                                        <CommunityRatingForm
+                                            communityId={community.id}
+                                            existingRating={existingRating?.rating ?? null}
+                                            existingReview={existingRating?.review ?? null}
+                                        />
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <div className="rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-10 text-center">
-                                <Calendar size={28} className="mx-auto mb-3 text-neutral-300" />
-                                <p className="text-sm font-medium text-neutral-500">No events yet</p>
-                                <p className="mt-1 text-xs text-neutral-400">Join to be notified when events are posted.</p>
+
+                            {/* Events section */}
+                            <div className="border-t border-neutral-200 bg-neutral-50 p-6 sm:p-7">
+                                <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-neutral-900">
+                                    <Calendar size={17} className="text-primary-600" />
+                                    Community Events
+                                    {approvedEvents.length > 0 && (
+                                        <span className="ml-1 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700">
+                                            {approvedEvents.length}
+                                        </span>
+                                    )}
+                                </h2>
+
+                                {approvedEvents.length > 0 ? (
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        {approvedEvents.map((event) => (
+                                            <EventCard
+                                                key={event.id}
+                                                event={{ ...event, communities: community } as any}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-10 text-center">
+                                        <Calendar size={28} className="mx-auto mb-3 text-neutral-300" />
+                                        <p className="text-sm font-medium text-neutral-500">No events yet</p>
+                                        <p className="mt-1 text-xs text-neutral-400">Join to be notified when events are posted.</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    </main>
                 </div>
             </div>
 

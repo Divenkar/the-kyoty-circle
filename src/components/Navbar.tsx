@@ -12,13 +12,13 @@ import {
     Menu,
     Settings,
     Shield,
-    Sparkles,
     User as UserIcon,
     Users,
     X,
 } from 'lucide-react';
 import Image from 'next/image';
 import { NotificationBell } from './NotificationBell';
+import { CreateMenu } from './CreateMenu';
 import { useClerk, useUser } from '@clerk/nextjs';
 
 // ---------------------------------------------------------------------------
@@ -47,10 +47,6 @@ const PUBLIC_NAV_LINKS: NavLink[] = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/explore', label: 'Explore', icon: Compass },
     { href: '/communities', label: 'Communities', icon: Users },
-];
-
-const AUTH_NAV_LINKS: NavLink[] = [
-    { href: '/create-community', label: 'Start a community', icon: Sparkles },
 ];
 
 // ---------------------------------------------------------------------------
@@ -202,7 +198,7 @@ function AvatarDropdown({
                         <DropdownMenuItem href="/dashboard" label="My Dashboard" icon={LayoutDashboard} />
                         <DropdownMenuItem href="/profile" label="My Profile" icon={UserIcon} />
                         <DropdownMenuItem href="/notifications" label="Notifications" icon={Bell} />
-                        <DropdownMenuItem href="/create-community" label="Start a community" icon={Sparkles} />
+                        <DropdownMenuItem href="/create-community" label="Start a community" icon={Users} />
                         <DropdownMenuItem href="/settings" label="Settings" icon={Settings} />
                         {isAdminRole && (
                             <DropdownMenuItem href="/admin" label="Admin panel" icon={Shield} />
@@ -260,7 +256,9 @@ function MobileMenu({
                     <div className="mt-3 space-y-1 border-t border-neutral-100 pt-3">
                         <MobileNavLink href="/dashboard" label="Dashboard" icon={LayoutDashboard} isActive={isActive('/dashboard')} />
                         <MobileNavLink href="/profile" label="My Profile" icon={UserIcon} isActive={isActive('/profile')} />
-                        <MobileNavLink href="/notifications" label="Notifications" icon={Bell} isActive={isActive('/notifications')} />
+                        <MobileNavLink href="/notifications" label="Activity" icon={Bell} isActive={isActive('/notifications')} />
+                        <MobileNavLink href="/create-event" label="Create Event" icon={Settings} isActive={isActive('/create-event')} />
+                        <MobileNavLink href="/create-community" label="Start Community" icon={Users} isActive={isActive('/create-community')} />
                         <MobileNavLink href="/settings" label="Settings" icon={Settings} isActive={isActive('/settings')} />
                         {isAdminRole && (
                             <MobileNavLink href="/admin" label="Admin Panel" icon={Shield} isActive={isActive('/admin')} />
@@ -330,9 +328,7 @@ export function Navbar({
     const effectiveRole = isSignedIn ? initialUserRole : null;
     const isAdminRole = effectiveRole === 'admin' || effectiveRole === 'kyoty_admin';
 
-    const navLinks = isSignedIn
-        ? [...PUBLIC_NAV_LINKS, ...AUTH_NAV_LINKS]
-        : PUBLIC_NAV_LINKS;
+    const navLinks = PUBLIC_NAV_LINKS;
 
     const displayEmail = clerkUser?.primaryEmailAddress?.emailAddress ?? initialUserEmail;
     const displayName = clerkUser?.fullName ?? initialUserName;
@@ -440,6 +436,10 @@ export function Navbar({
                                         Admin
                                     </Link>
                                 )}
+
+                                <div className="hidden sm:block">
+                                    <CreateMenu variant="desktop" />
+                                </div>
 
                                 <NotificationBell userId={initialUserId ?? null} />
 

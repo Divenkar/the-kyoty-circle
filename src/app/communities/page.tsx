@@ -1,4 +1,5 @@
 import { CommunityRepository } from '@/lib/repositories/community-repo';
+import { getCurrentUser } from '@/lib/auth-server';
 import { CommunityCard } from '@/components/CommunityCard';
 import { CommunitiesFilters } from '@/components/CommunitiesFilters';
 import { MapPin, Sparkles, Users } from 'lucide-react';
@@ -29,9 +30,25 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
     const query = params.q || '';
     const category = params.category || 'all';
 
-    const communities = await CommunityRepository.search({ city, query, category });
+    const [communities, currentUser] = await Promise.all([
+        CommunityRepository.search({ city, query, category }),
+        getCurrentUser(),
+    ]);
 
+    // Fetch interest-based suggestions when user has tags and no active filters
     const hasFilters = query || (category && category !== 'all');
+    const interestTags = currentUser?.interest_tags ?? [];
+    const showSuggested = !hasFilters && interestTags.length > 0;
+
+    let suggestedCommunities: typeof communities = [];
+    if (showSuggested) {
+        const allByInterest = await CommunityRepository.search({ city, query: '', category: 'all' });
+        // Filter to those whose category matches an interest tag (case-insensitive)
+        const lowerTags = interestTags.map((t) => t.toLowerCase());
+        suggestedCommunities = allByInterest
+            .filter((c) => lowerTags.some((t) => c.category?.toLowerCase().includes(t)))
+            .slice(0, 3);
+    }
 
     return (
         <div className="min-h-screen bg-neutral-50">
@@ -83,6 +100,34 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
             </div>
 
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+
+                {/* ── Suggested for you ───────────────────────────────── */}
+                {showSuggested && suggestedCommunities.length > 0 && (
+                    <div className="mb-8 rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 to-violet-50 p-5 shadow-sm">
+                        <div className="mb-4 flex items-center gap-2">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary-100">
+                                <Sparkles size={14} className="text-primary-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-primary-900">Suggested for you</p>
+                                <p className="text-xs text-primary-600">
+                                    Based on your interests: {interestTags.slice(0, 3).join(', ')}
+                                    {interestTags.length > 3 ? ` +${interestTags.length - 3} more` : ''}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {suggestedCommunities.map((community) => (
+                                <CommunityCard
+                                    key={community.id}
+                                    community={community}
+                                    memberCount={community.member_count || 0}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Search + category filters */}
                 <div className="mb-8 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
                     <Suspense>

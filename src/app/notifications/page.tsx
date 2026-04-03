@@ -23,7 +23,7 @@ export default async function NotificationsPage() {
 
     return (
         <div className="min-h-[calc(100vh-72px)] bg-neutral-50">
-            <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+            <div className="mx-auto max-w-xl px-4 py-10 sm:px-6">
                 {/* Header */}
                 <div className="mb-8 flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-100">

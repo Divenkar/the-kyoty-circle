@@ -3,7 +3,9 @@
 import { getCurrentUser } from '@/lib/auth-server';
 import { sanitizeInterestTags } from '@/lib/interest-tags';
 import { UserRepository } from '@/lib/repositories/user-repo';
+import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { createClient } from '@/utils/supabase/server';
+import type { Community } from '@/types';
 
 // Allowed hostname patterns per proof type.
 const SOCIAL_PROOF_HOSTS: Record<string, RegExp> = {
@@ -106,6 +108,39 @@ export async function updateInterestTagsAction(interestTags: string[]) {
         return { success: true };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to update interests' };
+    }
+}
+
+/** Fetch up to 3 communities matching the user's interest tags for Step 5 */
+export async function getSuggestedCommunitiesAction(
+    interestTags: string[],
+    city?: string,
+): Promise<{ success: boolean; data?: Pick<Community, 'id' | 'name' | 'slug' | 'category' | 'member_count' | 'city_name'>[]; error?: string }> {
+    try {
+        if (interestTags.length === 0) return { success: true, data: [] };
+
+        const allCommunities = await CommunityRepository.search({
+            city: city || 'all',
+            query: '',
+            category: 'all',
+        });
+
+        const lowerTags = interestTags.map((t) => t.toLowerCase());
+        const matched = allCommunities
+            .filter((c) => lowerTags.some((t) => c.category?.toLowerCase().includes(t)))
+            .slice(0, 3)
+            .map((c) => ({
+                id: c.id,
+                name: c.name,
+                slug: c.slug,
+                category: c.category,
+                member_count: c.member_count,
+                city_name: c.city_name,
+            }));
+
+        return { success: true, data: matched };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to fetch suggestions' };
     }
 }
 

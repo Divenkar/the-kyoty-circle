@@ -3,6 +3,7 @@
 import React, { Suspense, useMemo, useState } from 'react';
 import {
     completeOnboardingAction,
+    getSuggestedCommunitiesAction,
     submitSocialProofAction,
     updateCityAction,
     updateInterestTagsAction,
@@ -44,6 +45,9 @@ function OnboardingPageContent() {
     const [socialLink, setSocialLink] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [suggestedCommunities, setSuggestedCommunities] = useState<Array<{
+        id: number; name: string; slug: string; category: string; member_count: number; city_name?: string;
+    }>>([]);
 
     const selectedCountLabel = useMemo(
         () => `${selectedInterests.length}/${MAX_INTEREST_TAGS} selected`,
@@ -117,6 +121,15 @@ function OnboardingPageContent() {
         }
 
         setLoading(false);
+
+        // Prefetch suggested communities before showing Step 5
+        if (selectedInterests.length > 0) {
+            const result = await getSuggestedCommunitiesAction(selectedInterests, selectedCity || undefined);
+            if (result.success && result.data) {
+                setSuggestedCommunities(result.data);
+            }
+        }
+
         setStep(5);
     };
 
@@ -454,6 +467,39 @@ function OnboardingPageContent() {
                                 <p className="mt-4 text-sm leading-7 text-neutral-600">
                                     Pick the path that matches what you want to do next. You can still edit your profile and trust details later from settings.
                                 </p>
+
+                                {/* Suggested communities */}
+                                {suggestedCommunities.length > 0 && (
+                                    <div className="mt-6 rounded-2xl border border-primary-100 bg-primary-50 p-4">
+                                        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary-700">
+                                            Communities matched to your interests
+                                        </p>
+                                        <div className="space-y-2">
+                                            {suggestedCommunities.map((c) => (
+                                                <div
+                                                    key={c.id}
+                                                    className="flex items-center gap-3 rounded-xl border border-white bg-white px-3 py-2.5 shadow-sm"
+                                                >
+                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-xs font-bold text-primary-700">
+                                                        {c.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate text-sm font-semibold text-neutral-900">{c.name}</p>
+                                                        <p className="text-xs text-neutral-500">
+                                                            {c.category}{c.city_name ? ` · ${c.city_name}` : ''} · {c.member_count || 0} members
+                                                        </p>
+                                                    </div>
+                                                    <a
+                                                        href={`/community/${c.slug}`}
+                                                        className="shrink-0 rounded-lg border border-primary-200 bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 hover:bg-primary-100 transition-colors"
+                                                    >
+                                                        View →
+                                                    </a>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="mt-8 space-y-3">
                                     <button

@@ -1,5 +1,9 @@
 import Link from 'next/link';
-import { ArrowRight, Calendar, CheckCircle, Compass, MapPin, Shield, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, Calendar, CheckCircle, Compass, MapPin, Shield, Sparkles, Users, Rss, Bell, LayoutDashboard } from 'lucide-react';
+import { getCurrentUser } from '@/lib/auth-server';
+import { CommunityRepository } from '@/lib/repositories/community-repo';
+import { EventParticipantRepository } from '@/lib/repositories/event-participant-repo';
+import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
 
 const CITIES = [
   { name: 'Noida', status: 'active' as const, href: '/explore?city=Noida', blurb: 'Live now with curated communities and meetups.' },
@@ -53,7 +57,236 @@ const STATS = [
   { label: 'Designed for trust', value: 'Verified hosts' },
 ];
 
-export default function LandingPage() {
+// ─── Personalized Home (authenticated) ───────────────────────────────────────
+
+async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getCurrentUser>> & object }) {
+    const displayName = (user as any).name?.split(' ')[0] || 'there';
+    const interestTags: string[] = (user as any).interest_tags ?? [];
+
+    const [upcomingRSVPs, memberships] = await Promise.all([
+        EventParticipantRepository.listUpcomingByUser((user as any).id),
+        CommunityMemberRepository.listByUser((user as any).id),
+    ]);
+
+    const approvedMemberships = memberships.filter((m: any) => m.status === 'approved');
+
+    // Suggested communities based on interests
+    let suggestedCommunities: any[] = [];
+    if (interestTags.length > 0) {
+        const all = await CommunityRepository.search({ city: 'all', query: '', category: 'all' });
+        const lowerTags = interestTags.map((t) => t.toLowerCase());
+        const memberIds = new Set(approvedMemberships.map((m: any) => m.community_id || m.communities?.id));
+        suggestedCommunities = all
+            .filter((c) => !memberIds.has(c.id) && lowerTags.some((t) => c.category?.toLowerCase().includes(t)))
+            .slice(0, 3);
+    }
+
+    return (
+        <div className="min-h-screen bg-neutral-50">
+            {/* Personalized Hero */}
+            <div className="border-b border-neutral-200 bg-[radial-gradient(ellipse_at_top_left,_rgba(99,102,241,0.12),_transparent_50%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+                <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Welcome back</p>
+                            <h1 className="mt-1 text-2xl font-bold text-neutral-900 sm:text-3xl">
+                                Hey, {displayName} 👋
+                            </h1>
+                            {interestTags.length > 0 && (
+                                <p className="mt-1 text-sm text-neutral-500">
+                                    Your interests: {interestTags.slice(0, 4).join(' · ')}
+                                    {interestTags.length > 4 ? ` +${interestTags.length - 4}` : ''}
+                                </p>
+                            )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <Link
+                                href="/dashboard"
+                                className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-primary-300"
+                            >
+                                <LayoutDashboard size={15} />
+                                Dashboard
+                            </Link>
+                            <Link
+                                href="/notifications"
+                                className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-primary-300"
+                            >
+                                <Bell size={15} />
+                                Activity
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-10">
+
+                {/* Suggested Communities */}
+                {suggestedCommunities.length > 0 && (
+                    <section>
+                        <div className="mb-4 flex items-center gap-2">
+                            <Sparkles size={16} className="text-primary-600" />
+                            <h2 className="text-base font-bold text-neutral-900">Suggested for you</h2>
+                            <span className="ml-1 text-xs text-neutral-400">based on your interests</span>
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            {suggestedCommunities.map((c: any) => (
+                                <Link
+                                    key={c.id}
+                                    href={`/community/${c.slug || c.id}`}
+                                    className="group flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-primary-300 hover:shadow-md"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-sm font-bold text-primary-700">
+                                            {(c.name || '?').charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-semibold text-neutral-900 group-hover:text-primary-700">{c.name}</p>
+                                            <p className="text-xs text-neutral-500">{c.category}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs text-neutral-500">
+                                        <span>{c.member_count || 0} members</span>
+                                        <span className="text-primary-600 font-medium">View →</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                        <div className="mt-3 text-right">
+                            <Link href="/communities" className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                                Browse all communities →
+                            </Link>
+                        </div>
+                    </section>
+                )}
+
+                {/* My Communities */}
+                {approvedMemberships.length > 0 && (
+                    <section>
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Users size={16} className="text-primary-600" />
+                                <h2 className="text-base font-bold text-neutral-900">My Communities</h2>
+                            </div>
+                            <Link href="/dashboard" className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                                View all →
+                            </Link>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {approvedMemberships.slice(0, 4).map((m: any) => {
+                                const community = m.communities;
+                                if (!community) return null;
+                                const slug = community.slug || m.community_id;
+                                return (
+                                    <Link
+                                        key={m.id}
+                                        href={`/community/${slug}/feed`}
+                                        className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-sm transition hover:border-primary-300 hover:shadow-md"
+                                    >
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-sm font-bold text-primary-700">
+                                            {(community.name || '?').charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-semibold text-neutral-900">{community.name}</p>
+                                            <p className="text-xs text-neutral-400 flex items-center gap-1">
+                                                <Rss size={10} />
+                                                Open feed
+                                            </p>
+                                        </div>
+                                        <ArrowRight size={13} className="shrink-0 text-neutral-300" />
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
+
+                {/* Upcoming Events */}
+                {upcomingRSVPs.length > 0 && (
+                    <section>
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Calendar size={16} className="text-primary-600" />
+                                <h2 className="text-base font-bold text-neutral-900">Upcoming Events</h2>
+                            </div>
+                            <Link href="/explore" className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                                Find more →
+                            </Link>
+                        </div>
+                        <div className="space-y-2">
+                            {upcomingRSVPs.slice(0, 4).map((r: any) => {
+                                const event = r.events;
+                                if (!event) return null;
+                                const dateStr = new Date(event.date).toLocaleDateString('en-IN', {
+                                    weekday: 'short', day: 'numeric', month: 'short',
+                                });
+                                return (
+                                    <Link
+                                        key={r.id}
+                                        href={`/event/${event.id}`}
+                                        className="flex items-center gap-4 rounded-xl border border-neutral-100 bg-white px-4 py-3.5 transition hover:border-primary-200 hover:shadow-sm"
+                                    >
+                                        <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-primary-50 text-center">
+                                            <span className="text-[10px] font-semibold uppercase leading-none text-primary-500">
+                                                {new Date(event.date).toLocaleDateString('en-IN', { month: 'short' })}
+                                            </span>
+                                            <span className="mt-0.5 text-base font-extrabold leading-none text-primary-700">
+                                                {new Date(event.date).getDate()}
+                                            </span>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <span className="block truncate text-sm font-semibold text-neutral-900">{event.title}</span>
+                                            <span className="text-xs text-neutral-500">{dateStr}</span>
+                                        </div>
+                                        <ArrowRight size={14} className="shrink-0 text-neutral-300" />
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
+
+                {/* Empty state — no communities or events yet */}
+                {approvedMemberships.length === 0 && upcomingRSVPs.length === 0 && suggestedCommunities.length === 0 && (
+                    <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 to-indigo-700 px-6 py-10 text-white text-center">
+                        <Sparkles size={32} className="mx-auto mb-4 opacity-80" />
+                        <h3 className="text-xl font-bold">Your feed is empty for now</h3>
+                        <p className="mt-2 text-sm text-primary-100/80 max-w-sm mx-auto">
+                            Join communities and RSVP to events to see your personalized home here.
+                        </p>
+                        <div className="mt-6 flex flex-wrap gap-3 justify-center">
+                            <Link
+                                href="/communities"
+                                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-50"
+                            >
+                                <Users size={15} />
+                                Browse communities
+                            </Link>
+                            <Link
+                                href="/explore"
+                                className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+                            >
+                                <Calendar size={15} />
+                                Explore events
+                            </Link>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ─── Landing Page ─────────────────────────────────────────────────────────────
+
+export default async function LandingPage() {
+  const user = await getCurrentUser();
+
+  // Show personalized home for signed-in users who completed onboarding
+  if (user && user.onboarding_completed) {
+      return <PersonalizedHome user={user} />;
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
       {/* Hero */}
