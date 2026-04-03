@@ -8,9 +8,13 @@ import { auth } from '@clerk/nextjs/server';
 export async function createClient() {
     try {
         const { getToken } = await auth();
-        // getToken throws when the 'supabase' JWT template is not configured in
-        // the Clerk dashboard — catch that and fall through to the service client.
-        const clerkToken = await getToken({ template: 'supabase' }).catch(() => null);
+
+        // Strategy 1: Clerk JWT template named 'supabase' (classic HS256 approach).
+        // Strategy 2: Raw Clerk session token (Supabase third-party auth via JWKS).
+        // Try the template first; if it throws/returns null fall back to the raw token.
+        const clerkToken =
+            await getToken({ template: 'supabase' }).catch(() => null) ??
+            await getToken().catch(() => null);
 
         if (clerkToken) {
             return createSupabaseClient(
@@ -27,7 +31,7 @@ export async function createClient() {
         // auth() itself failed (e.g. called outside request context) — fall through
     }
 
-    // Fallback: service client bypasses RLS.
+    // Final fallback: service client bypasses RLS.
     // Safe because all callers of createClient() are server-side and have already
     // verified the user via Clerk's auth() before reaching any data query.
     return createServiceClient();
