@@ -2,6 +2,8 @@
 
 import { getCurrentUser } from '@/lib/auth-server';
 import { EventCommentsRepository, type EventComment } from '@/lib/repositories/event-comments-repo';
+import { EventRepository } from '@/lib/repositories/event-repo';
+import { NotificationService } from '@/lib/services/notification-service';
 import type { ActionResponse } from '@/types';
 
 export async function addCommentAction(
@@ -17,6 +19,13 @@ export async function addCommentAction(
         if (trimmed.length > 1000) return { success: false, error: 'Comment too long (max 1000 characters)' };
 
         const comment = await EventCommentsRepository.create(eventId, user.id, trimmed);
+
+        // Notify event organizer of new comment (not self-comment)
+        const event = await EventRepository.findById(eventId);
+        if (event && event.created_by !== user.id) {
+            NotificationService.eventComment(event.created_by, user.name, event.title, eventId);
+        }
+
         return { success: true, data: comment };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to add comment' };

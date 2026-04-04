@@ -2,6 +2,7 @@ import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
 import { AdminLogRepository } from '@/lib/repositories/admin-log-repo';
 import { UserRepository } from '@/lib/repositories/user-repo';
+import { NotificationService } from '@/lib/services/notification-service';
 import { sendEmail, memberApprovedEmail, memberRejectedEmail } from '@/lib/email';
 import type { Community, CommunityMemberWithUser } from '@/types';
 
@@ -20,6 +21,7 @@ export const CommunityService = {
     },
 
     async approveCommunity(communityId: number, adminId: number): Promise<void> {
+        const community = await CommunityRepository.findById(communityId);
         await CommunityRepository.updateStatus(communityId, 'approved');
         await AdminLogRepository.create({
             admin_id: adminId,
@@ -27,9 +29,14 @@ export const CommunityService = {
             target_type: 'community',
             target_id: communityId,
         });
+        // In-app notification to organizer
+        if (community?.organizer_id) {
+            NotificationService.communityApproved(community.organizer_id, community.name, community.slug);
+        }
     },
 
     async rejectCommunity(communityId: number, adminId: number): Promise<void> {
+        const community = await CommunityRepository.findById(communityId);
         await CommunityRepository.updateStatus(communityId, 'rejected');
         await AdminLogRepository.create({
             admin_id: adminId,
@@ -37,6 +44,10 @@ export const CommunityService = {
             target_type: 'community',
             target_id: communityId,
         });
+        // In-app notification to organizer
+        if (community?.organizer_id) {
+            NotificationService.communityRejected(community.organizer_id, community.name);
+        }
     },
 
     async requestToJoin(
@@ -61,6 +72,13 @@ export const CommunityService = {
         }
 
         await CommunityMemberRepository.createJoinRequest(communityId, userId, opts);
+        // Notify community organizer of pending join request
+        if (community.organizer_id) {
+            const user = await UserRepository.findById(userId);
+            if (user) {
+                NotificationService.joinRequest(community.organizer_id, user.name, community.name, community.slug);
+            }
+        }
         return { status: 'pending' };
     },
 
@@ -74,7 +92,7 @@ export const CommunityService = {
             target_type: 'community_member',
             target_id: memberId,
         });
-        // Send approval email (non-blocking)
+        // Send approval email + in-app notification (non-blocking)
         if (member) {
             const [user, community] = await Promise.all([
                 UserRepository.findById(member.user_id),
@@ -86,6 +104,7 @@ export const CommunityService = {
                     subject: `You're in! Welcome to ${community.name}`,
                     html: memberApprovedEmail(user.name, community.name, community.slug),
                 });
+                NotificationService.memberApproved(member.user_id, community.name, community.slug);
             }
         }
     },
@@ -99,7 +118,7 @@ export const CommunityService = {
             target_type: 'community_member',
             target_id: memberId,
         });
-        // Send rejection email (non-blocking)
+        // Send rejection email + in-app notification (non-blocking)
         if (member) {
             const [user, community] = await Promise.all([
                 UserRepository.findById(member.user_id),
@@ -111,6 +130,7 @@ export const CommunityService = {
                     subject: `Update on your ${community.name} application`,
                     html: memberRejectedEmail(user.name, community.name),
                 });
+                NotificationService.memberRejected(member.user_id, community.name);
             }
         }
     },

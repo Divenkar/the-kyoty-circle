@@ -3,6 +3,7 @@ import { EventParticipantRepository } from '@/lib/repositories/event-participant
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
 import { AdminLogRepository } from '@/lib/repositories/admin-log-repo';
 import { UserRepository } from '@/lib/repositories/user-repo';
+import { NotificationService } from '@/lib/services/notification-service';
 import { sendEmail, eventRegistrationEmail, waitlistJoinedEmail, waitlistPromotedEmail } from '@/lib/email';
 import type { KyotyEvent } from '@/types';
 
@@ -28,6 +29,7 @@ export const EventService = {
     },
 
     async approveEvent(eventId: number, adminId: number): Promise<void> {
+        const event = await EventRepository.findById(eventId);
         await EventRepository.updateStatus(eventId, 'approved');
         await AdminLogRepository.create({
             admin_id: adminId,
@@ -35,9 +37,14 @@ export const EventService = {
             target_type: 'event',
             target_id: eventId,
         });
+        // In-app notification to event creator
+        if (event?.created_by) {
+            NotificationService.eventApproved(event.created_by, event.title, eventId);
+        }
     },
 
     async rejectEvent(eventId: number, adminId: number): Promise<void> {
+        const event = await EventRepository.findById(eventId);
         await EventRepository.updateStatus(eventId, 'rejected');
         await AdminLogRepository.create({
             admin_id: adminId,
@@ -45,6 +52,10 @@ export const EventService = {
             target_type: 'event',
             target_id: eventId,
         });
+        // In-app notification to event creator
+        if (event?.created_by) {
+            NotificationService.eventRejected(event.created_by, event.title, eventId);
+        }
     },
 
     async joinEvent(eventId: number, userId: number): Promise<{ status: 'registered' | 'waitlisted'; position?: number }> {
@@ -101,6 +112,10 @@ export const EventService = {
                 subject: `You're registered for ${event.title}`,
                 html: eventRegistrationEmail(user.name, event.title, dateStr, eventId),
             });
+            // In-app notification to event organizer
+            if (event.created_by && event.created_by !== userId) {
+                NotificationService.eventRegistration(event.created_by, user.name, event.title, eventId);
+            }
         }
         return { status: 'registered' };
     },
@@ -121,6 +136,8 @@ export const EventService = {
                     subject: `You're off the waitlist for ${event.title}!`,
                     html: waitlistPromotedEmail(promotedUser.name, event.title, dateStr, eventId),
                 });
+                // In-app notification for waitlist promotion
+                NotificationService.waitlistPromoted(promoted.user_id, event.title, eventId);
             }
         }
     },

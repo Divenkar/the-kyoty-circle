@@ -6,6 +6,7 @@ import { PostCommentRepository } from '@/lib/repositories/post-comment-repo';
 import { PostReactionRepository, type ReactionType } from '@/lib/repositories/post-reaction-repo';
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
 import { CommunityRepository } from '@/lib/repositories/community-repo';
+import { NotificationService } from '@/lib/services/notification-service';
 import { revalidatePath } from 'next/cache';
 import type { ActionResponse } from '@/types';
 
@@ -101,6 +102,13 @@ export async function toggleReactionAction(
         if (!check.ok) return { success: false, error: check.error };
 
         const action = await PostReactionRepository.toggle(postId, user.id, type);
+        // Notify post author on new reaction (not on removal, not on self-reaction)
+        if (action === 'added' && post.user_id !== user.id) {
+            const community = await CommunityRepository.findById(post.community_id);
+            if (community) {
+                NotificationService.postReaction(post.user_id, user.name, community.slug);
+            }
+        }
         return { success: true, data: { action } };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to react' };
@@ -132,6 +140,14 @@ export async function addCommentAction(
             user_id: user.id,
             content: trimmed,
         });
+
+        // Notify post author of new comment (not self-comment)
+        if (post.user_id !== user.id) {
+            const community = await CommunityRepository.findById(post.community_id);
+            if (community) {
+                NotificationService.postComment(post.user_id, user.name, community.slug);
+            }
+        }
 
         revalidatePath(`/community/[slug]/feed`, 'page');
         return { success: true, data: { id: comment.id } };

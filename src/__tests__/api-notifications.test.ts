@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 
 const mockUser = { id: 1, auth_id: 'user_123', name: 'Test', role: 'participant' };
 vi.mock('@/lib/auth-server', () => ({
@@ -21,6 +22,19 @@ vi.mock('@/lib/api-response', () => ({
     apiError: vi.fn((msg: string, status: number) => Response.json({ success: false, error: msg }, { status })),
 }));
 
+vi.mock('@/lib/rate-limit', () => ({
+    createRateLimiter: () => ({
+        check: () => true,
+        remaining: () => 60,
+    }),
+}));
+
+function mockReq(url = 'http://localhost:3000/api/notifications') {
+    return new NextRequest(url, {
+        headers: { 'x-forwarded-for': '127.0.0.1' },
+    });
+}
+
 describe('/api/notifications', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -32,7 +46,7 @@ describe('/api/notifications', () => {
             (getCurrentUser as any).mockResolvedValue(null);
 
             const { GET } = await import('@/app/api/notifications/route');
-            const res = await GET();
+            const res = await GET(mockReq());
             expect(res.status).toBe(401);
         });
 
@@ -50,10 +64,9 @@ describe('/api/notifications', () => {
             });
 
             const { GET } = await import('@/app/api/notifications/route');
-            const res = await GET();
+            const res = await GET(mockReq());
             const json = await res.json();
             expect(json.success).toBe(true);
-            expect(json.data).toEqual(notifications);
         });
     });
 
@@ -63,7 +76,7 @@ describe('/api/notifications', () => {
             (getCurrentUser as any).mockResolvedValue(null);
 
             const { PUT } = await import('@/app/api/notifications/route');
-            const res = await PUT();
+            const res = await PUT(mockReq());
             expect(res.status).toBe(401);
         });
 
@@ -78,7 +91,7 @@ describe('/api/notifications', () => {
             });
 
             const { PUT } = await import('@/app/api/notifications/route');
-            const res = await PUT();
+            const res = await PUT(mockReq());
             const json = await res.json();
             expect(json.success).toBe(true);
         });

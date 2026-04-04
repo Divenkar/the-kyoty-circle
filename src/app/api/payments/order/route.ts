@@ -2,11 +2,16 @@ import Razorpay from 'razorpay';
 import { NextRequest } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-server';
 import { apiOk, apiError } from '@/lib/api-response';
+import { createRateLimiter } from '@/lib/rate-limit';
 
 const MAX_AMOUNT_INR = 100_000; // ₹1,00,000 cap
+const limiter = createRateLimiter({ windowMs: 60_000, max: 10 });
 
 export async function POST(req: NextRequest) {
     try {
+        const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+        if (!limiter.check(ip)) return apiError('Too many requests', 429);
+
         const user = await getCurrentUser();
         if (!user) return apiError('Authentication required', 401);
 

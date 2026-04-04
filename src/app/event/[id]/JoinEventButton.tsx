@@ -3,6 +3,12 @@
 import React from 'react';
 import { joinEventAction, cancelEventRegistrationAction } from '@/server/actions/event.actions';
 
+declare global {
+    interface Window {
+        Razorpay: new (options: Record<string, unknown>) => { open: () => void };
+    }
+}
+
 interface JoinEventButtonProps {
     eventId: number;
     isLoggedIn: boolean;
@@ -15,6 +21,9 @@ interface JoinEventButtonProps {
     isFull: boolean;
     isPaid?: boolean;
     price?: number;
+    /** User name and email for Razorpay prefill */
+    userName?: string;
+    userEmail?: string;
 }
 
 export function JoinEventButton({
@@ -28,6 +37,8 @@ export function JoinEventButton({
     isFull,
     isPaid = false,
     price = 0,
+    userName,
+    userEmail,
 }: JoinEventButtonProps) {
     const [loading, setLoading] = React.useState(false);
     const [status, setStatus] = React.useState<'idle' | 'registered' | 'waitlisted' | 'cancelled'>(
@@ -36,7 +47,81 @@ export function JoinEventButton({
     const [position, setPosition] = React.useState(waitlistPosition);
     const [error, setError] = React.useState('');
 
+    const handlePayment = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            // 1. Create Razorpay order via API
+            const res = await fetch('/api/payments/order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: price, eventId }),
+            });
+            const body = await res.json();
+            if (!body.success || !body.data?.order) {
+                setError(body.error || 'Failed to create payment order');
+                setLoading(false);
+                return;
+            }
+
+            const order = body.data.order;
+
+            // 2. Open Razorpay checkout
+            if (typeof window.Razorpay === 'undefined') {
+                setError('Payment gateway is loading. Please try again.');
+                setLoading(false);
+                return;
+            }
+
+            const razorpay = new window.Razorpay({
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                amount: order.amount,
+                currency: order.currency,
+                name: 'Kyoty',
+                description: `Event Registration`,
+                order_id: order.id,
+                prefill: {
+                    name: userName || '',
+                    email: userEmail || '',
+                },
+                theme: { color: '#6366f1' },
+                handler: async () => {
+                    // 3. Payment successful — join event via server action
+                    // The webhook will also handle this, but we join immediately for UX
+                    const result = await joinEventAction(eventId);
+                    if (result.success) {
+                        if (result.data?.status === 'waitlisted') {
+                            setStatus('waitlisted');
+                            setPosition(result.data.position || 0);
+                        } else {
+                            setStatus('registered');
+                        }
+                    } else {
+                        // Payment succeeded but join failed — show as registered
+                        // since webhook will handle registration
+                        setStatus('registered');
+                    }
+                    setLoading(false);
+                },
+                modal: {
+                    ondismiss: () => {
+                        setLoading(false);
+                    },
+                },
+            });
+            razorpay.open();
+        } catch {
+            setError('Something went wrong with payment');
+            setLoading(false);
+        }
+    };
+
     const handleJoin = async () => {
+        // For paid events, go through Razorpay
+        if (isPaid && price > 0 && !isFull) {
+            return handlePayment();
+        }
+
         setLoading(true);
         setError('');
         try {
@@ -90,7 +175,7 @@ export function JoinEventButton({
         return (
             <div className="space-y-2">
                 <div className="w-full py-3.5 text-center text-sm font-semibold text-green-700 bg-green-50 rounded-xl border border-green-200">
-                    ✓ You&apos;re registered for this event
+                    You&apos;re registered for this event
                 </div>
                 <button
                     onClick={handleCancel}
@@ -107,7 +192,7 @@ export function JoinEventButton({
         return (
             <div className="space-y-2">
                 <div className="w-full py-3.5 text-center text-sm font-semibold text-amber-700 bg-amber-50 rounded-xl border border-amber-200">
-                    ⏳ You&apos;re on the waitlist {position > 0 && `(#${position})`}
+                    You&apos;re on the waitlist {position > 0 && `(#${position})`}
                 </div>
                 <p className="text-xs text-neutral-500 text-center">
                     You&apos;ll be auto-promoted when a spot opens up
@@ -157,7 +242,7 @@ export function JoinEventButton({
                 ) : isFull ? (
                     'Join Waitlist'
                 ) : isPaid ? (
-                    `Join Event · ₹${price}`
+                    `Pay & Join · ₹${price}`
                 ) : (
                     'Join Event'
                 )}

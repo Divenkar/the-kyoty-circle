@@ -307,6 +307,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                                 isFull={isFull}
                                 isPaid={event.is_paid}
                                 price={event.price_per_person || 0}
+                                userName={currentUser?.name}
+                                userEmail={currentUser?.email}
                             />
                         )}
 

@@ -26,6 +26,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
+        <head>
+          <script src="https://checkout.razorpay.com/v1/checkout.js" async />
+        </head>
         <body className="min-h-screen bg-neutral-50 flex flex-col" suppressHydrationWarning>
           <Navbar
             initialUserRole={user?.role ?? null}

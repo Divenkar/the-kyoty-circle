@@ -40,10 +40,12 @@ export function NotificationBell({ userId }: NotificationBellProps) {
     const fetchNotifications = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/notifications');
+            const res = await fetch('/api/notifications?limit=20');
             if (res.ok) {
-                const data = await res.json();
-                setNotifications(data);
+                const json = await res.json();
+                // Support both old shape (array) and new shape ({ data: { items } })
+                const items = Array.isArray(json) ? json : (json.data?.items ?? json.items ?? []);
+                setNotifications(items);
             }
         } catch {
             console.error('Failed to fetch notifications');
