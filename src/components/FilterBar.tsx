@@ -49,6 +49,14 @@ export function FilterBar() {
     };
 
     const handleDateChange = (from: string, to: string) => {
+        // If both dates set, ensure from <= to
+        if (from && to && from > to) {
+            // Swap them automatically
+            setDateFrom(to);
+            setDateTo(from);
+            updateFilters({ from: to, to: from });
+            return;
+        }
         setDateFrom(from);
         setDateTo(to);
         updateFilters({ from, to });
@@ -106,6 +114,7 @@ export function FilterBar() {
                         <input
                             type="date"
                             value={dateTo}
+                            min={dateFrom || undefined}
                             onChange={(e) => handleDateChange(dateFrom, e.target.value)}
                             className="min-w-0 flex-1 bg-transparent outline-none"
                         />

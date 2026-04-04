@@ -92,6 +92,22 @@ export async function createEventAction(
             return { success: false, error: 'Start and end times are required' };
         }
 
+        // Validate date is not in the past
+        const eventDate = new Date(data.date);
+        if (isNaN(eventDate.getTime())) {
+            return { success: false, error: 'Invalid event date' };
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (eventDate < today) {
+            return { success: false, error: 'Event date cannot be in the past' };
+        }
+
+        // Validate end time is after start time
+        if (data.start_time && data.end_time && data.end_time <= data.start_time) {
+            return { success: false, error: 'End time must be after start time' };
+        }
+
         if (data.max_participants < 1) {
             return { success: false, error: 'Capacity must be at least 1' };
         }

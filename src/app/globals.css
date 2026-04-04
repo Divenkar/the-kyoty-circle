@@ -14,6 +14,8 @@ body {
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 /* Custom scrollbar */
@@ -34,19 +36,23 @@ body {
   background: #94a3b8;
 }
 
-/* Utility for line-clamp */
+/* Utility for line-clamp (with cross-browser support) */
 .line-clamp-1 {
   overflow: hidden;
+  text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
+  line-clamp: 1;
 }
 
 .line-clamp-2 {
   overflow: hidden;
+  text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 /* Hide scrollbar while keeping scroll functionality */

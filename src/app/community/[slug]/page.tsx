@@ -84,8 +84,8 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                 : hasPendingRequest
                     ? 'Application pending'
                     : 'Apply to join';
-    const ratingLabel = community.rating_count > 0
-        ? `${community.rating_avg.toFixed(1)}/5`
+    const ratingLabel = community.rating_count > 0 && community.rating_avg != null
+        ? `${Number(community.rating_avg).toFixed(1)}/5`
         : 'No ratings yet';
     const ratingHint = community.rating_count > 0
         ? `${community.rating_count} review${community.rating_count !== 1 ? 's' : ''}`
@@ -128,19 +128,19 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                                 {community.category}
                             </span>
                         )}
-                        {community.rating_count > 0 && (
+                        {community.rating_count > 0 && community.rating_avg != null && (
                             <span className="flex items-center gap-1">
                                 {[1, 2, 3, 4, 5].map(s => (
                                     <Star
                                         key={s}
                                         size={12}
-                                        className={s <= Math.round(community.rating_avg)
+                                        className={s <= Math.round(Number(community.rating_avg))
                                             ? 'fill-amber-400 text-amber-400'
                                             : 'fill-white/30 text-white/30'
                                         }
                                     />
                                 ))}
-                                <span className="ml-0.5 font-medium">{community.rating_avg}</span>
+                                <span className="ml-0.5 font-medium">{Number(community.rating_avg).toFixed(1)}</span>
                                 <span className="text-white/60">· {community.rating_count} review{community.rating_count !== 1 ? 's' : ''}</span>
                             </span>
                         )}

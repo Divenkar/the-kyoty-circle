@@ -36,8 +36,9 @@ export async function createCommunityAction(
         const { createClient } = await import('@/utils/supabase/server');
         const supabase = await createClient();
 
-        let slug = baseSlug;
+        let slug = baseSlug || 'community';
         let attempt = 1;
+        const MAX_SLUG_ATTEMPTS = 50;
         while (true) {
             const { data: existing } = await supabase
                 .from('communities')
@@ -48,6 +49,9 @@ export async function createCommunityAction(
             if (!existing) break; // slug is available
 
             attempt += 1;
+            if (attempt > MAX_SLUG_ATTEMPTS) {
+                return { success: false, error: 'Could not generate a unique URL slug. Try a different name.' };
+            }
             slug = `${baseSlug}-${attempt}`;
         }
         // ─────────────────────────────────────────────────────────────────────

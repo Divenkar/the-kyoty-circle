@@ -140,6 +140,8 @@ export default async function CommunityFeedPage({ params }: FeedPageProps) {
                                         key={post.id}
                                         post={post}
                                         currentUserId={currentUser.id}
+                                        currentUserName={currentUser.name}
+                                        currentUserAvatar={currentUser.avatar_url}
                                         communitySlug={slug}
                                     />
                                 ))}

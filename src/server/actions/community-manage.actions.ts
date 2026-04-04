@@ -122,12 +122,12 @@ export async function uploadCoverImageAction(
         const maxSize = 5 * 1024 * 1024; // 5 MB
         if (file.size > maxSize) return { success: false, error: 'File too large (max 5 MB)' };
 
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
+        const MIME_TO_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+        const ext = MIME_TO_EXT[file.type];
+        if (!ext) {
             return { success: false, error: 'Only JPEG, PNG, and WebP are allowed' };
         }
 
-        const ext = file.name.split('.').pop();
         const fileName = `covers/${user.id}-${Date.now()}.${ext}`;
 
         const supabase = await createClient();
@@ -171,12 +171,12 @@ export async function uploadMediaAction(
         const maxSize = 10 * 1024 * 1024; // 10 MB
         if (file.size > maxSize) return { success: false, error: 'File too large (max 10 MB)' };
 
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        if (!allowedTypes.includes(file.type)) {
+        const MIME_TO_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+        const ext = MIME_TO_EXT[file.type];
+        if (!ext) {
             return { success: false, error: 'Only JPEG, PNG, WebP, and GIF are allowed' };
         }
 
-        const ext = file.name.split('.').pop();
         const fileName = `community-${communityId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
         const supabase = await createClient();

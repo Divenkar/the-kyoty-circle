@@ -46,17 +46,19 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                 setNotifications(data);
             }
         } catch {
-            // silent fail
+            console.error('Failed to fetch notifications');
         }
         setLoading(false);
     };
 
     const markAllRead = async () => {
         try {
-            await fetch('/api/notifications', { method: 'PUT' });
-            setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+            const res = await fetch('/api/notifications', { method: 'PUT' });
+            if (res.ok) {
+                setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+            }
         } catch {
-            // silent fail
+            console.error('Failed to mark notifications as read');
         }
     };
 

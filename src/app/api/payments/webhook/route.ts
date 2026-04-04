@@ -65,10 +65,20 @@ export async function POST(req: NextRequest) {
             : null;
 
         // ── 3. Look up the kyoty user by matching the Razorpay order ─────────
-        // The order receipt encodes the eventId; we don't store userId in notes
-        // for security. Instead query event_participants for who is pending payment
-        // for this event. If not found, still record the payment for audit purposes.
         const supabase = createServiceClient();
+
+        // Find pending-payment participant for this event to resolve user_id
+        let resolvedUserId: number | null = null;
+        if (eventId) {
+            const { data: pendingParticipant } = await supabase
+                .from('event_participants')
+                .select('user_id')
+                .eq('event_id', eventId)
+                .eq('status', 'pending_payment')
+                .limit(1)
+                .maybeSingle();
+            resolvedUserId = pendingParticipant?.user_id ?? null;
+        }
 
         // ── 4. Persist to payments table (idempotent via ON CONFLICT DO NOTHING) ──
         const { error: insertError } = await supabase
@@ -78,6 +88,7 @@ export async function POST(req: NextRequest) {
                 razorpay_payment_id: payment.id,
                 event_id: eventId,
                 ticket_tier_id: ticketTierId,
+                user_id: resolvedUserId,
                 amount_paise: payment.amount,
                 currency: payment.currency,
                 status: 'captured',

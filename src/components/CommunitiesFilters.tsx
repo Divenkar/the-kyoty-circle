@@ -57,6 +57,7 @@ export function CommunitiesFilters({ currentQuery, currentCategory, currentCity 
                 {currentQuery && (
                     <button
                         onClick={() => updateParam('q', '')}
+                        aria-label="Clear search"
                         className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
                     >
                         <X size={14} />

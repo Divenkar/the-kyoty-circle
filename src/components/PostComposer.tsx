@@ -100,6 +100,7 @@ export function PostComposer({
                             />
                             <button
                                 onClick={() => { setShowImageInput(false); setImageUrl(''); }}
+                                aria-label="Remove image"
                                 className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
                             >
                                 <X size={14} />

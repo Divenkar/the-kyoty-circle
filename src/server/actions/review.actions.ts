@@ -14,9 +14,19 @@ export async function submitReviewAction(
         const user = await getCurrentUser();
         if (!user) return { success: false, error: 'Authentication required' };
 
-        if (rating < 1 || rating > 5) return { success: false, error: 'Rating must be 1-5' };
+        if (!Number.isInteger(rating) || rating < 1 || rating > 5) return { success: false, error: 'Rating must be 1-5' };
 
         const supabase = await createClient();
+
+        // Verify user actually participated in this event
+        const { data: participation } = await supabase
+            .from('event_participants')
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('user_id', user.id)
+            .in('status', ['registered', 'waitlisted'])
+            .maybeSingle();
+        if (!participation) return { success: false, error: 'You must have registered for this event to leave a review' };
 
         // Check if already reviewed
         const { data: existing } = await supabase
@@ -74,6 +84,9 @@ export async function getReviewsAction(eventId: number): Promise<ActionResponse<
     }
 }
 
+const VALID_REPORT_TARGETS = ['user', 'community', 'event', 'post', 'comment'] as const;
+type ReportTarget = typeof VALID_REPORT_TARGETS[number];
+
 export async function submitReportAction(
     targetType: string,
     targetId: number,
@@ -84,6 +97,12 @@ export async function submitReportAction(
         const user = await getCurrentUser();
         if (!user) return { success: false, error: 'Authentication required' };
 
+        if (!VALID_REPORT_TARGETS.includes(targetType as ReportTarget)) {
+            return { success: false, error: 'Invalid report target type' };
+        }
+        if (!reason.trim()) return { success: false, error: 'Reason is required' };
+        if (!Number.isInteger(targetId) || targetId < 1) return { success: false, error: 'Invalid target' };
+
         const supabase = await createClient();
         const { error } = await supabase
             .from('reports')
@@ -91,7 +110,7 @@ export async function submitReportAction(
                 reporter_id: user.id,
                 target_type: targetType,
                 target_id: targetId,
-                reason,
+                reason: reason.trim(),
                 description: description?.trim() || null,
             });
         if (error) throw new Error(error.message);

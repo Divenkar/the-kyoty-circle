@@ -125,10 +125,12 @@ interface PostCardProps {
         initialComments?: PostComment[];
     };
     currentUserId?: number;
+    currentUserName?: string;
+    currentUserAvatar?: string | null;
     communitySlug?: string;
 }
 
-export function PostCard({ post: initialPost, currentUserId, communitySlug }: PostCardProps) {
+export function PostCard({ post: initialPost, currentUserId, currentUserName, currentUserAvatar, communitySlug }: PostCardProps) {
     const [post, setPost] = useState(initialPost);
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState<PostComment[]>(initialPost.initialComments ?? []);
@@ -169,7 +171,7 @@ export function PostCard({ post: initialPost, currentUserId, communitySlug }: Po
                     content: text,
                     is_deleted: false,
                     created_at: new Date().toISOString(),
-                    author: undefined,
+                    author: currentUserName && currentUserId ? { id: currentUserId, name: currentUserName, avatar_url: currentUserAvatar ?? null } : undefined,
                 };
                 setComments((c) => [...c, optimistic]);
                 setPost((p) => ({ ...p, comment_count: p.comment_count + 1 }));
@@ -180,6 +182,7 @@ export function PostCard({ post: initialPost, currentUserId, communitySlug }: Po
     };
 
     const handleDeletePost = () => {
+        if (!window.confirm('Are you sure you want to delete this post? This cannot be undone.')) return;
         startTransition(async () => {
             const res = await deletePostAction(post.id);
             if (!res.success) toast.error(res.error);
@@ -228,6 +231,7 @@ export function PostCard({ post: initialPost, currentUserId, communitySlug }: Po
                         disabled={isPending}
                         className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-300 hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-50"
                         title="Delete post"
+                        aria-label="Delete post"
                     >
                         <Trash2 size={13} />
                     </button>
@@ -273,20 +277,25 @@ export function PostCard({ post: initialPost, currentUserId, communitySlug }: Po
                     </button>
 
                     {showReactionPicker && (
-                        <div className="absolute bottom-full left-0 mb-2 flex gap-1 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl z-10">
-                            {REACTIONS.map((r) => (
-                                <button
-                                    key={r.type}
-                                    onClick={() => handleReact(r.type)}
-                                    title={r.label}
-                                    className={`flex h-9 w-9 items-center justify-center rounded-xl text-lg transition-all hover:scale-125 ${
-                                        post.user_reaction_type === r.type ? 'bg-primary-50 scale-110' : 'hover:bg-neutral-100'
-                                    }`}
-                                >
-                                    {r.emoji}
-                                </button>
-                            ))}
-                        </div>
+                        <>
+                            {/* Backdrop to close picker */}
+                            <div className="fixed inset-0 z-[5]" onClick={() => setShowReactionPicker(false)} />
+                            <div className="absolute bottom-full left-0 mb-2 flex gap-1 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl z-10" role="group" aria-label="Reaction picker">
+                                {REACTIONS.map((r) => (
+                                    <button
+                                        key={r.type}
+                                        onClick={() => handleReact(r.type)}
+                                        title={r.label}
+                                        aria-label={r.label}
+                                        className={`flex h-9 w-9 items-center justify-center rounded-xl text-lg transition-all hover:scale-125 ${
+                                            post.user_reaction_type === r.type ? 'bg-primary-50 scale-110' : 'hover:bg-neutral-100'
+                                        }`}
+                                    >
+                                        {r.emoji}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
                     )}
                 </div>
 
@@ -330,6 +339,7 @@ export function PostCard({ post: initialPost, currentUserId, communitySlug }: Po
                             <button
                                 onClick={handleComment}
                                 disabled={!commentText.trim() || isPending}
+                                aria-label="Send comment"
                                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-600 text-white transition hover:bg-primary-700 disabled:opacity-40"
                             >
                                 <Send size={13} />

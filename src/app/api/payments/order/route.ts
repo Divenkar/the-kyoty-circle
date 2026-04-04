@@ -1,9 +1,15 @@
 import Razorpay from 'razorpay';
 import { NextRequest } from 'next/server';
+import { getCurrentUser } from '@/lib/auth-server';
 import { apiOk, apiError } from '@/lib/api-response';
+
+const MAX_AMOUNT_INR = 100_000; // ₹1,00,000 cap
 
 export async function POST(req: NextRequest) {
     try {
+        const user = await getCurrentUser();
+        if (!user) return apiError('Authentication required', 401);
+
         const { amount, eventId, ticketTierId } = await req.json();
 
         if (!amount || !eventId) {
@@ -12,6 +18,14 @@ export async function POST(req: NextRequest) {
 
         if (!Number.isFinite(amount) || amount <= 0) {
             return apiError('Amount must be a positive number', 400);
+        }
+
+        if (amount > MAX_AMOUNT_INR) {
+            return apiError(`Amount exceeds maximum (₹${MAX_AMOUNT_INR.toLocaleString()})`, 400);
+        }
+
+        if (!Number.isInteger(eventId) || eventId < 1) {
+            return apiError('Invalid event ID', 400);
         }
 
         const keyId = process.env.RAZORPAY_KEY_ID;

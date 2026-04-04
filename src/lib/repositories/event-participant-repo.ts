@@ -51,7 +51,7 @@ export const EventParticipantRepository = {
             .eq('status', 'waitlisted')
             .order('waitlist_position', { ascending: true })
             .limit(1)
-            .single();
+            .maybeSingle();
 
         if (!data) return null;
 

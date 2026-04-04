@@ -7,8 +7,10 @@ import { CoverImageUploader } from '@/components/CoverImageUploader';
 import type { Community } from '@/types';
 import { EVENT_CATEGORIES } from '@/types';
 import { toast } from 'sonner';
-import { Calendar, ArrowLeft, Globe, Lock } from 'lucide-react';
+import { Calendar, ArrowLeft, Globe, Lock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+
+const TODAY = new Date().toISOString().split('T')[0];
 
 export default function CreateEventPage() {
     const [communities, setCommunities] = React.useState<Community[]>([]);
@@ -103,6 +105,19 @@ export default function CreateEventPage() {
                     Fill in the details below. Your event will be reviewed before going live.
                 </p>
 
+                {communities.length === 0 && !loading && (
+                    <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                        <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-sm font-medium text-amber-800">No communities available</p>
+                            <p className="text-xs text-amber-700 mt-1">
+                                You need to create or manage a community before you can create events.{' '}
+                                <Link href="/create-community" className="font-semibold underline hover:text-amber-900">Create a community</Link>
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 sm:p-8 space-y-5">
                     {/* Cover Photo */}
                     <div>
@@ -176,6 +191,7 @@ export default function CreateEventPage() {
                                 name="date"
                                 type="date"
                                 required
+                                min={TODAY}
                                 className="w-full px-4 py-2.5 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all"
                             />
                         </div>
@@ -388,8 +404,7 @@ export default function CreateEventPage() {
                         </div>
                     </div>
 
-                    {/* Hidden city field */}
-                    <input type="hidden" name="city" value="Noida" />
+                    {/* City is derived from the selected community's city */}
 
                     {error && (
                         <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
