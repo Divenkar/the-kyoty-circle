@@ -1,4 +1,5 @@
 import { CommunityRepository } from '@/lib/repositories/community-repo';
+import { CityRepository } from '@/lib/repositories/city-repo';
 import { getCurrentUser } from '@/lib/auth-server';
 import { CommunityCard } from '@/components/CommunityCard';
 import { CommunitiesFilters } from '@/components/CommunitiesFilters';
@@ -17,21 +18,13 @@ interface CommunitiesPageProps {
     searchParams: Promise<{ city?: string; q?: string; category?: string }>;
 }
 
-const CITY_OPTIONS = [
-    { label: 'All Cities', value: 'all' },
-    { label: 'Noida', value: 'Noida' },
-    { label: 'Delhi', value: 'Delhi' },
-    { label: 'Gurgaon', value: 'Gurgaon' },
-    { label: 'Bangalore', value: 'Bangalore' },
-];
-
 export default async function CommunitiesPage({ searchParams }: CommunitiesPageProps) {
     const params = await searchParams;
     const city = params.city || 'all';
     const query = params.q || '';
     const category = params.category || 'all';
 
-    const [communities, currentUser] = await Promise.all([
+    const [communities, currentUser, allCities] = await Promise.all([
         cached(
             () => CommunityRepository.search({ city, query, category }),
             ['communities', city, query, category],
@@ -39,7 +32,13 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
             60, // 60s revalidation for community listing
         ),
         getCurrentUser(),
+        CityRepository.getAll().catch(() => []),
     ]);
+
+    const cityOptions = [
+        { label: 'All Cities', value: 'all' },
+        ...allCities.map((c) => ({ label: c.name, value: c.name })),
+    ];
 
     // Fetch interest-based suggestions when user has tags and no active filters
     const hasFilters = query || (category && category !== 'all');
@@ -87,7 +86,7 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
 
                     {/* City filter pills */}
                     <div className="mt-7 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                        {CITY_OPTIONS.map((option) => (
+                        {cityOptions.map((option) => (
                             <Link
                                 key={option.value}
                                 href={`/communities?city=${option.value}${query ? `&q=${encodeURIComponent(query)}` : ''}${category !== 'all' ? `&category=${encodeURIComponent(category)}` : ''}`}

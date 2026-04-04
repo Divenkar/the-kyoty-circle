@@ -1,17 +1,25 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Platform, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Platform, StatusBar, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useAuth as useClerkAuth } from '@clerk/clerk-expo';
+import { useAuth } from '../context/AuthContext';
+import { createSupabaseClient } from '../lib/supabase';
 
-const PRIMARY_COLOR = '#FF5A5F';
+const PRIMARY_COLOR = '#6C47FF';
+const PRIMARY_LIGHT = '#F5F3FF';
 
 export default function EventDetailScreen() {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { event } = route.params;
+    const { user } = useAuth();
+    const { getToken } = useClerkAuth();
+    const [rsvpLoading, setRsvpLoading] = useState(false);
+    const [rsvpDone, setRsvpDone] = useState(false);
 
     const handleBack = () => {
         if (Platform.OS !== 'web') {
@@ -24,8 +32,41 @@ export default function EventDetailScreen() {
         if (Platform.OS !== 'web') {
             await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         }
-        // TODO: Open RSVP Bottom Sheet
-        console.log("RSVP Pressed for", event.id);
+
+        if (!user || user.id === 0) {
+            Alert.alert('Error', 'Please sign in to RSVP for events.');
+            return;
+        }
+
+        setRsvpLoading(true);
+        try {
+            const token = await getToken({ template: 'supabase' }).catch(() => null)
+                ?? await getToken().catch(() => null);
+            const supabase = createSupabaseClient(token);
+
+            const { error } = await supabase
+                .from('event_participants')
+                .insert({
+                    event_id: event.id,
+                    user_id: user.id,
+                    status: 'registered',
+                });
+
+            if (error) {
+                if (error.code === '23505') {
+                    Alert.alert('Already Registered', 'You have already RSVP\'d for this event.');
+                } else {
+                    Alert.alert('Error', error.message || 'Failed to register for event.');
+                }
+            } else {
+                setRsvpDone(true);
+                Alert.alert('Success', 'You have been registered for this event!');
+            }
+        } catch (e: any) {
+            Alert.alert('Error', e?.message || 'Something went wrong.');
+        } finally {
+            setRsvpLoading(false);
+        }
     };
 
     const formattedDate = new Date(event.date).toLocaleDateString(undefined, {
@@ -119,8 +160,18 @@ export default function EventDetailScreen() {
                                     {event.price_per_person ? `₹${event.price_per_person}` : 'Free'}
                                 </Text>
                             </View>
-                            <TouchableOpacity style={styles.rsvpButton} onPress={handleRSVP}>
-                                <Text style={styles.rsvpButtonText}>Get Tickets</Text>
+                            <TouchableOpacity
+                                style={[styles.rsvpButton, rsvpDone && styles.rsvpButtonDone]}
+                                onPress={handleRSVP}
+                                disabled={rsvpLoading || rsvpDone}
+                            >
+                                {rsvpLoading ? (
+                                    <ActivityIndicator color="#FFF" />
+                                ) : (
+                                    <Text style={styles.rsvpButtonText}>
+                                        {rsvpDone ? 'Registered' : 'Get Tickets'}
+                                    </Text>
+                                )}
                             </TouchableOpacity>
                         </View>
                     </SafeAreaView>
@@ -177,7 +228,7 @@ const styles = StyleSheet.create({
         marginTop: -32,
     },
     communityBadge: {
-        backgroundColor: '#FEE2E2',
+        backgroundColor: PRIMARY_LIGHT,
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 8,
@@ -211,7 +262,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 16,
-        backgroundColor: '#FEE2E2', // Light red
+        backgroundColor: PRIMARY_LIGHT,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
@@ -283,6 +334,10 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 12,
         elevation: 6,
+    },
+    rsvpButtonDone: {
+        backgroundColor: '#10B981',
+        shadowColor: '#10B981',
     },
     rsvpButtonText: {
         color: '#FFF',

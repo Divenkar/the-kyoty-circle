@@ -6,6 +6,7 @@
 import { useState, type FormEvent } from "react";
 import { Mail, Clock, Send, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { submitContactFormAction } from "@/server/actions/contact.actions";
 
 const subjects = [
   { value: "general", label: "General Inquiry" },
@@ -33,12 +34,19 @@ export default function ContactPage() {
 
     setIsSubmitting(true);
 
-    // Simulate a short delay for UX
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    toast.success("Message sent! We'll get back to you soon.");
-    setFormData({ name: "", email: "", subject: "general", message: "" });
-    setIsSubmitting(false);
+    try {
+      const result = await submitContactFormAction(formData);
+      if (result.success) {
+        toast.success("Message sent! We'll get back to you soon.");
+        setFormData({ name: "", email: "", subject: "general", message: "" });
+      } else {
+        toast.error(result.error || "Something went wrong.");
+      }
+    } catch {
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

@@ -4,12 +4,15 @@ import { getCurrentUser } from '@/lib/auth-server';
 import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { EventParticipantRepository } from '@/lib/repositories/event-participant-repo';
 import { CommunityMemberRepository } from '@/lib/repositories/community-member-repo';
+import { CityRepository } from '@/lib/repositories/city-repo';
+import type { City } from '@/types';
 
-const CITIES = [
-  { name: 'Noida', status: 'active' as const, href: '/explore?city=Noida', blurb: 'Live now with curated communities and meetups.' },
-  { name: 'Delhi', status: 'coming_soon' as const, href: '/communities?city=Delhi', blurb: 'Interest list open for launch partners.' },
-  { name: 'Gurgaon', status: 'coming_soon' as const, href: '/communities?city=Gurgaon', blurb: 'Great for founder, fitness, and hobby circles.' },
-  { name: 'Bangalore', status: 'coming_soon' as const, href: '/communities?city=Bangalore', blurb: 'Tech, creator, and culture communities next.' },
+// Fallback if DB fetch fails
+const FALLBACK_CITIES = [
+  { name: 'Noida', is_active: true },
+  { name: 'Delhi', is_active: false },
+  { name: 'Gurgaon', is_active: false },
+  { name: 'Bangalore', is_active: false },
 ];
 
 const VALUE_PROPS = [
@@ -291,6 +294,14 @@ export default async function LandingPage() {
       return <PersonalizedHome user={user} />;
   }
 
+  let cities: Pick<City, 'name' | 'is_active'>[];
+  try {
+      cities = await CityRepository.getAll();
+      if (cities.length === 0) cities = FALLBACK_CITIES;
+  } catch {
+      cities = FALLBACK_CITIES;
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
       {/* Hero */}
@@ -338,18 +349,18 @@ export default async function LandingPage() {
 
           {/* City cards */}
           <div className="grid gap-4 sm:grid-cols-2">
-            {CITIES.map((city) => (
-              city.status === 'active' ? (
+            {cities.slice(0, 4).map((city) => (
+              city.is_active ? (
                 <Link
                   key={city.name}
-                  href={city.href}
+                  href={`/explore?city=${encodeURIComponent(city.name)}`}
                   className="group rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-md transition-all hover:-translate-y-1 hover:bg-white/15"
                 >
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white">
                     <MapPin size={20} />
                   </div>
                   <h2 className="text-lg font-semibold">{city.name}</h2>
-                  <p className="mt-1.5 text-sm text-white/70">{city.blurb}</p>
+                  <p className="mt-1.5 text-sm text-white/70">Live now with curated communities and meetups.</p>
                   <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-green-400/20 px-3 py-1 text-xs font-semibold text-green-100">
                     <span className="h-1.5 w-1.5 rounded-full bg-green-300 animate-pulse" />
                     Live now
@@ -364,7 +375,7 @@ export default async function LandingPage() {
                     <MapPin size={20} />
                   </div>
                   <h2 className="text-lg font-semibold text-white">{city.name}</h2>
-                  <p className="mt-1.5 text-sm text-white/60">{city.blurb}</p>
+                  <p className="mt-1.5 text-sm text-white/60">Interest list open — launching soon.</p>
                   <div className="mt-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
                     Coming soon
                   </div>

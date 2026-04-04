@@ -20,9 +20,34 @@ import {
 import NextImage from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 
 interface CommunityPageProps {
     params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: CommunityPageProps): Promise<Metadata> {
+    const { slug } = await params;
+    const community = await (isNaN(Number(slug))
+        ? CommunityRepository.findBySlug(slug)
+        : CommunityRepository.findById(Number(slug)));
+    if (!community) return { title: 'Community Not Found' };
+
+    return {
+        title: `${community.name} | Kyoty`,
+        description: community.description || `Join ${community.name} on Kyoty`,
+        openGraph: {
+            title: community.name,
+            description: community.description || `Discover ${community.name} — a community on Kyoty`,
+            images: community.cover_image_url ? [community.cover_image_url] : [],
+            type: 'website',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: community.name,
+            description: community.description || `Discover ${community.name} — a community on Kyoty`,
+        },
+    };
 }
 
 export default async function CommunityPage({ params }: CommunityPageProps) {
