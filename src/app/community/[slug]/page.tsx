@@ -4,6 +4,7 @@ import { CommunityMemberRepository } from '@/lib/repositories/community-member-r
 import { CommunityRolesRepository } from '@/lib/repositories/community-roles-repo';
 import { CommunityRatingsRepository } from '@/lib/repositories/community-ratings-repo';
 import { getCurrentUser } from '@/lib/auth-server';
+import { cached, CacheTags } from '@/lib/cache';
 import { EventCard } from '@/components/EventCard';
 import { CommunityTabNav } from '@/components/CommunityTabNav';
 import { CommunityRatingForm } from '@/components/CommunityRatingForm';
@@ -27,14 +28,24 @@ interface CommunityPageProps {
 export default async function CommunityPage({ params }: CommunityPageProps) {
     const { slug } = await params;
 
-    const community = isNaN(Number(slug))
-        ? await CommunityRepository.findBySlug(slug)
-        : await CommunityRepository.findById(Number(slug));
+    const community = await cached(
+        () => isNaN(Number(slug))
+            ? CommunityRepository.findBySlug(slug)
+            : CommunityRepository.findById(Number(slug)),
+        ['community-detail', slug],
+        [CacheTags.communityDetail(slug), CacheTags.COMMUNITIES],
+        60,
+    );
 
     if (!community) notFound();
 
     const [events, currentUser] = await Promise.all([
-        EventRepository.findByCommunity(community.id),
+        cached(
+            () => EventRepository.findByCommunity(community.id),
+            ['community-events', String(community.id)],
+            [CacheTags.communityDetail(slug), CacheTags.EXPLORE_EVENTS],
+            30,
+        ),
         getCurrentUser(),
     ]);
 
@@ -68,7 +79,12 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
         currentUser && isMember
             ? CommunityRatingsRepository.findByUser(community.id, currentUser.id)
             : Promise.resolve(null),
-        CommunityRolesRepository.listByCommunity(community.id),
+        cached(
+            () => CommunityRolesRepository.listByCommunity(community.id),
+            ['community-moderators', String(community.id)],
+            [CacheTags.communityDetail(slug)],
+            60,
+        ),
     ]);
 
     const organizerName = community.organizer?.name || 'Community host';
@@ -94,7 +110,7 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
     return (
         <div className="min-h-screen bg-neutral-50">
             {/* Cover */}
-            <div className="relative h-56 sm:h-72 bg-gradient-to-br from-primary-400 to-primary-600">
+            <div className="relative h-56 sm:h-72 bg-gradient-to-br from-primary-500 to-primary-700">
                 {community.cover_image_url ? (
                     <NextImage src={community.cover_image_url} alt={community.name} fill className="object-cover" />
                 ) : (
@@ -302,7 +318,7 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                                     <div className="mt-5 hidden lg:flex items-center gap-3 rounded-xl border border-primary-100 bg-primary-50 px-4 py-3">
                                         <Rss size={16} className="text-primary-600 shrink-0" />
                                         <p className="text-sm text-primary-800">
-                                            You're a member.{' '}
+                                            You&apos;re a member.{' '}
                                             <Link href={`/community/${slug}/feed`} className="font-semibold underline hover:text-primary-900">
                                                 Go to the community feed →
                                             </Link>

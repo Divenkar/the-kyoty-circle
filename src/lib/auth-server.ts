@@ -1,5 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@/utils/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { User, UserRole } from '@/types';
 
 export async function getCurrentUserId(): Promise<string | null> {
@@ -32,19 +33,26 @@ export async function getCurrentUser(): Promise<User | null> {
             email: clerkUser?.emailAddresses[0]?.emailAddress ?? '',
             name: clerkUser?.fullName ?? clerkUser?.firstName ?? clerkUser?.emailAddresses[0]?.emailAddress?.split('@')[0] ?? 'User',
             avatarUrl: clerkUser?.imageUrl,
-        });
+        }, supabase);
     } catch {
         return null;
     }
 }
 
-export async function ensureUser(profile: {
-    authId: string;
-    email: string;
-    name: string;
-    avatarUrl?: string | null;
-}): Promise<User> {
-    const supabase = await createClient();
+/**
+ * Idempotent user creation. When called from a webhook (no user session),
+ * pass an explicit service client via the `client` parameter.
+ */
+export async function ensureUser(
+    profile: {
+        authId: string;
+        email: string;
+        name: string;
+        avatarUrl?: string | null;
+    },
+    client?: SupabaseClient,
+): Promise<User> {
+    const supabase = client ?? await createClient();
     const { data: existing } = await supabase
         .from('kyoty_users')
         .select('*')

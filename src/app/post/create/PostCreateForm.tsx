@@ -155,7 +155,7 @@ export function PostCreateForm({ communities, defaultCommunitySlug }: PostCreate
                             </label>
                             {communities.length === 0 ? (
                                 <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-4 py-3 text-center">
-                                    <p className="text-xs text-neutral-500">You haven't joined any communities yet.</p>
+                                    <p className="text-xs text-neutral-500">You haven&apos;t joined any communities yet.</p>
                                     <Link href="/communities" className="mt-1.5 inline-block text-xs font-medium text-primary-600 hover:underline">
                                         Browse communities →
                                     </Link>

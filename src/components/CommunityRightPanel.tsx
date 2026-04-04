@@ -169,7 +169,7 @@ export function CommunityRightPanel({
 
             {/* Share CTA */}
             <div className="rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 to-violet-50 p-4">
-                <p className="text-xs font-semibold text-primary-900 mb-1">Know someone who'd love this?</p>
+                <p className="text-xs font-semibold text-primary-900 mb-1">Know someone who&apos;d love this?</p>
                 <p className="text-[11px] text-primary-600 mb-3">Share this community with friends.</p>
                 <Link
                     href={`/community/${communitySlug}`}

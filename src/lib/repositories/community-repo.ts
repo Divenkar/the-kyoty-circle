@@ -111,7 +111,14 @@ export const CommunityRepository = {
             .order('member_count', { ascending: false });
 
         if (params.query?.trim()) {
-            q = q.or(`name.ilike.%${params.query.trim()}%,description.ilike.%${params.query.trim()}%`);
+            // Use Postgres full-text search (tsvector) for ranked results.
+            // Falls back to ilike for single-character queries where tsquery would fail.
+            const trimmed = params.query.trim();
+            if (trimmed.length >= 2) {
+                q = q.textSearch('search_vector', trimmed, { type: 'websearch' });
+            } else {
+                q = q.or(`name.ilike.%${trimmed}%,description.ilike.%${trimmed}%`);
+            }
         }
         if (params.category && params.category !== 'all') {
             q = q.ilike('category', params.category);

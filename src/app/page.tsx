@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Calendar, CheckCircle, Compass, MapPin, Shield, Sparkles, Users, Rss, Bell, LayoutDashboard } from 'lucide-react';
+import { ArrowRight, Calendar, CheckCircle, Compass, MapPin, Shield, Sparkles, Users, Rss, Bell, LayoutDashboard, Search, Star, Zap } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth-server';
 import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { EventParticipantRepository } from '@/lib/repositories/event-participant-repo';
@@ -38,23 +38,20 @@ const HOW_IT_WORKS = [
     step: '01',
     title: 'Browse communities',
     desc: 'Explore verified communities across categories like fitness, tech, arts, and more — all in your city.',
+    icon: Search,
   },
   {
     step: '02',
     title: 'Apply to join',
     desc: 'Request to join communities you love. Organizers review and approve members to keep quality high.',
+    icon: Users,
   },
   {
     step: '03',
     title: 'Attend real events',
     desc: 'RSVP for community-hosted events, meet like-minded people, and build your offline social life.',
+    icon: Star,
   },
-];
-
-const STATS = [
-  { label: 'City launch focus', value: 'Noida first' },
-  { label: 'Discovery-first UX', value: 'Events + communities' },
-  { label: 'Designed for trust', value: 'Verified hosts' },
 ];
 
 // ─── Personalized Home (authenticated) ───────────────────────────────────────
@@ -84,19 +81,27 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
     return (
         <div className="min-h-screen bg-neutral-50">
             {/* Personalized Hero */}
-            <div className="border-b border-neutral-200 bg-[radial-gradient(ellipse_at_top_left,_rgba(99,102,241,0.12),_transparent_50%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+            <div className="border-b border-neutral-200 bg-[radial-gradient(ellipse_at_top_left,_rgba(108,71,255,0.1),_transparent_50%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
                 <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Welcome back</p>
                             <h1 className="mt-1 text-2xl font-bold text-neutral-900 sm:text-3xl">
-                                Hey, {displayName} 👋
+                                Hey, {displayName}
                             </h1>
                             {interestTags.length > 0 && (
-                                <p className="mt-1 text-sm text-neutral-500">
-                                    Your interests: {interestTags.slice(0, 4).join(' · ')}
-                                    {interestTags.length > 4 ? ` +${interestTags.length - 4}` : ''}
-                                </p>
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {interestTags.slice(0, 4).map((tag) => (
+                                        <span key={tag} className="rounded-lg bg-primary-50 px-2.5 py-0.5 text-xs font-medium text-primary-700">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                    {interestTags.length > 4 && (
+                                        <span className="rounded-lg bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-500">
+                                            +{interestTags.length - 4}
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -108,7 +113,7 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                                 Dashboard
                             </Link>
                             <Link
-                                href="/notifications"
+                                href="/activity"
                                 className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-primary-300"
                             >
                                 <Bell size={15} />
@@ -147,14 +152,14 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                                     </div>
                                     <div className="flex items-center justify-between text-xs text-neutral-500">
                                         <span>{c.member_count || 0} members</span>
-                                        <span className="text-primary-600 font-medium">View →</span>
+                                        <span className="text-primary-600 font-medium">View &rarr;</span>
                                     </div>
                                 </Link>
                             ))}
                         </div>
                         <div className="mt-3 text-right">
                             <Link href="/communities" className="text-xs font-medium text-primary-600 hover:text-primary-700">
-                                Browse all communities →
+                                Browse all communities &rarr;
                             </Link>
                         </div>
                     </section>
@@ -169,7 +174,7 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                                 <h2 className="text-base font-bold text-neutral-900">My Communities</h2>
                             </div>
                             <Link href="/dashboard" className="text-xs font-medium text-primary-600 hover:text-primary-700">
-                                View all →
+                                View all &rarr;
                             </Link>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -210,7 +215,7 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                                 <h2 className="text-base font-bold text-neutral-900">Upcoming Events</h2>
                             </div>
                             <Link href="/explore" className="text-xs font-medium text-primary-600 hover:text-primary-700">
-                                Find more →
+                                Find more &rarr;
                             </Link>
                         </div>
                         <div className="space-y-2">
@@ -246,9 +251,9 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                     </section>
                 )}
 
-                {/* Empty state — no communities or events yet */}
+                {/* Empty state */}
                 {approvedMemberships.length === 0 && upcomingRSVPs.length === 0 && suggestedCommunities.length === 0 && (
-                    <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 to-indigo-700 px-6 py-10 text-white text-center">
+                    <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 px-6 py-10 text-white text-center">
                         <Sparkles size={32} className="mx-auto mb-4 opacity-80" />
                         <h3 className="text-xl font-bold">Your feed is empty for now</h3>
                         <p className="mt-2 text-sm text-primary-100/80 max-w-sm mx-auto">
@@ -282,7 +287,6 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
 export default async function LandingPage() {
   const user = await getCurrentUser();
 
-  // Show personalized home for signed-in users who completed onboarding
   if (user && user.onboarding_completed) {
       return <PersonalizedHome user={user} />;
   }
@@ -290,26 +294,28 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.25),_transparent_35%),linear-gradient(135deg,#111827_0%,#312e81_52%,#4338ca_100%)] text-white">
+      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(108,71,255,0.3),_transparent_40%),linear-gradient(135deg,#0f172a_0%,#1e1b4b_52%,#4338ca_100%)] text-white">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-32 right-[-6rem] h-80 w-80 rounded-full bg-primary-300/20 blur-3xl" />
+          <div className="absolute -top-32 right-[-6rem] h-80 w-80 rounded-full bg-primary-400/20 blur-3xl" />
           <div className="absolute bottom-[-8rem] left-[-5rem] h-72 w-72 rounded-full bg-fuchsia-400/15 blur-3xl" />
         </div>
 
         <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:py-28">
           <div className="max-w-3xl">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
-              <Sparkles size={16} className="text-amber-300" />
-              Building the most trusted way to discover communities in your city
+              <Zap size={16} className="text-amber-300" />
+              The most trusted way to discover communities in your city
             </div>
 
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Discover beautiful,
-              <span className="block text-primary-200">real-world communities and events.</span>
+            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+              Discover real-world
+              <span className="block bg-gradient-to-r from-primary-200 to-violet-200 bg-clip-text text-transparent">
+                communities & events.
+              </span>
             </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-primary-50/85 sm:text-xl">
-              Kyoty helps people find verified communities, join curated gatherings, and build an offline social life around shared interests.
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/75 sm:text-xl">
+              Find verified communities, join curated gatherings, and build an offline social life around shared interests.
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -328,51 +334,38 @@ export default async function LandingPage() {
                 <Compass size={18} />
               </Link>
             </div>
-
-            <div className="mt-12 grid gap-4 sm:grid-cols-3">
-              {STATS.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
-                  <div className="text-lg font-bold text-white">{item.value}</div>
-                  <div className="mt-1 text-sm text-primary-100/80">{item.label}</div>
-                </div>
-              ))}
-            </div>
           </div>
 
+          {/* City cards */}
           <div className="grid gap-4 sm:grid-cols-2">
             {CITIES.map((city) => (
               city.status === 'active' ? (
                 <Link
                   key={city.name}
                   href={city.href}
-                  className="group rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur-md transition-all hover:-translate-y-1 hover:bg-white/15"
+                  className="group rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-md transition-all hover:-translate-y-1 hover:bg-white/15"
                 >
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-white">
-                    <MapPin size={22} />
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white">
+                    <MapPin size={20} />
                   </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-xl font-semibold">{city.name}</h2>
-                      <p className="mt-2 text-sm text-primary-100/80">{city.blurb}</p>
-                    </div>
-                    <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-                  </div>
-                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-green-400/20 px-3 py-1 text-xs font-semibold text-green-100">
-                    <span className="h-2 w-2 rounded-full bg-green-300" />
+                  <h2 className="text-lg font-semibold">{city.name}</h2>
+                  <p className="mt-1.5 text-sm text-white/70">{city.blurb}</p>
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-green-400/20 px-3 py-1 text-xs font-semibold text-green-100">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-300 animate-pulse" />
                     Live now
                   </div>
                 </Link>
               ) : (
                 <div
                   key={city.name}
-                  className="rounded-3xl border border-white/10 bg-white/5 p-5 text-white/80 backdrop-blur-sm"
+                  className="rounded-2xl border border-white/10 bg-white/5 p-5 text-white/80 backdrop-blur-sm"
                 >
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-                    <MapPin size={22} />
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                    <MapPin size={20} />
                   </div>
-                  <h2 className="text-xl font-semibold text-white">{city.name}</h2>
-                  <p className="mt-2 text-sm text-primary-100/70">{city.blurb}</p>
-                  <div className="mt-4 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-primary-100/85">
+                  <h2 className="text-lg font-semibold text-white">{city.name}</h2>
+                  <p className="mt-1.5 text-sm text-white/60">{city.blurb}</p>
+                  <div className="mt-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
                     Coming soon
                   </div>
                 </div>
@@ -384,44 +377,51 @@ export default async function LandingPage() {
 
       {/* Why Kyoty */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
-        <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">Why Kyoty works</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-neutral-900">A calmer, cleaner way to discover offline social experiences</h2>
-          </div>
-          <p className="max-w-xl text-sm leading-7 text-neutral-500 sm:text-base">
-            We believe the best social experiences happen offline, in trusted spaces, with people who share your interests. Kyoty makes finding those people effortless.
+        <div className="mb-12 max-w-2xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">Why Kyoty works</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+            A calmer, cleaner way to discover offline social experiences
+          </h2>
+          <p className="mt-4 text-base leading-7 text-neutral-500">
+            We believe the best social experiences happen offline, in trusted spaces, with people who share your interests.
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {VALUE_PROPS.map((item) => (
-            <div key={item.title} className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
-              <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${item.gradient} text-white shadow-lg`}>
-                <item.icon size={24} />
+            <div key={item.title} className="group rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+              <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${item.gradient} text-white shadow-lg`}>
+                <item.icon size={22} />
               </div>
-              <h3 className="text-xl font-semibold text-neutral-900">{item.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-neutral-600">{item.desc}</p>
+              <h3 className="text-lg font-semibold text-neutral-900">{item.title}</h3>
+              <p className="mt-2.5 text-sm leading-6 text-neutral-500">{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* How it works */}
-      <section className="bg-white border-y border-neutral-200">
+      <section className="border-y border-neutral-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <div className="text-center mb-14">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">Simple by design</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-neutral-900">How Kyoty works</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900">How Kyoty works</h2>
           </div>
           <div className="grid gap-8 md:grid-cols-3">
-            {HOW_IT_WORKS.map((item) => (
-              <div key={item.step} className="flex flex-col items-center text-center">
-                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 text-2xl font-extrabold text-primary-600">
-                  {item.step}
+            {HOW_IT_WORKS.map((item, i) => (
+              <div key={item.step} className="relative flex flex-col items-center text-center">
+                {/* Connector line */}
+                {i < HOW_IT_WORKS.length - 1 && (
+                  <div className="absolute left-[calc(50%+2rem)] top-7 hidden h-px w-[calc(100%-4rem)] bg-neutral-200 md:block" />
+                )}
+                <div className="relative mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50">
+                  <item.icon size={24} className="text-primary-600" />
+                  <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary-600 text-[10px] font-bold text-white">
+                    {item.step}
+                  </span>
                 </div>
                 <h3 className="text-lg font-semibold text-neutral-900">{item.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-neutral-500">{item.desc}</p>
+                <p className="mt-2.5 text-sm leading-6 text-neutral-500">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -431,36 +431,36 @@ export default async function LandingPage() {
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[2rem] border border-neutral-200 bg-white p-8 shadow-sm sm:p-10">
+          <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm sm:p-10">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">What you get</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900">Everything you need to build a great social life</h2>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
               {[
                 'Browse events by city and category',
                 'Join trusted, members-only communities',
                 'RSVP for curated, real-world gatherings',
                 'Start your own community and host events',
               ].map((item) => (
-                <div key={item} className="flex items-start gap-3 rounded-2xl bg-neutral-50 p-4">
-                  <CheckCircle size={18} className="mt-0.5 shrink-0 text-primary-500" />
+                <div key={item} className="flex items-start gap-3 rounded-xl bg-neutral-50 p-4">
+                  <CheckCircle size={16} className="mt-0.5 shrink-0 text-primary-500" />
                   <span className="text-sm font-medium text-neutral-700">{item}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-[2rem] bg-gradient-to-br from-primary-600 to-primary-800 p-8 text-white shadow-xl shadow-primary-900/10 sm:p-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-100">Get started today</p>
+          <div className="rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 p-8 text-white shadow-xl sm:p-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-100/80">Get started today</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight">Join Kyoty and find your people in Noida.</h2>
-            <p className="mt-4 text-sm leading-7 text-primary-100/85 sm:text-base">
+            <p className="mt-4 text-sm leading-7 text-primary-100/80 sm:text-base">
               Explore live communities and events, RSVP instantly, or start your own community and shape local culture.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3 font-semibold text-primary-700 transition hover:bg-primary-50">
+              <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-primary-700 transition hover:bg-primary-50">
                 Create account
                 <ArrowRight size={18} />
               </Link>
-              <Link href="/communities" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 px-6 py-3 font-semibold text-white transition hover:bg-white/10">
+              <Link href="/communities" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3 font-semibold text-white transition hover:bg-white/10">
                 Browse communities
                 <Users size={18} />
               </Link>

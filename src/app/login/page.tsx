@@ -218,7 +218,7 @@ function LoginPageContent() {
     // ── Render ────────────────────────────────────────────────
 
     return (
-        <div className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-neutral-50 px-4 py-8">
+        <div className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-[radial-gradient(ellipse_at_top_right,_rgba(108,71,255,0.08),_transparent_50%)] px-4 py-8">
             <div className="w-full max-w-md">
                 {/* Back to home */}
                 <Link
@@ -229,7 +229,7 @@ function LoginPageContent() {
                     Back to home
                 </Link>
 
-                <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
+                <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-lg shadow-neutral-900/5 sm:p-8">
 
                     {/* ── Step: Email verification ────────────────────── */}
                     {step === 'verify-email' && (
@@ -285,7 +285,7 @@ function LoginPageContent() {
                             </div>
                             <h1 className="mt-4 text-xl font-bold text-neutral-900">Reset your password</h1>
                             <p className="mt-2 text-sm text-neutral-500">
-                                Enter your email and we'll send a reset code.
+                                Enter your email and we&apos;ll send a reset code.
                             </p>
 
                             <form onSubmit={handleForgotPassword} className="mt-6 space-y-4">

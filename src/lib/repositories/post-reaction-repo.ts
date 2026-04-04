@@ -1,11 +1,11 @@
-import { createServiceClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/server';
 
 export type ReactionType = 'like' | 'fire' | 'heart' | 'clap';
 
 export const PostReactionRepository = {
     /** Toggle a reaction — if same type exists remove it, otherwise upsert */
     async toggle(postId: number, userId: number, type: ReactionType): Promise<'added' | 'removed'> {
-        const supabase = await createServiceClient();
+        const supabase = await createClient();
 
         // Check existing
         const { data: existing } = await supabase
@@ -35,7 +35,7 @@ export const PostReactionRepository = {
     },
 
     async countByPost(postId: number): Promise<number> {
-        const supabase = await createServiceClient();
+        const supabase = await createClient();
         const { count } = await supabase
             .from('post_reactions')
             .select('id', { count: 'exact', head: true })

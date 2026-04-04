@@ -7,11 +7,13 @@ import {
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth as useClerkAuth } from '@clerk/clerk-expo';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
-const PRIMARY_COLOR = '#FF5A5F';
-const BG_COLOR = '#FAFAFA';
+const PRIMARY_COLOR = '#6C47FF';
+const PRIMARY_LIGHT = '#F5F3FF';
+const BG_COLOR = '#F8FAFC';
 
 interface Event {
     id: number;
@@ -46,6 +48,7 @@ const MOCK_EVENTS: Event[] = [
 
 export default function DiscoveryFeed() {
     const { logout } = useAuth();
+    const { getToken } = useClerkAuth();
     const navigation = useNavigation<any>();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,7 +60,11 @@ export default function DiscoveryFeed() {
     const fetchEvents = async () => {
         try {
             const apiBase = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
-            const res = await fetch(`${apiBase}/api/mobile/events`);
+            const token = await getToken({ template: 'supabase' }).catch(() => null)
+                ?? await getToken().catch(() => null);
+            const res = await fetch(`${apiBase}/api/mobile/events`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
             const json = await res.json();
             if (json.success && json.data?.length > 0) {
                 const mapped = json.data.map((e: any, i: number) => ({
@@ -87,22 +94,25 @@ export default function DiscoveryFeed() {
         if (Platform.OS !== 'web') {
             await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
-        logout(); // Let users log out for now
+        logout();
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" />
 
-            {/* Header with Glassmorphism */}
+            {/* Header */}
             <BlurView intensity={80} tint="light" style={styles.header}>
                 <View style={styles.headerContent}>
-                    <Text style={styles.headerTitle}>Kyoty</Text>
+                    <View>
+                        <Text style={styles.headerTitle}>Kyoty</Text>
+                        <Text style={styles.headerSubtitle}>Discover events near you</Text>
+                    </View>
                     <TouchableOpacity
                         style={styles.profileBtn}
                         onPress={handleProfilePress}
                     >
-                        <Ionicons name="log-out-outline" size={32} color="#333" />
+                        <Ionicons name="log-out-outline" size={24} color="#6B7280" />
                     </TouchableOpacity>
                 </View>
             </BlurView>
@@ -111,6 +121,7 @@ export default function DiscoveryFeed() {
             {loading ? (
                 <View style={styles.center}>
                     <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+                    <Text style={styles.loadingText}>Finding events...</Text>
                 </View>
             ) : (
                 <FlatList
@@ -126,26 +137,49 @@ export default function DiscoveryFeed() {
                         >
                             <Image source={{ uri: item.image_placeholder }} style={styles.cardImage} />
 
+                            {/* Date badge on image */}
+                            <View style={styles.dateBadge}>
+                                <Text style={styles.dateBadgeMonth}>
+                                    {new Date(item.date).toLocaleDateString(undefined, { month: 'short' }).toUpperCase()}
+                                </Text>
+                                <Text style={styles.dateBadgeDay}>
+                                    {new Date(item.date).getDate()}
+                                </Text>
+                            </View>
+
+                            {/* Price badge */}
+                            <View style={styles.priceBadge}>
+                                <Text style={styles.priceText}>
+                                    {item.price_per_person ? `₹${item.price_per_person}` : 'Free'}
+                                </Text>
+                            </View>
+
                             <View style={styles.cardContent}>
-                                <View style={styles.badge}>
-                                    <Text style={styles.badgeText}>{item.communities?.name || 'Community'}</Text>
+                                {/* Community pill */}
+                                <View style={styles.communityPill}>
+                                    <View style={styles.communityDot} />
+                                    <Text style={styles.communityText}>{item.communities?.name || 'Community'}</Text>
                                 </View>
 
                                 <Text style={styles.title} numberOfLines={2}>
                                     {item.title}
                                 </Text>
 
-                                <View style={styles.row}>
-                                    <Ionicons name="location-outline" size={16} color="#666" />
-                                    <Text style={styles.subtitle}>{item.location_text}</Text>
+                                <View style={styles.metaRow}>
+                                    <Ionicons name="location-outline" size={14} color="#6B7280" />
+                                    <Text style={styles.metaText}>{item.location_text}</Text>
                                 </View>
 
-                                <View style={[styles.row, { marginTop: 12, justifyContent: 'space-between' }]}>
-                                    <Text style={styles.date}>
-                                        {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                    </Text>
-                                    <Text style={styles.price}>
-                                        {item.price_per_person ? `₹${item.price_per_person}` : 'Free'}
+                                <View style={styles.metaRow}>
+                                    <Ionicons name="calendar-outline" size={14} color="#6B7280" />
+                                    <Text style={styles.metaText}>
+                                        {new Date(item.date).toLocaleDateString(undefined, {
+                                            weekday: 'short',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        })}
                                     </Text>
                                 </View>
                             </View>
@@ -165,7 +199,13 @@ const styles = StyleSheet.create({
     center: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        gap: 12,
+    },
+    loadingText: {
+        fontSize: 14,
+        color: '#6B7280',
+        fontWeight: '500',
     },
     header: {
         position: 'absolute',
@@ -176,84 +216,131 @@ const styles = StyleSheet.create({
     },
     headerContent: {
         paddingHorizontal: 20,
-        paddingVertical: 16,
+        paddingVertical: 14,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.4)',
-        paddingTop: 40 // Make sure safe area header is big enough for iOS
+        backgroundColor: 'rgba(248,250,252,0.85)',
+        paddingTop: 40,
     },
     headerTitle: {
-        fontSize: 28,
+        fontSize: 26,
         fontWeight: '800',
         color: PRIMARY_COLOR,
         letterSpacing: -0.5,
     },
+    headerSubtitle: {
+        fontSize: 13,
+        color: '#6B7280',
+        marginTop: 2,
+        fontWeight: '500',
+    },
     profileBtn: {
-        padding: 4,
+        height: 40,
+        width: 40,
+        borderRadius: 12,
+        backgroundColor: '#F1F5F9',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     listContainer: {
-        paddingTop: 120, // accommodate fixed header
+        paddingTop: 120,
         paddingBottom: 40,
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
     },
     card: {
         backgroundColor: '#FFF',
-        borderRadius: 20,
-        marginBottom: 24,
+        borderRadius: 16,
+        marginBottom: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.08,
-        shadowRadius: 16,
-        elevation: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 3,
+        overflow: 'hidden',
     },
     cardImage: {
         width: '100%',
-        height: 200,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        height: 180,
+    },
+    dateBadge: {
+        position: 'absolute',
+        top: 12,
+        left: 12,
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        alignItems: 'center',
+        minWidth: 44,
+    },
+    dateBadgeMonth: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: PRIMARY_COLOR,
+        letterSpacing: 0.5,
+    },
+    dateBadgeDay: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: '#0F172A',
+        lineHeight: 22,
+    },
+    priceBadge: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+    },
+    priceText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#0F172A',
     },
     cardContent: {
-        padding: 20,
+        padding: 16,
     },
-    badge: {
-        backgroundColor: '#F3F4F6',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-        alignSelf: 'flex-start',
-        marginBottom: 12,
-    },
-    badgeText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#4B5563',
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#111827',
-        marginBottom: 8,
-        lineHeight: 26,
-    },
-    row: {
+    communityPill: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: PRIMARY_LIGHT,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        alignSelf: 'flex-start',
+        marginBottom: 10,
+        gap: 6,
     },
-    subtitle: {
-        fontSize: 14,
-        color: '#6B7280',
-        marginLeft: 6,
-        fontWeight: '500',
+    communityDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: PRIMARY_COLOR,
     },
-    date: {
-        fontSize: 15,
+    communityText: {
+        fontSize: 12,
         fontWeight: '600',
         color: PRIMARY_COLOR,
     },
-    price: {
-        fontSize: 16,
+    title: {
+        fontSize: 17,
         fontWeight: '700',
-        color: '#111827',
-    }
+        color: '#0F172A',
+        marginBottom: 10,
+        lineHeight: 22,
+    },
+    metaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 4,
+    },
+    metaText: {
+        fontSize: 13,
+        color: '#6B7280',
+        fontWeight: '500',
+    },
 });

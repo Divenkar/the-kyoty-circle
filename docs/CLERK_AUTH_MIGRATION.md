@@ -484,3 +484,27 @@ npm uninstall @supabase/ssr
 1. Export users from `auth.users` in Supabase
 2. Import into Clerk via Backend API (`/v1/users`) — Clerk assigns new IDs
 3. Run a data script to update `kyoty_users.auth_id` to the new Clerk IDs
+
+---
+
+## Outstanding: Mobile Auth Unification
+
+**Status**: The web stack is fully migrated to Clerk. The mobile app (`kyoty-mobile/`) still uses Supabase Auth directly via `supabase.auth.getSession()` and `supabase.auth.onAuthStateChange()`.
+
+**Impact**: Mobile API routes (e.g. `/api/mobile/events`) call `getCurrentUser()` which expects a Clerk session. Mobile requests will fail auth and receive 401s because they send Supabase tokens, not Clerk tokens.
+
+### Recommended Strategy: Clerk Expo SDK
+
+1. Install `@clerk/clerk-expo` in the mobile app.
+2. Replace `AuthContext.tsx` with Clerk's `<ClerkProvider>` and `useAuth()` hooks.
+3. Mobile API calls include the Clerk session token in the `Authorization` header.
+4. Server-side `createClient()` already handles Clerk JWTs — no backend changes needed.
+
+### Alternative: Token Bridge
+
+If a full mobile migration is too disruptive short-term:
+1. Keep Supabase Auth on mobile.
+2. Add a `/api/auth/bridge` endpoint that accepts a Supabase JWT, verifies it, looks up the user by email, and returns a Clerk session token.
+3. Mobile calls the bridge on login, then uses Clerk tokens for all subsequent requests.
+
+**Decision needed**: Full migration is cleaner and eliminates dual-auth maintenance. Token bridge is a stopgap that adds complexity. Recommend full migration as a dedicated sprint.

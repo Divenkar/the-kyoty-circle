@@ -2,6 +2,7 @@ import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { ensureUser } from '@/lib/auth-server';
+import { createServiceClient } from '@/utils/supabase/server';
 
 type ClerkUserCreatedEvent = {
     type: 'user.created';
@@ -45,7 +46,9 @@ export async function POST(req: Request) {
         const email = email_addresses[0]?.email_address ?? '';
 
         try {
-            await ensureUser({ authId: id, email, name, avatarUrl: image_url });
+            // Webhook has no user session — use service client explicitly.
+            const supabase = createServiceClient();
+            await ensureUser({ authId: id, email, name, avatarUrl: image_url }, supabase);
         } catch (err) {
             console.error('Failed to create kyoty_users row for Clerk user:', id, err);
             return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 });

@@ -3,6 +3,8 @@
 import { getCurrentUser } from '@/lib/auth-server';
 import { EventService } from '@/lib/services/event-service';
 import { EventRepository } from '@/lib/repositories/event-repo';
+import { revalidateTag } from 'next/cache';
+import { CacheTags } from '@/lib/cache';
 import type { ActionResponse, KyotyEvent } from '@/types';
 
 export async function cloneEventAction(eventId: number): Promise<ActionResponse<KyotyEvent>> {
@@ -121,6 +123,7 @@ export async function createEventAction(
         })();
 
         const event = await EventService.createEvent({ ...data, initialStatus });
+        revalidateTag(CacheTags.EXPLORE_EVENTS);
 
         // Insert ticket tiers if any
         if (data.pricing_model === 'tiered' && ticketTiers.length > 0) {

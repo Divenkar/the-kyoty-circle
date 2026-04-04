@@ -10,7 +10,8 @@ import { CommunityMediaRepository } from '@/lib/repositories/community-media-rep
 import { AdminLogRepository } from '@/lib/repositories/admin-log-repo';
 import { createClient } from '@/utils/supabase/server';
 import type { ActionResponse } from '@/types';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
+import { CacheTags } from '@/lib/cache';
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
@@ -209,6 +210,7 @@ export async function deleteCommunityAction(communityId: number): Promise<Action
             target_id: communityId,
         });
         revalidatePath('/admin/communities');
+        revalidateTag(CacheTags.COMMUNITIES);
         return { success: true };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to delete community' };
@@ -233,6 +235,7 @@ export async function toggleCommunityStatusAction(
         });
         revalidatePath('/admin/communities');
         revalidatePath(`/admin/community/${communityId}`);
+        revalidateTag(CacheTags.COMMUNITIES);
         return { success: true };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to update community status' };
@@ -258,6 +261,7 @@ export async function updateCommunityInfoAction(
         });
         revalidatePath(`/admin/community/${communityId}`);
         revalidatePath('/admin/communities');
+        revalidateTag(CacheTags.COMMUNITIES);
         return { success: true };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to update community' };
@@ -347,6 +351,7 @@ export async function updateEventStatusAction(
             target_id: eventId,
         });
         revalidatePath('/admin/events');
+        revalidateTag(CacheTags.EXPLORE_EVENTS);
         return { success: true };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to update event status' };

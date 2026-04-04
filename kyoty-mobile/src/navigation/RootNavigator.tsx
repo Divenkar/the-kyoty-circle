@@ -11,7 +11,7 @@ import EventDetailScreen from '../screens/EventDetailScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
-    const { session, isLoading } = useAuth();
+    const { isSignedIn, isLoading } = useAuth();
 
     if (isLoading) {
         return (
@@ -24,11 +24,9 @@ export default function RootNavigator() {
     return (
         <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
-                {!session ? (
-                    // Auth Stack
+                {!isSignedIn ? (
                     <Stack.Screen name="Login" component={LoginScreen} />
                 ) : (
-                    // App Stack
                     <>
                         <Stack.Screen name="Discovery" component={DiscoveryFeed} />
                         <Stack.Screen name="EventDetail" component={EventDetailScreen} />

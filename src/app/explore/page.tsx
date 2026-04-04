@@ -3,6 +3,7 @@ import { EventCard } from '@/components/EventCard';
 import { EVENT_CATEGORIES } from '@/types';
 import { FilterBar } from '@/components/FilterBar';
 import { ExploreMobileActionBar } from '@/components/ExploreMobileActionBar';
+import { cached, CacheTags } from '@/lib/cache';
 import Link from 'next/link';
 import { CalendarRange, MapPin, Sparkles } from 'lucide-react';
 import { Suspense } from 'react';
@@ -26,18 +27,24 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
     const sort = params.sort || 'latest';
 
     const hasFilters = params.q || params.from || params.to || params.price;
-    const events = hasFilters
-        ? await EventRepository.search({
-            query: params.q,
-            dateFrom: params.from,
-            dateTo: params.to,
-            isPaid: params.price === 'paid' ? true : params.price === 'free' ? false : undefined,
-            city: city === 'all' ? undefined : city,
-            category,
-        })
-        : city === 'all'
-            ? await EventRepository.findAll(category)
-            : await EventRepository.findByCity(city, category);
+    const events = await cached(
+        () =>
+            hasFilters
+                ? EventRepository.search({
+                    query: params.q,
+                    dateFrom: params.from,
+                    dateTo: params.to,
+                    isPaid: params.price === 'paid' ? true : params.price === 'free' ? false : undefined,
+                    city: city === 'all' ? undefined : city,
+                    category,
+                })
+                : city === 'all'
+                    ? EventRepository.findAll(category)
+                    : EventRepository.findByCity(city, category),
+        ['explore-events', city, category, params.q ?? '', params.from ?? '', params.to ?? '', params.price ?? ''],
+        [CacheTags.EXPLORE_EVENTS],
+        30, // 30s revalidation for explore
+    );
 
     const sortedEvents = [...events].sort((a, b) => {
         const left = new Date(a.date).getTime();
@@ -61,7 +68,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
 
     return (
         <div className="min-h-screen bg-neutral-50">
-            <div className="border-b border-neutral-200 bg-[radial-gradient(circle_at_top_right,_rgba(129,140,248,0.16),_transparent_25%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+            <div className="border-b border-neutral-200 bg-[radial-gradient(circle_at_top_right,_rgba(108,71,255,0.1),_transparent_30%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
                 <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
                     <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
                         <div>

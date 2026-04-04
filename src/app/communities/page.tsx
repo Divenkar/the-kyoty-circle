@@ -2,6 +2,7 @@ import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { getCurrentUser } from '@/lib/auth-server';
 import { CommunityCard } from '@/components/CommunityCard';
 import { CommunitiesFilters } from '@/components/CommunitiesFilters';
+import { cached, CacheTags } from '@/lib/cache';
 import { MapPin, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -31,7 +32,12 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
     const category = params.category || 'all';
 
     const [communities, currentUser] = await Promise.all([
-        CommunityRepository.search({ city, query, category }),
+        cached(
+            () => CommunityRepository.search({ city, query, category }),
+            ['communities', city, query, category],
+            [CacheTags.COMMUNITIES],
+            60, // 60s revalidation for community listing
+        ),
         getCurrentUser(),
     ]);
 
@@ -53,7 +59,7 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
     return (
         <div className="min-h-screen bg-neutral-50">
             {/* Header */}
-            <div className="border-b border-neutral-200 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+            <div className="border-b border-neutral-200 bg-[radial-gradient(circle_at_top_left,_rgba(108,71,255,0.1),_transparent_30%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
                 <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
                     <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
                         <div>

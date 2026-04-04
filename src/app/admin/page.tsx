@@ -11,7 +11,7 @@ import {
     Calendar,
     AlertTriangle,
     UserCircle,
-    Image,
+    Image as ImageIcon,
     Activity,
     ChevronRight,
 } from 'lucide-react';
@@ -89,7 +89,7 @@ export default async function AdminPage() {
                 <StatCard icon={<UserCircle size={16} />} color="violet" value={stats.totalUsers} label="Users" />
                 <StatCard icon={<Calendar size={16} />} color="blue" value={stats.totalEvents} label="Events" />
                 <StatCard icon={<Users size={16} />} color="green" value={stats.totalMembers} label="Active Members" />
-                <StatCard icon={<Image size={16} />} color="amber" value={stats.totalMedia} label="Media Items" />
+                <StatCard icon={<ImageIcon size={16} />} color="amber" value={stats.totalMedia} label="Media Items" />
             </div>
 
             {/* Pending alert */}

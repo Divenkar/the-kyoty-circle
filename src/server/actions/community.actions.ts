@@ -6,6 +6,8 @@ import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { CommunityRolesRepository } from '@/lib/repositories/community-roles-repo';
 import { CityRepository } from '@/lib/repositories/city-repo';
 import { createCommunitySchema } from '@/lib/validations/community.schema';
+import { revalidateTag } from 'next/cache';
+import { CacheTags } from '@/lib/cache';
 import type { ActionResponse, Community } from '@/types';
 
 export async function createCommunityAction(
@@ -78,6 +80,7 @@ export async function createCommunityAction(
             assigned_by: user.id,
         });
 
+        revalidateTag(CacheTags.COMMUNITIES);
         return { success: true, data: community };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to create community' };
@@ -93,6 +96,7 @@ export async function joinCommunityAction(
         if (!user) return { success: false, error: 'Authentication required' };
 
         const result = await CommunityService.requestToJoin(communityId, user.id, opts);
+        revalidateTag(CacheTags.COMMUNITIES);
         return { success: true, data: { memberStatus: result.status } };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to join community' };

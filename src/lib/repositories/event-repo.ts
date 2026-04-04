@@ -240,9 +240,14 @@ export const EventRepository = {
             }
         }
 
-        // Keyword search
+        // Keyword search — use Postgres full-text search for 2+ char queries
         if (params.query) {
-            query = query.or(`title.ilike.%${params.query}%,description.ilike.%${params.query}%`);
+            const trimmed = params.query.trim();
+            if (trimmed.length >= 2) {
+                query = query.textSearch('search_vector', trimmed, { type: 'websearch' });
+            } else {
+                query = query.or(`title.ilike.%${trimmed}%,description.ilike.%${trimmed}%`);
+            }
         }
 
         // Date range

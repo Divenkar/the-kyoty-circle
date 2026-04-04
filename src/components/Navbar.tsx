@@ -10,6 +10,7 @@ import {
     LayoutDashboard,
     LogOut,
     Menu,
+    Search,
     Settings,
     Shield,
     User as UserIcon,
@@ -246,6 +247,15 @@ function MobileMenu({
     return (
         <div className="border-t border-neutral-200 bg-white px-4 py-4 md:hidden max-h-[calc(100vh-4.5rem)] overflow-y-auto">
             <nav aria-label="Mobile navigation">
+                {/* Mobile search */}
+                <Link
+                    href="/search"
+                    className="mb-3 flex items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-500 transition hover:border-primary-300"
+                >
+                    <Search size={16} />
+                    Search communities, events...
+                </Link>
+
                 <div className="space-y-1">
                     {navLinks.map((link) => (
                         <MobileNavLink key={link.href} {...link} isActive={isActive(link.href)} />
@@ -384,6 +394,18 @@ export function Navbar({
                             </div>
                         ))}
                     </div>
+
+                    {/* Search bar */}
+                    <Link
+                        href="/search"
+                        className="hidden items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm text-neutral-400 transition-colors hover:border-primary-300 hover:text-neutral-600 md:flex"
+                    >
+                        <Search size={15} />
+                        <span className="min-w-[100px]">Search...</span>
+                        <kbd className="ml-2 rounded-md border border-neutral-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-neutral-400">
+                            /
+                        </kbd>
+                    </Link>
 
                     {/* Right side */}
                     <div className="flex items-center gap-2 sm:gap-3">

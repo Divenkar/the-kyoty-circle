@@ -233,12 +233,12 @@ export default async function DashboardPage() {
     return (
         <div className="min-h-screen bg-neutral-50">
             {/* ── Header ───────────────────────────────────────────────── */}
-            <div className="border-b border-neutral-200 bg-[radial-gradient(ellipse_at_top_left,_rgba(99,102,241,0.12),_transparent_50%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+            <div className="border-b border-neutral-200 bg-[radial-gradient(ellipse_at_top_left,_rgba(108,71,255,0.1),_transparent_50%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
                 <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                         {/* Avatar + name */}
                         <div className="flex items-center gap-4">
-                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-base font-bold text-white shadow-md">
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-base font-bold text-white shadow-lg shadow-primary-600/20">
                                 {avatarInitials}
                             </div>
                             <div>
@@ -473,7 +473,7 @@ export default async function DashboardPage() {
 
                 {/* ── Explore CTA ───────────────────────────────────── */}
                 <section>
-                    <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 to-indigo-700 px-6 py-8 text-white sm:px-8">
+                    <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 px-6 py-8 text-white sm:px-8">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <div className="mb-1 flex items-center gap-2">

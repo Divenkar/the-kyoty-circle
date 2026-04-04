@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useAuth as useClerkAuth, useUser as useClerkUser } from '@clerk/clerk-expo';
+import { createSupabaseClient } from '../lib/supabase';
 
 type User = {
     id: number;
@@ -10,130 +11,81 @@ type User = {
 
 type AuthContextType = {
     user: User | null;
-    session: any | null;
+    isSignedIn: boolean;
     isLoading: boolean;
-    login: (email: string, password: string) => Promise<{ error: string | null }>;
-    register: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
     logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
-    session: null,
+    isSignedIn: false,
     isLoading: true,
-    login: async () => ({ error: 'Not initialized' }),
-    register: async () => ({ error: 'Not initialized' }),
-    logout: async () => { },
+    logout: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const { isSignedIn, isLoaded, signOut, getToken } = useClerkAuth();
+    const { user: clerkUser } = useClerkUser();
     const [user, setUser] = useState<User | null>(null);
-    const [session, setSession] = useState<any | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const hydrateSession = async () => {
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                if (session) {
-                    setSession(session);
-                    fetchUserDetails(session.user.id);
-                } else {
-                    setIsLoading(false);
-                }
-            } catch (e) {
-                console.log('Error hydrating session', e);
-                setIsLoading(false);
-            }
-        };
+    const fetchUserProfile = useCallback(async () => {
+        if (!isSignedIn || !clerkUser) {
+            setUser(null);
+            setIsLoading(false);
+            return;
+        }
 
-        hydrateSession();
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            if (session?.user) {
-                fetchUserDetails(session.user.id);
-            } else {
-                setUser(null);
-                setIsLoading(false);
-            }
-        });
-
-        return () => {
-            subscription.unsubscribe();
-        };
-    }, []);
-
-    const fetchUserDetails = async (authId: string) => {
         try {
-            const { data, error } = await supabase
+            const token = await getToken({ template: 'supabase' }).catch(() => null)
+                ?? await getToken().catch(() => null);
+            const supabase = createSupabaseClient(token);
+
+            const { data } = await supabase
                 .from('kyoty_users')
                 .select('*')
-                .eq('auth_id', authId)
+                .eq('auth_id', clerkUser.id)
                 .single();
 
             if (data) {
                 setUser(data as User);
+            } else {
+                // User row may not exist yet (webhook race).
+                // The web-side ensureUser() will create it on next server action.
+                setUser({
+                    id: 0,
+                    email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+                    name: clerkUser.fullName ?? clerkUser.firstName ?? 'User',
+                    role: 'participant',
+                });
             }
         } catch (e) {
             console.error('Error fetching user profile', e);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [isSignedIn, clerkUser, getToken]);
 
-    const login = async (email: string, password: string) => {
-        setIsLoading(true);
-        try {
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) return { error: error.message };
-            return { error: null };
-        } catch (e: any) {
-            return { error: e.message };
-        } finally {
-            setIsLoading(false);
+    useEffect(() => {
+        if (isLoaded) {
+            fetchUserProfile();
         }
-    };
-
-    const register = async (email: string, password: string, name: string) => {
-        setIsLoading(true);
-        try {
-            const { data, error } = await supabase.auth.signUp({ email, password });
-            if (error) return { error: error.message };
-
-            if (data?.user) {
-                const { error: profileError } = await supabase
-                    .from('kyoty_users')
-                    .insert({
-                        auth_id: data.user.id,
-                        email,
-                        name,
-                        role: 'participant',
-                    });
-
-                if (profileError) {
-                    console.error('Failed to create profile record', profileError);
-                }
-            }
-
-            return { error: null };
-        } catch (e: any) {
-            return { error: e.message };
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [isLoaded, isSignedIn, fetchUserProfile]);
 
     const logout = async () => {
         setIsLoading(true);
-        await supabase.auth.signOut();
+        await signOut();
         setUser(null);
-        setSession(null);
         setIsLoading(false);
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, isLoading, login, register, logout }}>
+        <AuthContext.Provider value={{
+            user,
+            isSignedIn: isSignedIn ?? false,
+            isLoading: !isLoaded || isLoading,
+            logout,
+        }}>
             {children}
         </AuthContext.Provider>
     );

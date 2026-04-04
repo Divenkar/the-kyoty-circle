@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/server';
 
 export interface CommunityPost {
     id: number;
@@ -73,7 +73,7 @@ export const PostRepository = {
         content: string;
         image_url?: string | null;
     }): Promise<CommunityPost> {
-        const supabase = await createServiceClient();
+        const supabase = await createClient();
         const { data: post, error } = await supabase
             .from('community_posts')
             .insert(data)
@@ -85,7 +85,7 @@ export const PostRepository = {
 
     /** Soft-delete a post */
     async softDelete(id: number): Promise<void> {
-        const supabase = await createServiceClient();
+        const supabase = await createClient();
         const { error } = await supabase
             .from('community_posts')
             .update({ is_deleted: true })

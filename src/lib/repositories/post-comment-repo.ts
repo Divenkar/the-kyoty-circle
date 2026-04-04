@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/server';
 
 export interface PostComment {
     id: number;
@@ -37,7 +37,7 @@ export const PostCommentRepository = {
         user_id: number;
         content: string;
     }): Promise<PostComment> {
-        const supabase = await createServiceClient();
+        const supabase = await createClient();
         const { data: comment, error } = await supabase
             .from('post_comments')
             .insert(data)
@@ -48,7 +48,7 @@ export const PostCommentRepository = {
     },
 
     async softDelete(id: number): Promise<void> {
-        const supabase = await createServiceClient();
+        const supabase = await createClient();
         const { error } = await supabase
             .from('post_comments')
             .update({ is_deleted: true })

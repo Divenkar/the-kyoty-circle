@@ -13,8 +13,9 @@ This is the right stack for the current stage. Supabase handles auth, database, 
 **Bottlenecks to fix NOW (before any marketing spend):**
 - Add indexes (migration 016) — done.
 - Enforce per-query `limit()` on all repository calls — done.
-- Fix `USING (true)` RLS policies to filter at the DB level — see migration 017.
-- Add `revalidate` or `unstable_cache` on high-traffic read paths (explore, community detail).
+- Fix `USING (true)` RLS policies to filter at the DB level — done (migration 023).
+- Add `unstable_cache` on high-traffic read paths (explore, communities) — done.
+- **Connection pooling note:** All queries go through `@supabase/supabase-js` (PostgREST API), not direct Postgres connections. PostgREST has its own connection pool managed by Supabase. Direct pooling (Supavisor port 6543) is only needed if you add direct Postgres access (e.g., Prisma, Drizzle, or background job workers). Not required at current scale.
 
 ---
 
