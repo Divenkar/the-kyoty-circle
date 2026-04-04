@@ -192,12 +192,12 @@ export function PostCreateForm({ communities, defaultCommunitySlug }: PostCreate
                                         : 'Share something interesting, ask a question, or start a discussion…'
                                 }
                                 rows={5}
-                                maxLength={2000}
+                                maxLength={5000}
                                 className="w-full resize-none rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
                                 required
                             />
                             <div className="mt-1 text-right text-xs text-neutral-400">
-                                {content.length}/2000
+                                {content.length}/5000
                             </div>
                         </div>
 

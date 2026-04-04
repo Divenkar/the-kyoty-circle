@@ -24,7 +24,7 @@ export default async function PostCreatePage({ searchParams }: PostCreatePagePro
     const memberships = await CommunityMemberRepository.listByUser(currentUser.id);
 
     const communities = memberships
-        .filter((m) => m.communities?.status === 'approved')
+        .filter((m) => ['active', 'approved', 'open'].includes(m.communities?.status))
         .map((m) => ({
             id: m.communities.id as number,
             name: m.communities.name as string,
