@@ -106,13 +106,23 @@ export default async function AdminEventsPage() {
                                         </div>
                                     </td>
                                     <td className="px-5 py-3.5">
-                                        <Link
-                                            href={`/event/${e.id}`}
-                                            className="p-1.5 rounded-lg text-neutral-400 hover:text-primary-600 hover:bg-primary-50 transition-colors inline-flex"
-                                            title="View event"
-                                        >
-                                            <ExternalLink size={13} />
-                                        </Link>
+                                        <div className="flex items-center gap-1">
+                                            <Link
+                                                href={`/admin/event/${e.id}`}
+                                                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors inline-flex"
+                                                title="Manage"
+                                            >
+                                                <Users size={13} />
+                                            </Link>
+                                            <Link
+                                                href={`/event/${e.id}`}
+                                                target="_blank"
+                                                className="p-1.5 rounded-lg text-neutral-400 hover:text-primary-600 hover:bg-primary-50 transition-colors inline-flex"
+                                                title="View live"
+                                            >
+                                                <ExternalLink size={13} />
+                                            </Link>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

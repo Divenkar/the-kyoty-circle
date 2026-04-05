@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/lib/auth-server';
 import { createClient } from '@/utils/supabase/server';
 import type { User } from '@/types';
 import { UserRoleSelect } from './UserRoleSelect';
+import Link from 'next/link';
+import { ExternalLink } from 'lucide-react';
 
 const ROLE_COLOR: Record<string, string> = {
     participant: 'bg-neutral-100 text-neutral-600',
@@ -52,6 +54,7 @@ export default async function AdminUsersPage() {
                                 <th className="px-5 py-3">Social Proof</th>
                                 <th className="px-5 py-3">Joined</th>
                                 <th className="px-5 py-3">Role</th>
+                                <th className="px-5 py-3">View</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100">
@@ -101,11 +104,20 @@ export default async function AdminUsersPage() {
                                             isSelf={u.id === user.id}
                                         />
                                     </td>
+                                    <td className="px-5 py-3.5">
+                                        <Link
+                                            href={`/admin/user/${u.id}`}
+                                            className="p-1.5 rounded-lg text-neutral-400 hover:text-primary-600 hover:bg-primary-50 transition-colors inline-flex"
+                                            title="View user details"
+                                        >
+                                            <ExternalLink size={13} />
+                                        </Link>
+                                    </td>
                                 </tr>
                             ))}
                             {users.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-sm text-neutral-400">
+                                    <td colSpan={6} className="py-12 text-center text-sm text-neutral-400">
                                         No users found.
                                     </td>
                                 </tr>

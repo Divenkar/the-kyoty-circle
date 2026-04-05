@@ -387,3 +387,35 @@ export async function updateUserRoleAction(
         return { success: false, error: err instanceof Error ? err.message : 'Failed to update user role' };
     }
 }
+
+/* ─────���───────────────────────────────────────
+   Report management actions
+───────────────────────────────────────────── */
+
+export async function resolveReportAction(
+    reportId: number,
+    newStatus: 'resolved' | 'dismissed'
+): Promise<ActionResponse> {
+    try {
+        const user = await getCurrentUser();
+        if (!user || !isPlatformAdmin(user.role)) {
+            return { success: false, error: 'Admin access required' };
+        }
+        const supabase = await createClient();
+        const { error } = await supabase
+            .from('reports')
+            .update({ status: newStatus, resolved_at: new Date().toISOString() })
+            .eq('id', reportId);
+        if (error) throw new Error(error.message);
+        await AdminLogRepository.create({
+            admin_id: user.id,
+            action: newStatus === 'resolved' ? 'resolve_report' : 'dismiss_report',
+            target_type: 'report',
+            target_id: reportId,
+        });
+        revalidatePath('/admin/reports');
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to update report' };
+    }
+}

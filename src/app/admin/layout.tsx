@@ -1,11 +1,17 @@
 import Link from 'next/link';
-import { Shield, Users, Calendar, LayoutDashboard, UserCircle } from 'lucide-react';
+import {
+    Shield, Users, Calendar, LayoutDashboard, UserCircle,
+    AlertTriangle, IndianRupee, Activity,
+} from 'lucide-react';
 
 const NAV_ITEMS = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/communities', label: 'Communities', icon: Users },
     { href: '/admin/events', label: 'Events', icon: Calendar },
     { href: '/admin/users', label: 'Users', icon: UserCircle },
+    { href: '/admin/reports', label: 'Reports', icon: AlertTriangle },
+    { href: '/admin/payments', label: 'Payments', icon: IndianRupee },
+    { href: '/admin/activity', label: 'Activity', icon: Activity },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

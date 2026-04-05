@@ -116,7 +116,7 @@ export default async function AdminPage() {
                     { href: '/admin/communities', icon: <Users size={16} />, label: 'Communities', sub: `${stats.totalCommunities} total` },
                     { href: '/admin/events', icon: <Calendar size={16} />, label: 'Events', sub: `${stats.totalEvents} total` },
                     { href: '/admin/users', icon: <UserCircle size={16} />, label: 'Users', sub: `${stats.totalUsers} total` },
-                    { href: '/admin/communities', icon: <AlertTriangle size={16} />, label: 'Pending Approvals', sub: `${totalPending} waiting` },
+                    { href: '/admin/reports', icon: <AlertTriangle size={16} />, label: 'Reports', sub: 'Moderation queue' },
                 ].map(({ href, icon, label, sub }) => (
                     <Link
                         key={label}

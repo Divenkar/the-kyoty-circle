@@ -8,7 +8,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import {
     ArrowRight, Calendar, Clock, Compass, MessageSquare,
-    Plus, Settings, Users, Ticket, ChevronRight, Globe, Bookmark, MapPin
+    Plus, Settings, Users, Ticket, ChevronRight, Globe, Bookmark, MapPin,
+    Bell, IndianRupee,
 } from 'lucide-react';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -293,6 +294,33 @@ export default async function DashboardPage() {
                             </div>
                         ))}
                     </div>
+                </div>
+            </div>
+
+            {/* ── Quick Nav ─────────────────────────────────────────────── */}
+            <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-6">
+                <div className="flex flex-wrap gap-2">
+                    <Link
+                        href="/dashboard/events"
+                        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:text-primary-700 shadow-sm"
+                    >
+                        <Calendar size={14} />
+                        My Events
+                    </Link>
+                    <Link
+                        href="/dashboard/payments"
+                        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:text-primary-700 shadow-sm"
+                    >
+                        <IndianRupee size={14} />
+                        Payments
+                    </Link>
+                    <Link
+                        href="/notifications"
+                        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:text-primary-700 shadow-sm"
+                    >
+                        <Bell size={14} />
+                        Notifications
+                    </Link>
                 </div>
             </div>
 
