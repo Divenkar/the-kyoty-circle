@@ -135,27 +135,27 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
     return (
         <div className="min-h-screen bg-neutral-50">
             {/* Cover */}
-            <div className="relative h-56 sm:h-72 bg-gradient-to-br from-primary-500 to-primary-700">
+            <div className="relative h-48 sm:h-64 bg-gradient-to-br from-primary-500 to-primary-700">
                 {community.cover_image_url ? (
                     <NextImage src={community.cover_image_url} alt={community.name} fill className="object-cover" />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <Users size={52} className="text-primary-300" />
+                        <Users size={48} className="text-primary-300" />
                     </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <Link
                     href="/communities"
-                    className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-xl bg-white/20 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/30 sm:left-6 sm:top-6"
+                    className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/30 sm:left-6 sm:top-6"
                 >
-                    <ArrowLeft size={16} />
-                    Communities
+                    <ArrowLeft size={15} />
+                    Back
                 </Link>
 
                 {/* Community name on cover */}
                 <div className="absolute bottom-0 left-0 right-0 px-4 pb-5 sm:px-8">
-                    <h1 className="text-2xl font-bold text-white sm:text-3xl drop-shadow-sm">{community.name}</h1>
-                    <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-white/80">
+                    <h1 className="font-display text-xl text-white sm:text-2xl drop-shadow-sm">{community.name}</h1>
+                    <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/80">
                         <span className="flex items-center gap-1.5">
                             <MapPin size={13} />
                             {community.city_name || 'Noida'}
@@ -165,24 +165,15 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                             {memberCount} {memberCount === 1 ? 'member' : 'members'}
                         </span>
                         {community.category && (
-                            <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm">
+                            <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm">
                                 {community.category}
                             </span>
                         )}
                         {community.rating_count > 0 && community.rating_avg != null && (
                             <span className="flex items-center gap-1">
-                                {[1, 2, 3, 4, 5].map(s => (
-                                    <Star
-                                        key={s}
-                                        size={12}
-                                        className={s <= Math.round(Number(community.rating_avg))
-                                            ? 'fill-amber-400 text-amber-400'
-                                            : 'fill-white/30 text-white/30'
-                                        }
-                                    />
-                                ))}
-                                <span className="ml-0.5 font-medium">{Number(community.rating_avg).toFixed(1)}</span>
-                                <span className="text-white/60">· {community.rating_count} review{community.rating_count !== 1 ? 's' : ''}</span>
+                                <Star size={12} className="fill-amber-400 text-amber-400" />
+                                <span className="font-medium">{Number(community.rating_avg).toFixed(1)}</span>
+                                <span className="text-white/60">({community.rating_count})</span>
                             </span>
                         )}
                     </div>
@@ -191,12 +182,12 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
 
             {/* Trust signals strip */}
             <div className="mx-auto max-w-7xl px-4 sm:px-6 -mt-4 relative z-10">
-                <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-lg sm:p-5">
+                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
                     <DetailTrustSignals
                         items={[
                             {
                                 label: 'Host',
-                                icon: <ShieldCheck size={18} />,
+                                icon: <ShieldCheck size={16} />,
                                 value: (
                                     <>
                                         <span className="truncate">{organizerName}</span>
@@ -205,23 +196,23 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                                         )}
                                     </>
                                 ),
-                                hint: 'Visible organizer identity',
+                                hint: 'Verified organizer',
                             },
                             {
                                 label: 'Members',
-                                icon: <Users size={18} />,
-                                value: `${memberCount} total`,
-                                hint: memberCount > 0 ? 'Active member base' : 'Membership building',
+                                icon: <Users size={16} />,
+                                value: `${memberCount}`,
+                                hint: memberCount > 0 ? 'Active' : 'Growing',
                             },
                             {
-                                label: 'Social proof',
-                                icon: <Star size={18} />,
+                                label: 'Rating',
+                                icon: <Star size={16} />,
                                 value: ratingLabel,
                                 hint: ratingHint,
                             },
                             {
-                                label: 'Approval status',
-                                icon: <UserCheck size={18} />,
+                                label: 'Status',
+                                icon: <UserCheck size={16} />,
                                 value: communityStatusLabel,
                                 hint: accessStatusLabel,
                             },
@@ -233,11 +224,11 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
             {/* Tab nav */}
             <CommunityTabNav slug={slug} isMember={showMemberFeatures} canManage={canManage} />
 
-            {/* ── 2-column layout ────────────────────────────────────────── */}
+            {/* 2-column layout */}
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
                 <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
 
-                    {/* ── LEFT SIDEBAR ─────────────────────────────── */}
+                    {/* LEFT SIDEBAR */}
                     <div className="hidden lg:block">
                         <CommunitySidebar
                             community={community}
@@ -249,15 +240,15 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                         />
                     </div>
 
-                    {/* ── MAIN CONTENT ──────────────────────────────── */}
+                    {/* MAIN CONTENT */}
                     <main className="min-w-0 space-y-5">
-                        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-                            <div className="p-6 sm:p-7">
+                        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+                            <div className="p-5 sm:p-6">
                                 {/* Description + report */}
                                 <div className="mb-5 flex items-start justify-between gap-3">
                                     <div className="flex-1">
                                         {community.description && (
-                                            <p className="text-sm leading-7 text-neutral-600">{community.description}</p>
+                                            <p className="text-sm leading-relaxed text-neutral-600">{community.description}</p>
                                         )}
                                         {community.organizer && (
                                             <div className="mt-3 flex items-center gap-2 text-xs text-neutral-500">
@@ -274,26 +265,26 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
 
                                 {/* Join / auth gate */}
                                 {!currentUser ? (
-                                    <div className="rounded-2xl border border-primary-100 bg-primary-50 p-5">
+                                    <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-5">
                                         <div className="flex items-start gap-3">
                                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-100">
                                                 <Lock size={18} className="text-primary-600" />
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-sm font-semibold text-primary-900">Sign in to join this community</p>
-                                                <p className="mt-1 text-xs leading-5 text-primary-700">
-                                                    Create a free Kyoty account to apply for membership, RSVP to events, and connect with community members.
+                                                <p className="text-sm font-semibold text-neutral-900">Sign in to join</p>
+                                                <p className="mt-1 text-xs leading-5 text-neutral-500">
+                                                    Create a free account to apply for membership, RSVP to events, and connect with members.
                                                 </p>
                                                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                                                     <Link
                                                         href="/login"
                                                         className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
                                                     >
-                                                        Sign in to apply
+                                                        Sign in
                                                     </Link>
                                                     <Link
                                                         href="/login"
-                                                        className="inline-flex items-center justify-center rounded-xl border border-primary-200 bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-50"
+                                                        className="inline-flex items-center justify-center rounded-xl border border-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
                                                     >
                                                         Create account
                                                     </Link>
@@ -311,47 +302,47 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                                     />
                                 )}
 
-                                {/* Member quick-links (mobile only — sidebar handles desktop) */}
+                                {/* Member quick-links (mobile only) */}
                                 {showMemberFeatures && (
-                                    <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:hidden">
+                                    <div className="mt-5 grid grid-cols-3 gap-2 lg:hidden">
                                         <Link
                                             href={`/community/${slug}/feed`}
-                                            className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                                            className="flex flex-col items-center gap-1.5 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-xs font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
                                         >
-                                            <Rss size={16} className="text-primary-500" />
+                                            <Rss size={18} className="text-primary-500" />
                                             Feed
                                         </Link>
                                         <Link
                                             href={`/community/${slug}/chat`}
-                                            className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                                            className="flex flex-col items-center gap-1.5 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-xs font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
                                         >
-                                            <MessageCircle size={16} className="text-primary-500" />
+                                            <MessageCircle size={18} className="text-primary-500" />
                                             Chat
                                         </Link>
                                         <Link
                                             href={`/community/${slug}/media`}
-                                            className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                                            className="flex flex-col items-center gap-1.5 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-xs font-medium text-neutral-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
                                         >
-                                            <ImageIcon size={16} className="text-primary-500" />
+                                            <ImageIcon size={18} className="text-primary-500" />
                                             Gallery
                                         </Link>
                                     </div>
                                 )}
 
-                                {/* If member, show a prompt to go to the feed */}
+                                {/* Member feed prompt (desktop) */}
                                 {showMemberFeatures && (
-                                    <div className="mt-5 hidden lg:flex items-center gap-3 rounded-xl border border-primary-100 bg-primary-50 px-4 py-3">
+                                    <div className="mt-5 hidden lg:flex items-center gap-3 rounded-xl bg-primary-50 px-4 py-3">
                                         <Rss size={16} className="text-primary-600 shrink-0" />
-                                        <p className="text-sm text-primary-800">
+                                        <p className="text-sm text-neutral-700">
                                             You&apos;re a member.{' '}
-                                            <Link href={`/community/${slug}/feed`} className="font-semibold underline hover:text-primary-900">
-                                                Go to the community feed →
+                                            <Link href={`/community/${slug}/feed`} className="font-semibold text-primary-700 hover:underline">
+                                                Go to the feed →
                                             </Link>
                                         </p>
                                     </div>
                                 )}
 
-                                {/* Rating form — approved members only */}
+                                {/* Rating form */}
                                 {isMember && (
                                     <div className="mt-5">
                                         <CommunityRatingForm
@@ -364,10 +355,10 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                             </div>
 
                             {/* Events section */}
-                            <div className="border-t border-neutral-200 bg-neutral-50 p-6 sm:p-7">
-                                <h2 className="mb-5 flex items-center gap-2 text-base font-semibold text-neutral-900">
-                                    <Calendar size={17} className="text-primary-600" />
-                                    Community Events
+                            <div className="border-t border-neutral-200 bg-neutral-50/50 p-5 sm:p-6">
+                                <h2 className="mb-4 flex items-center gap-2 font-display text-base text-neutral-900">
+                                    <Calendar size={16} className="text-primary-600" />
+                                    Events
                                     {approvedEvents.length > 0 && (
                                         <span className="ml-1 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700">
                                             {approvedEvents.length}
@@ -385,10 +376,10 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-10 text-center">
-                                        <Calendar size={28} className="mx-auto mb-3 text-neutral-300" />
-                                        <p className="text-sm font-medium text-neutral-500">No events yet</p>
-                                        <p className="mt-1 text-xs text-neutral-400">Join to be notified when events are posted.</p>
+                                    <div className="rounded-xl border border-dashed border-neutral-200 bg-white px-6 py-8 text-center">
+                                        <Calendar size={24} className="mx-auto mb-2 text-neutral-300" />
+                                        <p className="text-sm text-neutral-500">No events yet</p>
+                                        <p className="mt-1 text-xs text-neutral-400">Join to get notified when events are posted.</p>
                                     </div>
                                 )}
                             </div>

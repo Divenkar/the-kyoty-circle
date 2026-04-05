@@ -28,10 +28,9 @@ export function CommunityRightPanel({
     return (
         <aside className="space-y-4">
             {/* Upcoming Events */}
-            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-neutral-200 bg-white p-4">
                 <div className="mb-3 flex items-center justify-between">
-                    <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-neutral-500">
-                        <Calendar size={12} />
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
                         Upcoming Events
                     </h3>
                     <Link
@@ -51,16 +50,15 @@ export function CommunityRightPanel({
                                 <Link
                                     key={event.id}
                                     href={`/event/${event.id}`}
-                                    className="group flex items-start gap-3 rounded-xl border border-neutral-100 bg-neutral-50 p-2.5 transition hover:border-primary-200 hover:bg-primary-50/50"
+                                    className="group flex items-start gap-2.5 rounded-lg border border-neutral-100 p-2 transition hover:border-neutral-200 hover:bg-neutral-50"
                                 >
-                                    {/* Date block */}
-                                    <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-white border border-neutral-200 text-center shadow-sm">
-                                        <span className="text-[9px] font-semibold uppercase leading-none text-primary-500">{d.month}</span>
-                                        <span className="mt-0.5 text-sm font-extrabold leading-none text-primary-700">{d.day}</span>
+                                    <div className="flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-lg bg-neutral-50 text-center">
+                                        <span className="text-[9px] font-semibold uppercase leading-none text-neutral-400">{d.month}</span>
+                                        <span className="text-sm font-bold leading-none text-neutral-900">{d.day}</span>
                                     </div>
 
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate text-xs font-semibold text-neutral-900 group-hover:text-primary-700 leading-snug">
+                                        <p className="truncate text-xs font-medium text-neutral-900 group-hover:text-primary-700 leading-snug">
                                             {event.title}
                                         </p>
                                         <div className="mt-0.5 flex items-center gap-2 text-[10px] text-neutral-400">
@@ -68,21 +66,9 @@ export function CommunityRightPanel({
                                                 <Clock size={9} />
                                                 {event.start_time || d.weekday}
                                             </span>
-                                            <span className="flex items-center gap-0.5">
-                                                <Users size={9} />
+                                            <span>
                                                 {spotsLeft > 0 ? `${spotsLeft} spots` : 'Full'}
                                             </span>
-                                        </div>
-                                        <div className="mt-1">
-                                            {event.is_paid ? (
-                                                <span className="text-[10px] font-semibold text-neutral-700">
-                                                    ₹{event.price_per_person || event.per_person_estimate}
-                                                </span>
-                                            ) : (
-                                                <span className="rounded-full bg-green-50 px-1.5 py-0.5 text-[9px] font-semibold text-green-700">
-                                                    Free
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
                                 </Link>
@@ -90,8 +76,7 @@ export function CommunityRightPanel({
                         })}
                     </div>
                 ) : (
-                    <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50 px-4 py-5 text-center">
-                        <Calendar size={18} className="mx-auto mb-2 text-neutral-300" />
+                    <div className="rounded-lg bg-neutral-50 px-4 py-5 text-center">
                         <p className="text-xs text-neutral-400">No upcoming events</p>
                         {isMember && (
                             <Link
@@ -105,34 +90,33 @@ export function CommunityRightPanel({
                 )}
             </div>
 
-            {/* Trending / Activity hint */}
-            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-neutral-500">
-                    <TrendingUp size={12} />
-                    Community Activity
+            {/* Activity */}
+            <div className="rounded-2xl border border-neutral-200 bg-white p-4">
+                <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                    Activity
                 </h3>
-                <div className="space-y-2 text-xs text-neutral-600">
-                    <div className="flex items-center justify-between rounded-xl bg-neutral-50 px-3 py-2">
+                <div className="space-y-1.5 text-xs text-neutral-600">
+                    <div className="flex items-center justify-between rounded-lg bg-neutral-50 px-3 py-2">
                         <span>Posts this week</span>
-                        <span className="font-bold text-primary-700">—</span>
+                        <span className="font-medium text-neutral-900">—</span>
                     </div>
-                    <div className="flex items-center justify-between rounded-xl bg-neutral-50 px-3 py-2">
+                    <div className="flex items-center justify-between rounded-lg bg-neutral-50 px-3 py-2">
                         <span>Active members</span>
-                        <span className="font-bold text-primary-700">—</span>
+                        <span className="font-medium text-neutral-900">—</span>
                     </div>
-                    <div className="flex items-center justify-between rounded-xl bg-neutral-50 px-3 py-2">
-                        <span>Events hosted</span>
-                        <span className="font-bold text-primary-700">{upcomingEvents.length > 0 ? `${upcomingEvents.length}+` : '—'}</span>
+                    <div className="flex items-center justify-between rounded-lg bg-neutral-50 px-3 py-2">
+                        <span>Events</span>
+                        <span className="font-medium text-neutral-900">{upcomingEvents.length > 0 ? upcomingEvents.length : '—'}</span>
                     </div>
                 </div>
             </div>
 
             {/* Related communities */}
             {relatedCommunities.length > 0 && (
-                <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-                    <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-xs font-bold uppercase tracking-wide text-neutral-500">
-                            Similar Communities
+                <div className="rounded-2xl border border-neutral-200 bg-white p-4">
+                    <div className="mb-2.5 flex items-center justify-between">
+                        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                            Similar
                         </h3>
                         <Link
                             href="/communities"
@@ -141,26 +125,24 @@ export function CommunityRightPanel({
                             Browse all →
                         </Link>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         {relatedCommunities.slice(0, 4).map((c) => (
                             <Link
                                 key={c.id}
                                 href={`/community/${c.slug || c.id}`}
-                                className="group flex items-center gap-2.5 rounded-xl border border-neutral-100 p-2 transition hover:border-primary-200 hover:bg-primary-50/40"
+                                className="group flex items-center gap-2.5 rounded-lg p-2 transition hover:bg-neutral-50"
                             >
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-[11px] font-bold text-primary-700">
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-[11px] font-bold text-primary-700">
                                     {c.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-xs font-semibold text-neutral-900 group-hover:text-primary-700">
+                                    <p className="truncate text-xs font-medium text-neutral-900 group-hover:text-primary-700">
                                         {c.name}
                                     </p>
-                                    <p className="flex items-center gap-1 text-[10px] text-neutral-400">
-                                        <Users size={9} />
+                                    <p className="text-[10px] text-neutral-400">
                                         {c.member_count || 0} members
                                     </p>
                                 </div>
-                                <ArrowRight size={12} className="shrink-0 text-neutral-300 group-hover:text-primary-500" />
                             </Link>
                         ))}
                     </div>
@@ -168,15 +150,15 @@ export function CommunityRightPanel({
             )}
 
             {/* Share CTA */}
-            <div className="rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 to-violet-50 p-4">
-                <p className="text-xs font-semibold text-primary-900 mb-1">Know someone who&apos;d love this?</p>
-                <p className="text-[11px] text-primary-600 mb-3">Share this community with friends.</p>
+            <div className="rounded-2xl bg-neutral-50 p-4">
+                <p className="text-xs font-medium text-neutral-700 mb-1">Know someone who&apos;d love this?</p>
+                <p className="text-[11px] text-neutral-500 mb-3">Share this community with friends.</p>
                 <Link
                     href={`/community/${communitySlug}`}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-50"
                 >
                     <ExternalLink size={11} />
-                    Share community
+                    Share
                 </Link>
             </div>
         </aside>

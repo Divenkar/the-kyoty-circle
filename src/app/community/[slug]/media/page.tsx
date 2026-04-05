@@ -25,10 +25,13 @@ export default async function MediaPage({ params }: Props) {
         return (
             <div className="min-h-screen bg-neutral-50">
                 <CommunityTabNav slug={slug} isMember={false} canManage={false} />
-                <div className="flex flex-col items-center justify-center py-24 text-center px-4">
-                    <Lock size={28} className="mb-3 text-neutral-400" />
-                    <p className="text-sm font-medium text-neutral-600">Sign in to view the photo gallery</p>
-                    <Link href="/login" className="mt-4 inline-flex rounded-xl bg-primary-600 px-5 py-2 text-sm font-semibold text-white hover:bg-primary-700">Sign in</Link>
+                <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 mb-3">
+                        <Lock size={20} className="text-neutral-500" />
+                    </div>
+                    <h2 className="font-display text-lg text-neutral-900">Members only</h2>
+                    <p className="mt-1.5 text-sm text-neutral-500">Sign in to view the photo gallery</p>
+                    <Link href="/login" className="mt-4 inline-flex rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">Sign in</Link>
                 </div>
             </div>
         );
@@ -45,10 +48,13 @@ export default async function MediaPage({ params }: Props) {
         return (
             <div className="min-h-screen bg-neutral-50">
                 <CommunityTabNav slug={slug} isMember={false} canManage={false} />
-                <div className="flex flex-col items-center justify-center py-24 text-center px-4">
-                    <Lock size={28} className="mb-3 text-neutral-400" />
-                    <p className="text-sm font-medium text-neutral-600">Join to view the gallery</p>
-                    <Link href={`/community/${slug}`} className="mt-4 inline-flex rounded-xl bg-primary-600 px-5 py-2 text-sm font-semibold text-white hover:bg-primary-700">Request to join</Link>
+                <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 mb-3">
+                        <Lock size={20} className="text-neutral-500" />
+                    </div>
+                    <h2 className="font-display text-lg text-neutral-900">Join to view</h2>
+                    <p className="mt-1.5 text-sm text-neutral-500">Become a member to access the photo gallery.</p>
+                    <Link href={`/community/${slug}`} className="mt-4 inline-flex rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">Request to join</Link>
                 </div>
             </div>
         );
@@ -59,12 +65,12 @@ export default async function MediaPage({ params }: Props) {
     return (
         <div className="min-h-screen bg-neutral-50">
             <div className="border-b border-neutral-200 bg-white px-4 py-3 sm:px-8">
-                <h1 className="text-base font-bold text-neutral-900">{community.name}</h1>
+                <h1 className="font-display text-base text-neutral-900">{community.name}</h1>
             </div>
             <CommunityTabNav slug={slug} isMember={isMember || isOrganizer} canManage={canManage} />
 
             <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-                <h2 className="mb-5 text-lg font-semibold text-neutral-900">Photo Gallery</h2>
+                <h2 className="mb-5 font-display text-lg text-neutral-900">Photo Gallery</h2>
                 <MediaGallery
                     communityId={community.id}
                     initialMedia={media}

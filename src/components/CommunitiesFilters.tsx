@@ -46,13 +46,13 @@ export function CommunitiesFilters({ currentQuery, currentCategory, currentCity 
         <div className={`transition-opacity ${isPending ? 'opacity-60' : 'opacity-100'}`}>
             {/* Search bar */}
             <div className="relative mb-4">
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                     type="text"
-                    placeholder="Search communities by name or description…"
+                    placeholder="Search communities..."
                     defaultValue={currentQuery}
                     onChange={e => updateParam('q', e.target.value)}
-                    className="w-full rounded-2xl border border-neutral-200 bg-white py-3 pl-10 pr-4 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                    className="w-full rounded-xl border border-neutral-200 bg-neutral-50 py-2.5 pl-10 pr-4 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-100"
                 />
                 {currentQuery && (
                     <button
@@ -69,10 +69,10 @@ export function CommunitiesFilters({ currentQuery, currentCategory, currentCity 
             <div className="flex flex-wrap gap-2">
                 <button
                     onClick={() => updateParam('category', 'all')}
-                    className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                    className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition ${
                         !currentCategory || currentCategory === 'all'
-                            ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-neutral-200 bg-white text-neutral-600 hover:border-primary-300 hover:text-primary-600'
+                            ? 'bg-neutral-900 text-white'
+                            : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                     }`}
                 >
                     All
@@ -81,10 +81,10 @@ export function CommunitiesFilters({ currentQuery, currentCategory, currentCity 
                     <button
                         key={cat}
                         onClick={() => updateParam('category', cat)}
-                        className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                        className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition ${
                             currentCategory === cat
-                                ? 'border-primary-600 bg-primary-600 text-white'
-                                : 'border-neutral-200 bg-white text-neutral-600 hover:border-primary-300 hover:text-primary-600'
+                                ? 'bg-neutral-900 text-white'
+                                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                         }`}
                     >
                         {cat}
@@ -96,7 +96,7 @@ export function CommunitiesFilters({ currentQuery, currentCategory, currentCity 
             {hasFilters && (
                 <button
                     onClick={clearAll}
-                    className="mt-3 flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-800"
+                    className="mt-3 flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700"
                 >
                     <X size={12} /> Clear all filters
                 </button>

@@ -57,43 +57,38 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
 
     return (
         <div className="min-h-screen bg-neutral-50">
-            {/* Header */}
-            <div className="border-b border-neutral-200 bg-[radial-gradient(circle_at_top_left,_rgba(108,71,255,0.1),_transparent_30%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
-                <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-                    <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
-                        <div>
-                            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700">
-                                <Sparkles size={15} />
-                                Community-led discovery
-                            </div>
-                            <h1 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
-                                {city === 'all' ? 'Browse communities' : `${city} communities`}
-                                {category !== 'all' && <span className="text-primary-500"> · {category}</span>}
-                            </h1>
-                            <p className="mt-3 max-w-2xl text-sm leading-7 text-neutral-500 sm:text-base">
-                                Discover niche circles, local groups, and trusted organizers building recurring experiences around shared interests.
-                            </p>
-                        </div>
+            {/* Hero header */}
+            <div className="border-b border-neutral-200 bg-white">
+                <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
+                    <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium text-primary-600 tracking-wide">
+                            Community-led discovery
+                        </p>
+                        <h1 className="font-display text-2xl tracking-tight text-neutral-900 sm:text-3xl">
+                            {city === 'all' ? 'Browse communities' : `Communities in ${city}`}
+                            {category !== 'all' && <span className="text-primary-500"> · {category}</span>}
+                        </h1>
+                        <p className="mt-1 max-w-xl text-sm leading-relaxed text-neutral-500">
+                            Discover local groups and trusted organizers building recurring experiences around shared interests.
+                        </p>
+                    </div>
 
-                        <div className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm">
-                            <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Found</div>
-                            <div className="mt-2 text-3xl font-bold text-neutral-900">{communities.length}</div>
-                            <div className="mt-1 text-sm text-neutral-500">
-                                {hasFilters ? 'matching your filters' : 'communities available'}
-                            </div>
-                        </div>
+                    {/* Stats + City pills row */}
+                    <div className="mt-6 flex items-center gap-2 text-sm">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-50 text-sm font-bold text-primary-700">{communities.length}</span>
+                        <span className="mr-4 text-neutral-500">{hasFilters ? 'matching' : 'available'}</span>
                     </div>
 
                     {/* City filter pills */}
-                    <div className="mt-7 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                    <div className="mt-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                         {cityOptions.map((option) => (
                             <Link
                                 key={option.value}
                                 href={`/communities?city=${option.value}${query ? `&q=${encodeURIComponent(query)}` : ''}${category !== 'all' ? `&category=${encodeURIComponent(category)}` : ''}`}
-                                className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-all ${
+                                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
                                     city === option.value
-                                        ? 'border-primary-600 bg-primary-600 text-white'
-                                        : 'border-neutral-200 bg-white text-neutral-600 hover:border-primary-300 hover:text-primary-600'
+                                        ? 'bg-neutral-900 text-white'
+                                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900'
                                 }`}
                             >
                                 {option.value !== 'all' && <MapPin size={14} className="mr-1 inline" />}
@@ -106,17 +101,15 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
 
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-                {/* ── Suggested for you ───────────────────────────────── */}
+                {/* Suggested for you */}
                 {showSuggested && suggestedCommunities.length > 0 && (
-                    <div className="mb-8 rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 to-violet-50 p-5 shadow-sm">
+                    <div className="mb-8 rounded-2xl border border-primary-100 bg-primary-50/50 p-5">
                         <div className="mb-4 flex items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary-100">
-                                <Sparkles size={14} className="text-primary-600" />
-                            </div>
+                            <Sparkles size={16} className="text-primary-600" />
                             <div>
-                                <p className="text-sm font-bold text-primary-900">Suggested for you</p>
-                                <p className="text-xs text-primary-600">
-                                    Based on your interests: {interestTags.slice(0, 3).join(', ')}
+                                <p className="text-sm font-semibold text-neutral-900">Suggested for you</p>
+                                <p className="text-xs text-neutral-500">
+                                    Based on: {interestTags.slice(0, 3).join(', ')}
                                     {interestTags.length > 3 ? ` +${interestTags.length - 3} more` : ''}
                                 </p>
                             </div>
@@ -134,7 +127,7 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
                 )}
 
                 {/* Search + category filters */}
-                <div className="mb-8 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+                <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-5">
                     <Suspense>
                         <CommunitiesFilters
                             currentQuery={query}
@@ -146,7 +139,7 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
 
                 {/* Results */}
                 {communities.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         {communities.map((community) => (
                             <CommunityCard
                                 key={community.id}
@@ -156,32 +149,32 @@ export default async function CommunitiesPage({ searchParams }: CommunitiesPageP
                         ))}
                     </div>
                 ) : (
-                    <div className="rounded-[2rem] border border-dashed border-neutral-300 bg-white px-6 py-16 text-center shadow-sm">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100">
-                            <Users size={28} className="text-primary-500" />
+                    <div className="mx-auto max-w-lg rounded-2xl border border-neutral-200 bg-white px-6 py-16 text-center">
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50">
+                            <Users size={24} className="text-primary-500" />
                         </div>
                         {hasFilters ? (
                             <>
-                                <h3 className="text-xl font-semibold text-neutral-900">No communities match your search</h3>
-                                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-neutral-500">
+                                <h3 className="font-display text-lg text-neutral-900">No communities found</h3>
+                                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-neutral-500">
                                     Try different keywords or remove some filters to see more results.
                                 </p>
                                 <Link
                                     href="/communities"
-                                    className="mt-6 inline-flex rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-700 transition hover:border-neutral-300 hover:bg-neutral-50"
+                                    className="mt-5 inline-flex rounded-xl border border-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
                                 >
                                     Clear all filters
                                 </Link>
                             </>
                         ) : (
                             <>
-                                <h3 className="text-xl font-semibold text-neutral-900">No communities yet</h3>
-                                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-neutral-500">
-                                    This city needs a few founding communities to make discovery feel alive. Be the first to create one.
+                                <h3 className="font-display text-lg text-neutral-900">No communities yet</h3>
+                                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-neutral-500">
+                                    Be the first to start a community in this city and bring people together.
                                 </p>
                                 <Link
                                     href="/create-community"
-                                    className="mt-6 inline-flex rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-700"
+                                    className="mt-5 inline-flex rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
                                 >
                                     Create Community
                                 </Link>

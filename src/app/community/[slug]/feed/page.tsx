@@ -86,11 +86,11 @@ export default async function CommunityFeedPage({ params }: FeedPageProps) {
         <div className="min-h-screen bg-neutral-50">
             <CommunityTabNav slug={slug} isMember={true} canManage={canManage} />
 
-            {/* ── 3-column grid ──────────────────────────────────────── */}
+            {/* 3-column grid */}
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
                 <div className="grid gap-6 lg:grid-cols-[240px_1fr_260px]">
 
-                    {/* ── LEFT SIDEBAR ─────────────────────────────── */}
+                    {/* LEFT SIDEBAR */}
                     <div className="hidden lg:block">
                         <CommunitySidebar
                             community={community}
@@ -102,10 +102,10 @@ export default async function CommunityFeedPage({ params }: FeedPageProps) {
                         />
                     </div>
 
-                    {/* ── MAIN FEED ────────────────────────────────── */}
+                    {/* MAIN FEED */}
                     <main className="min-w-0">
                         {/* Composer */}
-                        <div className="mb-5">
+                        <div className="mb-4">
                             <PostComposer
                                 communityId={community.id}
                                 communityName={community.name}
@@ -115,7 +115,7 @@ export default async function CommunityFeedPage({ params }: FeedPageProps) {
                         </div>
 
                         {/* Post type shortcuts */}
-                        <div className="mb-5 flex gap-2 overflow-x-auto">
+                        <div className="mb-4 flex gap-2 overflow-x-auto">
                             {[
                                 { label: 'Discussion', href: `/post/create?community=${slug}&type=discussion` },
                                 { label: 'Media', href: `/post/create?community=${slug}&type=media` },
@@ -124,7 +124,7 @@ export default async function CommunityFeedPage({ params }: FeedPageProps) {
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 shadow-sm transition hover:border-primary-300 hover:text-primary-700"
+                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:bg-neutral-50 hover:text-neutral-900"
                                 >
                                     <Plus size={11} />
                                     {item.label}
@@ -147,35 +147,35 @@ export default async function CommunityFeedPage({ params }: FeedPageProps) {
                                 ))}
                             </div>
                         ) : (
-                            <div className="rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-16 text-center">
-                                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50">
-                                    <Rss size={26} className="text-primary-500" />
+                            <div className="rounded-2xl border border-neutral-200 bg-white px-6 py-14 text-center">
+                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50">
+                                    <Rss size={22} className="text-primary-500" />
                                 </div>
-                                <h3 className="text-base font-semibold text-neutral-900">No posts yet</h3>
-                                <p className="mt-2 text-sm text-neutral-500 max-w-xs mx-auto">
+                                <h3 className="font-display text-base text-neutral-900">No posts yet</h3>
+                                <p className="mt-1.5 text-sm text-neutral-500 max-w-xs mx-auto">
                                     Be the first to share something with {community.name}.
                                 </p>
                                 <Link
                                     href={`/post/create?community=${slug}`}
-                                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
+                                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
                                 >
-                                    <Plus size={15} />
+                                    <Plus size={14} />
                                     Write the first post
                                 </Link>
                             </div>
                         )}
 
                         {enrichedPosts.length >= 20 && (
-                            <p className="mt-6 text-center text-xs text-neutral-400">
+                            <p className="mt-5 text-center text-xs text-neutral-400">
                                 Showing latest 20 posts.{' '}
                                 <Link href={`/community/${slug}/chat`} className="text-primary-600 hover:underline">
-                                    Open chat for real-time conversation →
+                                    Open chat →
                                 </Link>
                             </p>
                         )}
                     </main>
 
-                    {/* ── RIGHT PANEL ──────────────────────────────── */}
+                    {/* RIGHT PANEL */}
                     <div className="hidden xl:block">
                         <CommunityRightPanel
                             upcomingEvents={upcomingEvents as any[]}

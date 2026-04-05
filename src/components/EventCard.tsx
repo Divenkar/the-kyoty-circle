@@ -27,9 +27,9 @@ export function EventCard({ event }: EventCardProps) {
         : 0;
 
     return (
-        <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary-300 hover:shadow-cardHover">
+        <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white transition-all duration-200 hover:border-neutral-300 hover:shadow-md">
             {/* Image */}
-            <Link href={`/event/${event.id}`} className="relative block aspect-[16/9] overflow-hidden bg-gradient-to-br from-primary-100 via-primary-200 to-primary-300">
+            <Link href={`/event/${event.id}`} className="relative block aspect-[16/9] overflow-hidden bg-gradient-to-br from-primary-100 to-primary-200">
                 {(event.cover_image_url || event.communities?.cover_image_url) ? (
                     <Image
                         src={event.cover_image_url || event.communities!.cover_image_url!}
@@ -39,44 +39,37 @@ export function EventCard({ event }: EventCardProps) {
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <Calendar size={38} className="text-primary-500/60" />
+                        <Calendar size={32} className="text-primary-400" />
                     </div>
                 )}
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-
                 {/* Date badge */}
-                <div className="absolute left-3 top-3 flex flex-col items-center rounded-xl bg-white/95 px-2.5 py-1.5 text-center shadow-sm backdrop-blur-sm">
+                <div className="absolute left-3 top-3 flex flex-col items-center rounded-lg bg-white px-2 py-1.5 text-center shadow-sm">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600">
                         {eventDate.toLocaleDateString('en-IN', { month: 'short' })}
                     </span>
-                    <span className="text-lg font-extrabold leading-tight text-neutral-900">
+                    <span className="text-base font-extrabold leading-tight text-neutral-900">
                         {eventDate.getDate()}
                     </span>
                 </div>
 
                 {/* Tags */}
                 <div className="absolute right-3 top-3 flex flex-wrap gap-1.5">
-                    {event.communities?.category && (
-                        <span className="rounded-lg bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-primary-700 backdrop-blur-sm">
-                            {event.communities.category}
-                        </span>
-                    )}
                     {isPast && (
-                        <span className="rounded-lg bg-neutral-900/75 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                        <span className="rounded-md bg-neutral-900/70 px-2 py-0.5 text-[11px] font-medium text-white">
                             Past
                         </span>
                     )}
                 </div>
 
-                {/* Price tag on image */}
+                {/* Price tag */}
                 <div className="absolute bottom-3 right-3">
                     {event.is_paid ? (
-                        <span className="rounded-lg bg-white/95 px-2.5 py-1 text-sm font-bold text-neutral-900 shadow-sm backdrop-blur-sm">
+                        <span className="rounded-md bg-white px-2 py-1 text-sm font-bold text-neutral-900 shadow-sm">
                             ₹{event.price_per_person || event.per_person_estimate || '—'}
                         </span>
                     ) : (
-                        <span className="rounded-lg bg-green-500/90 px-2.5 py-1 text-sm font-bold text-white shadow-sm backdrop-blur-sm">
+                        <span className="rounded-md bg-green-500 px-2 py-1 text-sm font-bold text-white shadow-sm">
                             Free
                         </span>
                     )}
@@ -89,7 +82,7 @@ export function EventCard({ event }: EventCardProps) {
                 <Link
                     href={`/community/${communitySlug}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="mb-2.5 inline-flex w-fit items-center gap-1.5 rounded-lg bg-primary-50 px-2.5 py-1 text-[11px] font-semibold text-primary-700 transition-colors hover:bg-primary-100"
+                    className="mb-2 inline-flex w-fit items-center gap-1.5 text-xs font-medium text-primary-600 transition-colors hover:text-primary-700"
                 >
                     <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
                     {communityName}
@@ -103,35 +96,33 @@ export function EventCard({ event }: EventCardProps) {
                 </Link>
 
                 {/* Meta row */}
-                <div className="mt-2.5 space-y-1.5 text-[13px] text-neutral-500">
+                <div className="mt-2 space-y-1 text-[13px] text-neutral-500">
                     <div className="flex items-center gap-2">
-                        <Calendar size={13} className="shrink-0 text-primary-500" />
+                        <Calendar size={13} className="shrink-0 text-neutral-400" />
                         <span>{dateStr}</span>
                         {event.start_time && (
                             <>
                                 <span className="text-neutral-300">·</span>
-                                <Clock3 size={13} className="shrink-0 text-primary-500" />
                                 <span>{event.start_time}</span>
                             </>
                         )}
                     </div>
                     {event.location_text && (
                         <div className="flex items-center gap-2">
-                            <MapPin size={13} className="shrink-0 text-primary-500" />
+                            <MapPin size={13} className="shrink-0 text-neutral-400" />
                             <span className="truncate">{event.location_text}</span>
                         </div>
                     )}
                 </div>
 
-                {/* Capacity bar + CTA */}
+                {/* Capacity + CTA */}
                 <div className="mt-auto pt-4">
-                    {/* Capacity */}
-                    <div className="mb-3 flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-1.5 font-medium text-neutral-600">
-                            <Users size={13} className="text-primary-500" />
+                    <div className="mb-3 flex items-center justify-between text-xs text-neutral-500">
+                        <span className="flex items-center gap-1.5">
+                            <Users size={12} />
                             {(event.registered_count || 0)}/{event.max_participants}
                         </span>
-                        <span className={`font-medium ${spotsLeft <= 3 && spotsLeft > 0 ? 'text-amber-600' : spotsLeft === 0 ? 'text-red-500' : 'text-neutral-500'}`}>
+                        <span className={`font-medium ${spotsLeft <= 3 && spotsLeft > 0 ? 'text-amber-600' : spotsLeft === 0 ? 'text-red-500' : ''}`}>
                             {spotsLeft > 0 ? `${spotsLeft} left` : 'Full'}
                         </span>
                     </div>
@@ -143,11 +134,10 @@ export function EventCard({ event }: EventCardProps) {
                         />
                     </div>
 
-                    {/* CTA */}
                     {isPast ? (
                         <Link
                             href={`/event/${event.id}`}
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-600 transition-colors hover:border-primary-300 hover:text-primary-600"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-600 transition hover:bg-neutral-50"
                         >
                             View Details
                             <ArrowUpRight size={14} />
@@ -155,7 +145,7 @@ export function EventCard({ event }: EventCardProps) {
                     ) : spotsLeft === 0 ? (
                         <Link
                             href={`/event/${event.id}`}
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
                         >
                             <Zap size={14} />
                             Join Waitlist
@@ -163,7 +153,7 @@ export function EventCard({ event }: EventCardProps) {
                     ) : (
                         <Link
                             href={`/event/${event.id}`}
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
                         >
                             <CheckCircle2 size={14} />
                             Join Event

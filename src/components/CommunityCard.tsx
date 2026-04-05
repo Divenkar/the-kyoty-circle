@@ -15,9 +15,9 @@ export function CommunityCard({ community, memberCount = 0 }: CommunityCardProps
 
     return (
         <Link href={communityHref} className="group block h-full">
-            <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary-300 hover:shadow-cardHover">
+            <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white transition-all duration-200 hover:border-neutral-300 hover:shadow-md">
                 {/* Cover image */}
-                <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-primary-200 via-primary-300 to-primary-400">
+                <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-primary-100 to-primary-200">
                     {community.cover_image_url ? (
                         <Image
                             src={community.cover_image_url}
@@ -27,21 +27,13 @@ export function CommunityCard({ community, memberCount = 0 }: CommunityCardProps
                         />
                     ) : (
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <Users size={32} className="text-primary-700/50" />
+                            <Users size={28} className="text-primary-400" />
                         </div>
                     )}
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
                     {/* Category badge */}
-                    <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-lg bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-primary-700 backdrop-blur-sm">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    <div className="absolute left-3 top-3 rounded-md bg-white px-2 py-1 text-[11px] font-medium text-neutral-700 shadow-sm">
                         {community.category || 'Community'}
-                    </div>
-
-                    {/* Arrow icon */}
-                    <div className="absolute bottom-3 right-3 rounded-lg bg-white/90 p-1.5 text-primary-600 opacity-0 backdrop-blur-sm transition-all duration-300 group-hover:opacity-100">
-                        <ArrowUpRight size={14} />
                     </div>
                 </div>
 
@@ -66,8 +58,8 @@ export function CommunityCard({ community, memberCount = 0 }: CommunityCardProps
 
                     {/* Footer */}
                     <div className="mt-auto flex items-center justify-between border-t border-neutral-100 pt-3 text-xs">
-                        <span className="inline-flex items-center gap-1.5 font-medium text-neutral-600">
-                            <Users size={13} className="text-primary-500" />
+                        <span className="inline-flex items-center gap-1.5 text-neutral-500">
+                            <Users size={12} />
                             {memberCount} member{memberCount === 1 ? '' : 's'}
                         </span>
 
@@ -77,8 +69,8 @@ export function CommunityCard({ community, memberCount = 0 }: CommunityCardProps
                                 {Number(community.rating_avg).toFixed(1)}
                             </span>
                         ) : (
-                            <span className="font-semibold text-primary-600 transition-colors group-hover:text-primary-700">
-                                View &rarr;
+                            <span className="font-medium text-primary-600 transition-colors group-hover:text-primary-700">
+                                View →
                             </span>
                         )}
                     </div>

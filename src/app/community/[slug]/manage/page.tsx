@@ -39,8 +39,8 @@ export default async function ManagePage({ params }: Props) {
     return (
         <div className="min-h-screen bg-neutral-50">
             <div className="border-b border-neutral-200 bg-white px-4 py-3 sm:px-8">
-                <h1 className="text-base font-bold text-neutral-900">{community.name}</h1>
-                <p className="text-xs text-neutral-500">Community Management</p>
+                <h1 className="font-display text-base text-neutral-900">{community.name}</h1>
+                <p className="text-xs text-neutral-400">Manage</p>
             </div>
             <CommunityTabNav slug={slug} isMember={isMember || isOrganizer} canManage={canManage} />
 

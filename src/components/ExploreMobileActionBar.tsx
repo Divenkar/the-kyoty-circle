@@ -44,48 +44,36 @@ export function ExploreMobileActionBar() {
     };
 
     return (
-        <div className="sticky top-[4.5rem] z-30 -mx-4 border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur-xl sm:hidden">
-            <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-neutral-900">
-                            {city === 'all' ? 'Everywhere' : city}
-                            <span className="text-neutral-400"> - </span>
-                            {category}
-                        </p>
-                        <p className="text-xs text-neutral-500">
-                            {activeFilterCount} active filter{activeFilterCount === 1 ? '' : 's'}
-                        </p>
-                    </div>
-                    {activeFilterCount > 0 && (
-                        <button
-                            type="button"
-                            onClick={clearFilters}
-                            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-red-50 px-3 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
-                        >
-                            <X size={14} />
-                            Clear
-                        </button>
-                    )}
+        <div className="sticky top-[4.5rem] z-30 -mx-4 border-b border-neutral-200 bg-white px-4 py-2.5 sm:hidden">
+            <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-neutral-900">
+                        {city === 'all' ? 'Everywhere' : city}
+                        <span className="mx-1 text-neutral-300">·</span>
+                        <span className="text-neutral-500">{category}</span>
+                    </p>
                 </div>
 
-                <div className="grid grid-cols-[1fr_auto] gap-2">
+                <div className="flex items-center gap-2">
                     <button
                         type="button"
                         onClick={scrollToFilters}
-                        className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 text-sm font-semibold text-neutral-700 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-xs font-medium text-neutral-700"
                     >
-                        <Filter size={16} />
+                        <Filter size={14} />
                         Filters
+                        {activeFilterCount > 0 && (
+                            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-[10px] font-bold text-white">{activeFilterCount}</span>
+                        )}
                     </button>
 
-                    <label className="inline-flex h-11 items-center gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 px-3 text-sm font-medium text-neutral-700 focus-within:border-primary-400 focus-within:bg-white">
-                        <ArrowUpDown size={15} className="shrink-0 text-primary-500" />
+                    <label className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 text-xs font-medium text-neutral-700">
+                        <ArrowUpDown size={13} className="shrink-0 text-neutral-400" />
                         <select
                             aria-label="Sort events"
                             value={sort}
                             onChange={(e) => updateSort(e.target.value)}
-                            className="w-full bg-transparent outline-none"
+                            className="bg-transparent outline-none"
                         >
                             {SORT_OPTIONS.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -94,6 +82,16 @@ export function ExploreMobileActionBar() {
                             ))}
                         </select>
                     </label>
+
+                    {activeFilterCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={clearFilters}
+                            className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs font-medium text-red-600"
+                        >
+                            <X size={13} />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

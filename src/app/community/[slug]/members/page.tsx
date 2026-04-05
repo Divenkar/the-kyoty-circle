@@ -24,10 +24,13 @@ export default async function MembersPage({ params }: Props) {
         return (
             <div className="min-h-screen bg-neutral-50">
                 <CommunityTabNav slug={slug} isMember={false} canManage={false} />
-                <div className="flex flex-col items-center justify-center py-24 text-center px-4">
-                    <Lock size={28} className="mb-3 text-neutral-400" />
-                    <p className="text-sm font-medium text-neutral-600">Sign in to view members</p>
-                    <Link href="/login" className="mt-4 inline-flex rounded-xl bg-primary-600 px-5 py-2 text-sm font-semibold text-white hover:bg-primary-700">Sign in</Link>
+                <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 mb-3">
+                        <Lock size={20} className="text-neutral-500" />
+                    </div>
+                    <h2 className="font-display text-lg text-neutral-900">Members only</h2>
+                    <p className="mt-1.5 text-sm text-neutral-500">Sign in to view members</p>
+                    <Link href="/login" className="mt-4 inline-flex rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">Sign in</Link>
                 </div>
             </div>
         );
@@ -43,9 +46,12 @@ export default async function MembersPage({ params }: Props) {
         return (
             <div className="min-h-screen bg-neutral-50">
                 <CommunityTabNav slug={slug} isMember={false} canManage={false} />
-                <div className="flex flex-col items-center justify-center py-24 text-center px-4">
-                    <Lock size={28} className="mb-3 text-neutral-400" />
-                    <p className="text-sm font-medium text-neutral-600">Join to see members</p>
+                <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 mb-3">
+                        <Lock size={20} className="text-neutral-500" />
+                    </div>
+                    <h2 className="font-display text-lg text-neutral-900">Join to view</h2>
+                    <p className="mt-1.5 text-sm text-neutral-500">Become a member to see the member list.</p>
                 </div>
             </div>
         );
@@ -67,15 +73,14 @@ export default async function MembersPage({ params }: Props) {
     return (
         <div className="min-h-screen bg-neutral-50">
             <div className="border-b border-neutral-200 bg-white px-4 py-3 sm:px-8">
-                <h1 className="text-base font-bold text-neutral-900">{community.name}</h1>
+                <h1 className="font-display text-base text-neutral-900">{community.name}</h1>
             </div>
             <CommunityTabNav slug={slug} isMember={isMember || isOrganizer} canManage={canManage} />
 
             <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
                 <div className="mb-5 flex items-center gap-2">
-                    <Users size={18} className="text-primary-600" />
-                    <h2 className="text-lg font-semibold text-neutral-900">Members</h2>
-                    <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700">{members.length}</span>
+                    <h2 className="font-display text-lg text-neutral-900">Members</h2>
+                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">{members.length}</span>
                 </div>
 
                 <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">

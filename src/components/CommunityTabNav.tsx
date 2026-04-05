@@ -36,7 +36,7 @@ export function CommunityTabNav({ slug, isMember, canManage }: CommunityTabNavPr
     ];
 
     return (
-        <div className="flex gap-1 overflow-x-auto border-b border-neutral-200 bg-white px-4 sm:px-8 scrollbar-none">
+        <div className="flex gap-0.5 overflow-x-auto border-b border-neutral-200 bg-white px-4 sm:px-8 scrollbar-none">
             {tabs.map(tab => {
                 const isExact = tab.href === base;
                 const isActive = isExact
@@ -48,10 +48,10 @@ export function CommunityTabNav({ slug, isMember, canManage }: CommunityTabNavPr
                         key={tab.href}
                         href={tab.href}
                         className={[
-                            'flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3.5 text-sm font-medium transition-colors',
+                            'flex shrink-0 items-center gap-1.5 border-b-2 px-3.5 py-3 text-sm font-medium transition-colors',
                             isActive
-                                ? 'border-primary-600 text-primary-700'
-                                : 'border-transparent text-neutral-500 hover:text-neutral-800',
+                                ? 'border-neutral-900 text-neutral-900'
+                                : 'border-transparent text-neutral-400 hover:text-neutral-700',
                         ].join(' ')}
                     >
                         {tab.icon}
