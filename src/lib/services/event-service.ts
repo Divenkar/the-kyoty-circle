@@ -84,10 +84,25 @@ export const EventService = {
             throw new Error('You are already registered for this event');
         }
 
+        // Check for a previously cancelled/removed row so we can reactivate
+        // instead of inserting (avoids unique constraint violations)
+        const previousRow = await EventParticipantRepository.findAny(eventId, userId);
+
         // Check capacity
         const currentCount = await EventParticipantRepository.countByEvent(eventId);
         if (currentCount >= event.max_participants) {
-            await EventParticipantRepository.joinWaitlist(eventId, userId);
+            if (previousRow) {
+                // Reactivate as waitlisted
+                const { count } = await (await (await import('@/utils/supabase/server')).createClient())
+                    .from('event_participants')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('event_id', eventId)
+                    .eq('status', 'waitlisted');
+                const position = (count || 0) + 1;
+                await EventParticipantRepository.reactivate(previousRow.id, 'waitlisted', position);
+            } else {
+                await EventParticipantRepository.joinWaitlist(eventId, userId);
+            }
             const position = await EventParticipantRepository.getWaitlistPosition(eventId, userId);
             // Send waitlist confirmation email (non-blocking)
             const user = await UserRepository.findById(userId);
@@ -102,7 +117,12 @@ export const EventService = {
             return { status: 'waitlisted', position };
         }
 
-        await EventParticipantRepository.join(eventId, userId);
+        if (previousRow) {
+            // Reactivate as registered
+            await EventParticipantRepository.reactivate(previousRow.id, 'registered');
+        } else {
+            await EventParticipantRepository.join(eventId, userId);
+        }
         // Send registration confirmation email (non-blocking)
         const user = await UserRepository.findById(userId);
         if (user) {

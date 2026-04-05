@@ -46,12 +46,12 @@ export default async function CommunityFeedPage({ params }: FeedPageProps) {
 
     const memberCount = community.member_count || await CommunityRepository.getMemberCount(community.id);
 
-    // Fetch all data in parallel
+    // Fetch all data in parallel (each query handles its own errors gracefully)
     const [posts, allEvents, moderators, relatedCommunities] = await Promise.all([
-        PostRepository.findByCommunity(community.id, 20),
-        EventRepository.findByCommunity(community.id),
-        CommunityRolesRepository.listByCommunity(community.id),
-        CommunityRepository.search({ city: 'all', query: '', category: community.category }),
+        PostRepository.findByCommunity(community.id, 20).catch(() => []),
+        EventRepository.findByCommunity(community.id).catch(() => []),
+        CommunityRolesRepository.listByCommunity(community.id).catch(() => []),
+        CommunityRepository.search({ city: 'all', query: '', category: community.category }).catch(() => []),
     ]);
 
     // Upcoming events only

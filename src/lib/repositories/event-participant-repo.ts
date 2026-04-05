@@ -107,6 +107,37 @@ export const EventParticipantRepository = {
         return data as EventParticipant;
     },
 
+    /** Find any row for this user+event (including cancelled/removed) */
+    async findAny(eventId: number, userId: number): Promise<EventParticipant | null> {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('event_participants')
+            .select('*')
+            .eq('event_id', eventId)
+            .eq('user_id', userId)
+            .order('joined_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (error) return null;
+        return data as EventParticipant | null;
+    },
+
+    /** Re-activate a cancelled/removed row back to registered */
+    async reactivate(id: number, status: 'registered' | 'waitlisted', waitlistPosition?: number): Promise<void> {
+        const supabase = await createClient();
+        const update: Record<string, unknown> = { status, joined_at: new Date().toISOString() };
+        if (status === 'waitlisted' && waitlistPosition !== undefined) {
+            update.waitlist_position = waitlistPosition;
+        } else {
+            update.waitlist_position = null;
+        }
+        const { error } = await supabase
+            .from('event_participants')
+            .update(update)
+            .eq('id', id);
+        if (error) throw new Error(error.message);
+    },
+
     async listByEvent(eventId: number): Promise<EventParticipantWithUser[]> {
         const supabase = await createClient();
         // Try with user join first, fall back to plain select if FK is missing

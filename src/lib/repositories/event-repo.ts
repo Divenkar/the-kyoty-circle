@@ -157,7 +157,7 @@ export const EventRepository = {
             .select('*')
             .eq('community_id', communityId)
             .order('date', { ascending: true });
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []) as KyotyEvent[];
     },
 

@@ -27,7 +27,7 @@ export const CommunityRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('communities')
-            .select('*, cities!inner(name)')
+            .select('*, cities(name)')
             .eq('id', id)
             .single();
         if (error) return null;
@@ -43,7 +43,7 @@ export const CommunityRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('communities')
-            .select('*, cities!inner(name), kyoty_users!communities_organizer_id_fkey(id, name, email, social_proof_type, avatar_url)')
+            .select('*, cities(name), kyoty_users!communities_organizer_id_fkey(id, name, email, social_proof_type, avatar_url)')
             .eq('slug', slug)
             .single();
         if (error) return null;
