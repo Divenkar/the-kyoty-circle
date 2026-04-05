@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Calendar, CheckCircle, Compass, MapPin, Shield, Sparkles, Users, Rss, Bell, LayoutDashboard, Search, Star, Zap } from 'lucide-react';
+import { ArrowRight, Calendar, CheckCircle, Compass, MapPin, Shield, Sparkles, Users, Rss, Bell, LayoutDashboard, Search, Star, Zap, Heart, TrendingUp } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth-server';
 import { CommunityRepository } from '@/lib/repositories/community-repo';
 import { EventParticipantRepository } from '@/lib/repositories/event-participant-repo';
@@ -81,27 +81,34 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
             .slice(0, 3);
     }
 
+    const hasContent = approvedMemberships.length > 0 || upcomingRSVPs.length > 0 || suggestedCommunities.length > 0;
+
     return (
         <div className="min-h-screen bg-neutral-50">
-            {/* Personalized Hero */}
-            <div className="border-b border-neutral-200 bg-[radial-gradient(ellipse_at_top_left,_rgba(108,71,255,0.1),_transparent_50%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
-                <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Hero greeting */}
+            <div className="relative overflow-hidden border-b border-neutral-200/60">
+                {/* Decorative background */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(108,71,255,0.08),_transparent_50%),radial-gradient(ellipse_at_bottom_right,_rgba(139,92,246,0.06),_transparent_50%)]" />
+                <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-primary-200/20 blur-3xl" />
+                <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-200/15 blur-3xl" />
+
+                <div className="relative mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Welcome back</p>
-                            <h1 className="mt-1 text-2xl font-bold text-neutral-900 sm:text-3xl">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-primary-500">Welcome back</p>
+                            <h1 className="mt-2 font-display text-3xl font-normal text-neutral-900 sm:text-4xl">
                                 Hey, {displayName}
                             </h1>
                             {interestTags.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                <div className="mt-3 flex flex-wrap gap-2">
                                     {interestTags.slice(0, 4).map((tag) => (
-                                        <span key={tag} className="rounded-lg bg-primary-50 px-2.5 py-0.5 text-xs font-medium text-primary-700">
+                                        <span key={tag} className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700 ring-1 ring-primary-100">
                                             {tag}
                                         </span>
                                     ))}
                                     {interestTags.length > 4 && (
-                                        <span className="rounded-lg bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-500">
-                                            +{interestTags.length - 4}
+                                        <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-500">
+                                            +{interestTags.length - 4} more
                                         </span>
                                     )}
                                 </div>
@@ -110,14 +117,14 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                         <div className="flex flex-wrap gap-2">
                             <Link
                                 href="/dashboard"
-                                className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-primary-300"
+                                className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition-all hover:border-primary-300 hover:shadow-md"
                             >
                                 <LayoutDashboard size={15} />
                                 Dashboard
                             </Link>
                             <Link
                                 href="/activity"
-                                className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-primary-300"
+                                className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition-all hover:border-primary-300 hover:shadow-md"
                             >
                                 <Bell size={15} />
                                 Activity
@@ -127,41 +134,47 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                 </div>
             </div>
 
-            <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-10">
+            <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 space-y-12">
 
                 {/* Suggested Communities */}
                 {suggestedCommunities.length > 0 && (
                     <section>
-                        <div className="mb-4 flex items-center gap-2">
-                            <Sparkles size={16} className="text-primary-600" />
+                        <div className="mb-5 flex items-center gap-2.5">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-100">
+                                <Sparkles size={14} className="text-primary-600" />
+                            </div>
                             <h2 className="text-base font-bold text-neutral-900">Suggested for you</h2>
-                            <span className="ml-1 text-xs text-neutral-400">based on your interests</span>
+                            <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-medium text-neutral-500">based on interests</span>
                         </div>
                         <div className="grid gap-4 sm:grid-cols-3">
                             {suggestedCommunities.map((c: any) => (
                                 <Link
                                     key={c.id}
                                     href={`/community/${c.slug || c.id}`}
-                                    className="group flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-primary-300 hover:shadow-md"
+                                    className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-card transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-cardHover"
                                 >
+                                    <div className="absolute top-0 right-0 h-20 w-20 bg-gradient-to-bl from-primary-50 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-sm font-bold text-primary-700">
+                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-100 to-primary-50 text-sm font-bold text-primary-700 ring-1 ring-primary-200/50">
                                             {(c.name || '?').charAt(0).toUpperCase()}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="truncate text-sm font-semibold text-neutral-900 group-hover:text-primary-700">{c.name}</p>
+                                            <p className="truncate text-sm font-semibold text-neutral-900 group-hover:text-primary-700 transition-colors">{c.name}</p>
                                             <p className="text-xs text-neutral-500">{c.category}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between text-xs text-neutral-500">
-                                        <span>{c.member_count || 0} members</span>
-                                        <span className="text-primary-600 font-medium">View &rarr;</span>
+                                        <span className="flex items-center gap-1">
+                                            <Users size={11} />
+                                            {c.member_count || 0} members
+                                        </span>
+                                        <span className="text-primary-600 font-semibold group-hover:translate-x-0.5 transition-transform">View &rarr;</span>
                                     </div>
                                 </Link>
                             ))}
                         </div>
-                        <div className="mt-3 text-right">
-                            <Link href="/communities" className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                        <div className="mt-4 text-right">
+                            <Link href="/communities" className="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors">
                                 Browse all communities &rarr;
                             </Link>
                         </div>
@@ -171,12 +184,15 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                 {/* My Communities */}
                 {approvedMemberships.length > 0 && (
                     <section>
-                        <div className="mb-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Users size={16} className="text-primary-600" />
+                        <div className="mb-5 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-100">
+                                    <Users size={14} className="text-primary-600" />
+                                </div>
                                 <h2 className="text-base font-bold text-neutral-900">My Communities</h2>
+                                <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-bold text-primary-600">{approvedMemberships.length}</span>
                             </div>
-                            <Link href="/dashboard" className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                            <Link href="/dashboard" className="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors">
                                 View all &rarr;
                             </Link>
                         </div>
@@ -189,19 +205,19 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                                     <Link
                                         key={m.id}
                                         href={`/community/${slug}/feed`}
-                                        className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-sm transition hover:border-primary-300 hover:shadow-md"
+                                        className="group flex items-center gap-3.5 rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-card transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-cardHover"
                                     >
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-sm font-bold text-primary-700">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-100 to-primary-50 text-sm font-bold text-primary-700 ring-1 ring-primary-200/50">
                                             {(community.name || '?').charAt(0).toUpperCase()}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-semibold text-neutral-900">{community.name}</p>
-                                            <p className="text-xs text-neutral-400 flex items-center gap-1">
+                                            <p className="truncate text-sm font-semibold text-neutral-900 group-hover:text-primary-700 transition-colors">{community.name}</p>
+                                            <p className="text-xs text-neutral-400 flex items-center gap-1.5 mt-0.5">
                                                 <Rss size={10} />
                                                 Open feed
                                             </p>
                                         </div>
-                                        <ArrowRight size={13} className="shrink-0 text-neutral-300" />
+                                        <ArrowRight size={14} className="shrink-0 text-neutral-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" />
                                     </Link>
                                 );
                             })}
@@ -212,16 +228,19 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                 {/* Upcoming Events */}
                 {upcomingRSVPs.length > 0 && (
                     <section>
-                        <div className="mb-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Calendar size={16} className="text-primary-600" />
+                        <div className="mb-5 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-100">
+                                    <Calendar size={14} className="text-primary-600" />
+                                </div>
                                 <h2 className="text-base font-bold text-neutral-900">Upcoming Events</h2>
+                                <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-bold text-primary-600">{upcomingRSVPs.length}</span>
                             </div>
-                            <Link href="/explore" className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                            <Link href="/explore" className="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors">
                                 Find more &rarr;
                             </Link>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                             {upcomingRSVPs.slice(0, 4).map((r: any) => {
                                 const event = r.events;
                                 if (!event) return null;
@@ -232,21 +251,21 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                                     <Link
                                         key={r.id}
                                         href={`/event/${event.id}`}
-                                        className="flex items-center gap-4 rounded-xl border border-neutral-100 bg-white px-4 py-3.5 transition hover:border-primary-200 hover:shadow-sm"
+                                        className="group flex items-center gap-4 rounded-2xl border border-neutral-100 bg-white px-5 py-4 shadow-card transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-cardHover"
                                     >
-                                        <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-primary-50 text-center">
-                                            <span className="text-[10px] font-semibold uppercase leading-none text-primary-500">
+                                        <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-b from-primary-50 to-primary-100/50 text-center ring-1 ring-primary-200/30">
+                                            <span className="text-[10px] font-bold uppercase leading-none text-primary-500">
                                                 {new Date(event.date).toLocaleDateString('en-IN', { month: 'short' })}
                                             </span>
-                                            <span className="mt-0.5 text-base font-extrabold leading-none text-primary-700">
+                                            <span className="mt-0.5 text-lg font-extrabold leading-none text-primary-700">
                                                 {new Date(event.date).getDate()}
                                             </span>
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <span className="block truncate text-sm font-semibold text-neutral-900">{event.title}</span>
-                                            <span className="text-xs text-neutral-500">{dateStr}</span>
+                                            <span className="block truncate text-sm font-semibold text-neutral-900 group-hover:text-primary-700 transition-colors">{event.title}</span>
+                                            <span className="text-xs text-neutral-500 mt-0.5 block">{dateStr}</span>
                                         </div>
-                                        <ArrowRight size={14} className="shrink-0 text-neutral-300" />
+                                        <ArrowRight size={14} className="shrink-0 text-neutral-300 group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" />
                                     </Link>
                                 );
                             })}
@@ -254,29 +273,72 @@ async function PersonalizedHome({ user }: { user: Awaited<ReturnType<typeof getC
                     </section>
                 )}
 
-                {/* Empty state */}
-                {approvedMemberships.length === 0 && upcomingRSVPs.length === 0 && suggestedCommunities.length === 0 && (
-                    <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 px-6 py-10 text-white text-center">
-                        <Sparkles size={32} className="mx-auto mb-4 opacity-80" />
-                        <h3 className="text-xl font-bold">Your feed is empty for now</h3>
-                        <p className="mt-2 text-sm text-primary-100/80 max-w-sm mx-auto">
-                            Join communities and RSVP to events to see your personalized home here.
-                        </p>
-                        <div className="mt-6 flex flex-wrap gap-3 justify-center">
-                            <Link
-                                href="/communities"
-                                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-50"
-                            >
-                                <Users size={15} />
-                                Browse communities
-                            </Link>
-                            <Link
-                                href="/explore"
-                                className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
-                            >
-                                <Calendar size={15} />
-                                Explore events
-                            </Link>
+                {/* Empty state — redesigned */}
+                {!hasContent && (
+                    <div className="relative overflow-hidden rounded-3xl border border-neutral-200/60 bg-white shadow-lg">
+                        {/* Decorative gradient top bar */}
+                        <div className="h-1.5 bg-gradient-to-r from-primary-500 via-violet-500 to-fuchsia-500" />
+
+                        {/* Background decorations */}
+                        <div className="absolute top-12 right-8 h-32 w-32 rounded-full bg-primary-100/40 blur-3xl" />
+                        <div className="absolute bottom-8 left-8 h-28 w-28 rounded-full bg-violet-100/30 blur-3xl" />
+
+                        <div className="relative px-6 py-14 sm:px-12 sm:py-16 text-center">
+                            {/* Animated sparkle icon */}
+                            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-100 to-violet-100 ring-1 ring-primary-200/50">
+                                <Sparkles size={28} className="text-primary-600" />
+                            </div>
+
+                            <h3 className="font-display text-2xl text-neutral-900 sm:text-3xl">
+                                Your feed is empty for now
+                            </h3>
+                            <p className="mt-3 text-sm text-neutral-500 max-w-md mx-auto leading-relaxed">
+                                Join communities and RSVP to events to see your personalized home here. Discover what&apos;s happening around you.
+                            </p>
+
+                            <div className="mt-8 flex flex-wrap gap-3 justify-center">
+                                <Link
+                                    href="/communities"
+                                    className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition-all hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-xl hover:shadow-primary-600/30"
+                                >
+                                    <Users size={16} />
+                                    Browse communities
+                                </Link>
+                                <Link
+                                    href="/explore"
+                                    className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-6 py-3 text-sm font-semibold text-neutral-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md"
+                                >
+                                    <Calendar size={16} />
+                                    Explore events
+                                </Link>
+                            </div>
+
+                            {/* Quick stats row */}
+                            <div className="mt-12 flex items-center justify-center gap-8 border-t border-neutral-100 pt-8">
+                                <div className="text-center">
+                                    <div className="flex items-center justify-center gap-1.5 text-primary-600">
+                                        <TrendingUp size={14} />
+                                        <span className="text-lg font-bold">50+</span>
+                                    </div>
+                                    <p className="mt-1 text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Communities</p>
+                                </div>
+                                <div className="h-8 w-px bg-neutral-100" />
+                                <div className="text-center">
+                                    <div className="flex items-center justify-center gap-1.5 text-primary-600">
+                                        <Calendar size={14} />
+                                        <span className="text-lg font-bold">100+</span>
+                                    </div>
+                                    <p className="mt-1 text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Events</p>
+                                </div>
+                                <div className="h-8 w-px bg-neutral-100" />
+                                <div className="text-center">
+                                    <div className="flex items-center justify-center gap-1.5 text-primary-600">
+                                        <Heart size={14} />
+                                        <span className="text-lg font-bold">4</span>
+                                    </div>
+                                    <p className="mt-1 text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Cities</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -320,7 +382,7 @@ export default async function LandingPage() {
 
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
               Discover real-world
-              <span className="block bg-gradient-to-r from-primary-200 to-violet-200 bg-clip-text text-transparent">
+              <span className="block font-display font-normal mt-2 bg-gradient-to-r from-primary-200 to-violet-200 bg-clip-text text-transparent">
                 communities & events.
               </span>
             </h1>
@@ -390,7 +452,7 @@ export default async function LandingPage() {
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="mb-12 max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">Why Kyoty works</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+          <h2 className="mt-3 font-display text-2xl font-normal text-neutral-900 sm:text-3xl">
             A calmer, cleaner way to discover offline social experiences
           </h2>
           <p className="mt-4 text-base leading-7 text-neutral-500">
@@ -416,7 +478,7 @@ export default async function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <div className="text-center mb-14">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">Simple by design</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900">How Kyoty works</h2>
+            <h2 className="mt-3 font-display text-2xl font-normal text-neutral-900 sm:text-3xl">How Kyoty works</h2>
           </div>
           <div className="grid gap-8 md:grid-cols-3">
             {HOW_IT_WORKS.map((item, i) => (
@@ -444,7 +506,7 @@ export default async function LandingPage() {
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm sm:p-10">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-600">What you get</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900">Everything you need to build a great social life</h2>
+            <h2 className="mt-3 font-display text-xl font-normal text-neutral-900 sm:text-2xl">Everything you need to build a great social life</h2>
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               {[
                 'Browse events by city and category',
@@ -462,7 +524,7 @@ export default async function LandingPage() {
 
           <div className="rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 p-8 text-white shadow-xl sm:p-10">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-100/80">Get started today</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight">Join Kyoty and find your people in Noida.</h2>
+            <h2 className="mt-3 font-display text-xl font-normal sm:text-2xl">Join Kyoty and find your people in Noida.</h2>
             <p className="mt-4 text-sm leading-7 text-primary-100/80 sm:text-base">
               Explore live communities and events, RSVP instantly, or start your own community and shape local culture.
             </p>

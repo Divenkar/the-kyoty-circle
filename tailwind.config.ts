@@ -18,6 +18,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: [...fontFamily.sans] as string[],
+        display: [...fontFamily.display] as string[],
       },
       boxShadow: {
         card: shadows.card,

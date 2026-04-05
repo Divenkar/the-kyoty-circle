@@ -47,6 +47,7 @@ export const colors = {
 
 export const fontFamily = {
     sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+    display: ['Playwrite IN', 'cursive'],
 } as const;
 
 export const shadows = {
