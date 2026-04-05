@@ -70,7 +70,7 @@ export const CommunityRepository = {
 
         const { data, error } = await supabase
             .from('communities')
-            .select('*, cities!inner(name)')
+            .select('*, cities(name)')
             .eq('city_id', cityData.id)
             .in('status', ['active', 'approved'])
             .order('created_at', { ascending: false });
@@ -86,7 +86,7 @@ export const CommunityRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('communities')
-            .select('*, cities!inner(name)')
+            .select('*, cities(name)')
             .in('status', ['active', 'approved'])
             .order('created_at', { ascending: false });
         if (error) throw new Error(error.message);
@@ -166,7 +166,7 @@ export const CommunityRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('communities')
-            .select('*, cities!inner(name)')
+            .select('*, cities(name)')
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
         if (error) throw new Error(error.message);
@@ -181,7 +181,7 @@ export const CommunityRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('communities')
-            .select('*, cities!inner(name)')
+            .select('*, cities(name)')
             .eq('organizer_id', userId)
             .order('created_at', { ascending: false });
         if (error) throw new Error(error.message);

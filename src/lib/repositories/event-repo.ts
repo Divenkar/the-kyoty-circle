@@ -35,7 +35,7 @@ export const EventRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('events')
-            .select('*, communities(*, cities!inner(name))')
+            .select('*, communities(*, cities(name))')
             .eq('id', id)
             .single();
         if (error) return null;
@@ -97,7 +97,7 @@ export const EventRepository = {
 
         let query = supabase
             .from('events')
-            .select('*, communities!inner(*, cities!inner(name))')
+            .select('*, communities!inner(*, cities(name))')
             .eq('city_id', cityData.id)
             .in('status', ['approved', 'open'])
             .order('date', { ascending: true });
@@ -126,7 +126,7 @@ export const EventRepository = {
         const supabase = await createClient();
         let query = supabase
             .from('events')
-            .select('*, communities(*, cities!inner(name))')
+            .select('*, communities(*, cities(name))')
             .in('status', ['approved', 'open'])
             .order('date', { ascending: true });
 
@@ -165,7 +165,7 @@ export const EventRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('events')
-            .select('*, communities(*, cities!inner(name))')
+            .select('*, communities(*, cities(name))')
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
         if (error) throw new Error(error.message);
@@ -182,7 +182,7 @@ export const EventRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('events')
-            .select('*, communities(*, cities!inner(name))')
+            .select('*, communities(*, cities(name))')
             .eq('created_by', userId)
             .order('date', { ascending: true });
         if (error) throw new Error(error.message);
@@ -215,7 +215,7 @@ export const EventRepository = {
         const supabase = await createClient();
         let query = supabase
             .from('events')
-            .select('*, communities!inner(*, cities!inner(name))')
+            .select('*, communities!inner(*, cities(name))')
             .in('status', ['approved', 'open'])
             .order('date', { ascending: true });
 

@@ -36,7 +36,7 @@ export const SavedEventsRepository = {
         const supabase = await createClient();
         const { data, error } = await supabase
             .from('saved_events')
-            .select('event_id, events(*, communities(*, cities!inner(name)))')
+            .select('event_id, events(*, communities(*, cities(name)))')
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .limit(limit);
