@@ -28,9 +28,9 @@ export default async function DashboardEventsPage() {
     const canCreateEvents = user.role === 'community_admin' || isAdmin;
 
     const [myEvents, pastRsvps, upcomingRsvps] = await Promise.all([
-        EventRepository.findByCreator(user.id),
-        EventParticipantRepository.listPastByUser(user.id),
-        EventParticipantRepository.listUpcomingByUser(user.id),
+        EventRepository.findByCreator(user.id).catch(() => []),
+        EventParticipantRepository.listPastByUser(user.id).catch(() => []),
+        EventParticipantRepository.listUpcomingByUser(user.id).catch(() => []),
     ]);
 
     return (

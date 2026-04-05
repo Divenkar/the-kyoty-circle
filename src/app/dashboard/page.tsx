@@ -214,11 +214,11 @@ export default async function DashboardPage() {
     }
 
     const [myCommunities, myEvents, upcomingRSVPs, myMemberships, savedEvents] = await Promise.all([
-        CommunityRepository.findByCreator(user.id),
-        EventRepository.findByCreator(user.id),
-        EventParticipantRepository.listUpcomingByUser(user.id),
-        CommunityMemberRepository.listByUser(user.id),
-        SavedEventsRepository.listByUser(user.id),
+        CommunityRepository.findByCreator(user.id).catch(() => []),
+        EventRepository.findByCreator(user.id).catch(() => []),
+        EventParticipantRepository.listUpcomingByUser(user.id).catch(() => []),
+        CommunityMemberRepository.listByUser(user.id).catch(() => []),
+        SavedEventsRepository.listByUser(user.id).catch(() => []),
     ]);
 
     const isAdmin = user.role === 'kyoty_admin' || user.role === 'admin';

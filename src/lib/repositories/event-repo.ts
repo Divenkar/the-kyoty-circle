@@ -112,7 +112,7 @@ export const EventRepository = {
         }
 
         const { data, error } = await query;
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((e: any) => {
             if (e.communities) {
                 e.communities.city_name = e.communities.cities?.name;
@@ -140,7 +140,7 @@ export const EventRepository = {
         }
 
         const { data, error } = await query;
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((e: any) => {
             if (e.communities) {
                 e.communities.city_name = e.communities.cities?.name;
@@ -168,7 +168,7 @@ export const EventRepository = {
             .select('*, communities(*, cities(name))')
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((e: any) => {
             if (e.communities) {
                 e.communities.city_name = e.communities.cities?.name;
@@ -185,7 +185,7 @@ export const EventRepository = {
             .select('*, communities(*, cities(name))')
             .eq('created_by', userId)
             .order('date', { ascending: true });
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((e: any) => {
             if (e.communities) {
                 e.communities.city_name = e.communities.cities?.name;
@@ -264,7 +264,7 @@ export const EventRepository = {
         }
 
         const { data, error } = await query;
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((e: any) => {
             if (e.communities) {
                 e.communities.city_name = e.communities.cities?.name;

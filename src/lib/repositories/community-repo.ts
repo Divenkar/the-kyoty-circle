@@ -74,7 +74,7 @@ export const CommunityRepository = {
             .eq('city_id', cityData.id)
             .in('status', ['active', 'approved'])
             .order('created_at', { ascending: false });
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((c: any) => ({
             ...c,
             city_name: c.cities?.name,
@@ -89,7 +89,7 @@ export const CommunityRepository = {
             .select('*, cities(name)')
             .in('status', ['active', 'approved'])
             .order('created_at', { ascending: false });
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((c: any) => ({
             ...c,
             city_name: c.cities?.name,
@@ -154,7 +154,7 @@ export const CommunityRepository = {
             .from('communities')
             .select('*, cities(name)')
             .order('created_at', { ascending: false });
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((c: any) => ({
             ...c,
             city_name: c.cities?.name,
@@ -169,7 +169,7 @@ export const CommunityRepository = {
             .select('*, cities(name)')
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((c: any) => ({
             ...c,
             city_name: c.cities?.name,
@@ -184,7 +184,7 @@ export const CommunityRepository = {
             .select('*, cities(name)')
             .eq('organizer_id', userId)
             .order('created_at', { ascending: false });
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []).map((c: any) => ({
             ...c,
             city_name: c.cities?.name,

@@ -201,7 +201,7 @@ export const EventParticipantRepository = {
             .eq('user_id', userId)
             .in('status', ['registered', 'waitlisted'])
             .order('joined_at', { ascending: false });
-        if (error) throw new Error(error.message);
+        if (error) return [];
         return (data || []) as any[];
     },
 
