@@ -1,5 +1,5 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { createClient } from '@/utils/supabase/server';
+import { createServiceClient } from '@/utils/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { User, UserRole } from '@/types';
 
@@ -17,8 +17,11 @@ export async function getCurrentUser(): Promise<User | null> {
         const { userId } = await auth();
         if (!userId) return null;
 
-        const supabase = await createClient();
-        const { data } = await supabase
+        // Use service client for user lookup to avoid RLS/JWT issues.
+        // The kyoty_users table has a public SELECT policy, but the service
+        // client guarantees we always get results regardless of JWT state.
+        const serviceClient = createServiceClient();
+        const { data } = await serviceClient
             .from('kyoty_users')
             .select('*')
             .eq('auth_id', userId)
@@ -33,7 +36,7 @@ export async function getCurrentUser(): Promise<User | null> {
             email: clerkUser?.emailAddresses[0]?.emailAddress ?? '',
             name: clerkUser?.fullName ?? clerkUser?.firstName ?? clerkUser?.emailAddresses[0]?.emailAddress?.split('@')[0] ?? 'User',
             avatarUrl: clerkUser?.imageUrl,
-        }, supabase);
+        }, serviceClient);
     } catch {
         return null;
     }
@@ -42,6 +45,8 @@ export async function getCurrentUser(): Promise<User | null> {
 /**
  * Idempotent user creation. When called from a webhook (no user session),
  * pass an explicit service client via the `client` parameter.
+ * Always uses the service client to bypass RLS — user rows are created
+ * before the JWT is available in the Supabase context.
  */
 export async function ensureUser(
     profile: {
@@ -52,7 +57,7 @@ export async function ensureUser(
     },
     client?: SupabaseClient,
 ): Promise<User> {
-    const supabase = client ?? await createClient();
+    const supabase = client ?? createServiceClient();
     const { data: existing } = await supabase
         .from('kyoty_users')
         .select('*')

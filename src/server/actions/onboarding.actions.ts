@@ -2,9 +2,8 @@
 
 import { getCurrentUser } from '@/lib/auth-server';
 import { sanitizeInterestTags } from '@/lib/interest-tags';
-import { UserRepository } from '@/lib/repositories/user-repo';
 import { CommunityRepository } from '@/lib/repositories/community-repo';
-import { createClient } from '@/utils/supabase/server';
+import { createServiceClient } from '@/utils/supabase/server';
 import type { Community } from '@/types';
 
 // Allowed hostname patterns per proof type.
@@ -57,7 +56,8 @@ export async function submitSocialProofAction(formData: FormData) {
             return { success: false, error: validationError };
         }
 
-        const supabase = await createClient();
+        // Use service client to bypass RLS — user identity already verified via Clerk
+        const supabase = createServiceClient();
         const { error } = await supabase
             .from('kyoty_users')
             .update({
@@ -81,7 +81,8 @@ export async function completeOnboardingAction() {
         const user = await getCurrentUser();
         if (!user) return { success: false, error: 'Authentication required' };
 
-        const supabase = await createClient();
+        // Use service client to bypass RLS — user identity already verified via Clerk
+        const supabase = createServiceClient();
         const { error } = await supabase
             .from('kyoty_users')
             .update({ onboarding_completed: true })
@@ -104,7 +105,13 @@ export async function updateInterestTagsAction(interestTags: string[]) {
             return { success: true };
         }
 
-        await UserRepository.updateProfile(user.id, { interest_tags: sanitizedTags });
+        // Use service client to bypass RLS — user identity already verified via Clerk
+        const supabase = createServiceClient();
+        const { error } = await supabase
+            .from('kyoty_users')
+            .update({ interest_tags: sanitizedTags })
+            .eq('id', user.id);
+        if (error) throw new Error(error.message);
         return { success: true };
     } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : 'Failed to update interests' };
@@ -149,7 +156,8 @@ export async function updateCityAction(cityName: string) {
         const user = await getCurrentUser();
         if (!user) return { success: false, error: 'Authentication required' };
 
-        const supabase = await createClient();
+        // Use service client to bypass RLS — user identity already verified via Clerk
+        const supabase = createServiceClient();
 
         // Look up city id by name.
         const { data: city } = await supabase
