@@ -20,13 +20,7 @@ import Link from 'next/link';
 async function getPlatformStats() {
     const supabase = await createClient();
 
-    const [
-        { count: totalCommunities },
-        { count: totalUsers },
-        { count: totalEvents },
-        { count: totalMembers },
-        { count: totalMedia },
-    ] = await Promise.all([
+    const results = await Promise.all([
         supabase.from('communities').select('*', { count: 'exact', head: true }),
         supabase.from('kyoty_users').select('*', { count: 'exact', head: true }),
         supabase.from('events').select('*', { count: 'exact', head: true }),
@@ -34,12 +28,16 @@ async function getPlatformStats() {
         supabase.from('community_media').select('*', { count: 'exact', head: true }),
     ]);
 
+    for (const r of results) {
+        if (r.error) console.error('[admin] getPlatformStats query error:', r.error.message);
+    }
+
     return {
-        totalCommunities: totalCommunities ?? 0,
-        totalUsers: totalUsers ?? 0,
-        totalEvents: totalEvents ?? 0,
-        totalMembers: totalMembers ?? 0,
-        totalMedia: totalMedia ?? 0,
+        totalCommunities: results[0].count ?? 0,
+        totalUsers: results[1].count ?? 0,
+        totalEvents: results[2].count ?? 0,
+        totalMembers: results[3].count ?? 0,
+        totalMedia: results[4].count ?? 0,
     };
 }
 
@@ -63,12 +61,22 @@ export default async function AdminPage() {
     const user = await getCurrentUser();
     if (!user || (user.role !== 'kyoty_admin' && user.role !== 'admin')) redirect('/dashboard');
 
-    const [pendingCommunities, pendingEvents, stats, recentLogs] = await Promise.all([
+    const [pendingCommunitiesResult, pendingEventsResult, statsResult, recentLogsResult] = await Promise.allSettled([
         CommunityRepository.findPending(),
         EventRepository.findPending(),
         getPlatformStats(),
         AdminLogRepository.findRecent(12),
     ]);
+
+    if (pendingCommunitiesResult.status === 'rejected') console.error('[admin] findPending communities failed:', pendingCommunitiesResult.reason);
+    if (pendingEventsResult.status === 'rejected') console.error('[admin] findPending events failed:', pendingEventsResult.reason);
+    if (statsResult.status === 'rejected') console.error('[admin] getPlatformStats failed:', statsResult.reason);
+    if (recentLogsResult.status === 'rejected') console.error('[admin] findRecent logs failed:', recentLogsResult.reason);
+
+    const pendingCommunities = pendingCommunitiesResult.status === 'fulfilled' ? pendingCommunitiesResult.value : [];
+    const pendingEvents = pendingEventsResult.status === 'fulfilled' ? pendingEventsResult.value : [];
+    const stats = statsResult.status === 'fulfilled' ? statsResult.value : { totalCommunities: 0, totalUsers: 0, totalEvents: 0, totalMembers: 0, totalMedia: 0 };
+    const recentLogs = recentLogsResult.status === 'fulfilled' ? recentLogsResult.value : [];
 
     const totalPending = pendingCommunities.length + pendingEvents.length;
 

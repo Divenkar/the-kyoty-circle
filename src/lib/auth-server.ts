@@ -28,7 +28,7 @@ export async function getCurrentUser(): Promise<User | null> {
             .from('kyoty_users')
             .select('*')
             .eq('auth_id', userId)
-            .single();
+            .maybeSingle();
 
         if (selectError) {
             console.warn('[auth] getCurrentUser: DB lookup failed for', userId, selectError.message);
@@ -73,7 +73,7 @@ export async function ensureUser(
         .from('kyoty_users')
         .select('*')
         .eq('auth_id', profile.authId)
-        .single();
+        .maybeSingle();
 
     if (existing) return existing as User;
 
@@ -83,8 +83,8 @@ export async function ensureUser(
         const { data: byEmail } = await supabase
             .from('kyoty_users')
             .select('*')
-            .eq('email', profile.email)
-            .single();
+            .ilike('email', profile.email)
+            .maybeSingle();
 
         if (byEmail) {
             console.log('[auth] ensureUser: Found existing row by email, updating auth_id from', byEmail.auth_id, 'to', profile.authId);
@@ -118,6 +118,31 @@ export async function ensureUser(
         })
         .select()
         .single();
+
+    // If INSERT fails due to duplicate email (race with webhook), retry the lookup
+    if (error?.code === '23505') {
+        console.log('[auth] ensureUser: INSERT conflict, retrying email lookup for', profile.email);
+        const { data: retried } = await supabase
+            .from('kyoty_users')
+            .select('*')
+            .ilike('email', profile.email)
+            .maybeSingle();
+
+        if (retried) {
+            // Update auth_id if it doesn't match
+            if (retried.auth_id !== profile.authId) {
+                const { data: updated, error: updateError } = await supabase
+                    .from('kyoty_users')
+                    .update({ auth_id: profile.authId })
+                    .eq('id', retried.id)
+                    .select()
+                    .single();
+                if (updateError) throw new Error(`Failed to update auth_id on retry: ${updateError.message}`);
+                return updated as User;
+            }
+            return retried as User;
+        }
+    }
 
     if (error) throw new Error(`Failed to create user: ${error.message}`);
     return newUser as User;
