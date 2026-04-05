@@ -15,21 +15,29 @@ export async function getCurrentUserId(): Promise<string | null> {
 export async function getCurrentUser(): Promise<User | null> {
     try {
         const { userId } = await auth();
-        if (!userId) return null;
+        if (!userId) {
+            console.warn('[auth] getCurrentUser: Clerk auth() returned no userId');
+            return null;
+        }
 
         // Use service client for user lookup to avoid RLS/JWT issues.
         // The kyoty_users table has a public SELECT policy, but the service
         // client guarantees we always get results regardless of JWT state.
         const serviceClient = createServiceClient();
-        const { data } = await serviceClient
+        const { data, error: selectError } = await serviceClient
             .from('kyoty_users')
             .select('*')
             .eq('auth_id', userId)
             .single();
 
+        if (selectError) {
+            console.warn('[auth] getCurrentUser: DB lookup failed for', userId, selectError.message);
+        }
+
         if (data) return data as User;
 
         // Fallback: create row if the Clerk webhook hasn't fired yet (race condition safety net)
+        console.log('[auth] getCurrentUser: No DB row for', userId, '— creating via ensureUser');
         const clerkUser = await currentUser();
         return await ensureUser({
             authId: userId,
@@ -37,7 +45,8 @@ export async function getCurrentUser(): Promise<User | null> {
             name: clerkUser?.fullName ?? clerkUser?.firstName ?? clerkUser?.emailAddresses[0]?.emailAddress?.split('@')[0] ?? 'User',
             avatarUrl: clerkUser?.imageUrl,
         }, serviceClient);
-    } catch {
+    } catch (err) {
+        console.error('[auth] getCurrentUser failed:', err instanceof Error ? err.message : err);
         return null;
     }
 }
