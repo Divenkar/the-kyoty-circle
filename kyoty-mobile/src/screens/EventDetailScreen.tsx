@@ -40,27 +40,36 @@ export default function EventDetailScreen() {
 
         setRsvpLoading(true);
         try {
-            const token = await getToken({ template: 'supabase' }).catch(() => null)
-                ?? await getToken().catch(() => null);
-            const supabase = createSupabaseClient(token);
+            // Use the Clerk session token (not Supabase template) for API auth
+            const token = await getToken().catch(() => null);
 
-            const { error } = await supabase
-                .from('event_participants')
-                .insert({
-                    event_id: event.id,
-                    user_id: user.id,
-                    status: 'registered',
-                });
+            const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? 'https://kyoty.in';
 
-            if (error) {
-                if (error.code === '23505') {
-                    Alert.alert('Already Registered', 'You have already RSVP\'d for this event.');
-                } else {
-                    Alert.alert('Error', error.message || 'Failed to register for event.');
-                }
-            } else {
+            const res = await fetch(`${apiUrl}/api/mobile/events/join`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ eventId: event.id }),
+            });
+
+            const body = await res.json();
+
+            if (body.success) {
                 setRsvpDone(true);
-                Alert.alert('Success', 'You have been registered for this event!');
+                const msg = body.data?.status === 'waitlisted'
+                    ? `You're on the waitlist (#${body.data.position || ''}). We'll notify you when a spot opens up!`
+                    : 'You have been registered for this event!';
+                Alert.alert('Success', msg);
+            } else {
+                const errorMsg = body.error || 'Failed to register for event.';
+                if (errorMsg.includes('already registered')) {
+                    Alert.alert('Already Registered', 'You have already RSVP\'d for this event.');
+                    setRsvpDone(true);
+                } else {
+                    Alert.alert('Error', errorMsg);
+                }
             }
         } catch (e: any) {
             Alert.alert('Error', e?.message || 'Something went wrong.');
