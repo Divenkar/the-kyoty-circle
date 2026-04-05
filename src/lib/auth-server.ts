@@ -67,6 +67,8 @@ export async function ensureUser(
     client?: SupabaseClient,
 ): Promise<User> {
     const supabase = client ?? createServiceClient();
+
+    // 1. Check if a row already exists with this Clerk auth_id
     const { data: existing } = await supabase
         .from('kyoty_users')
         .select('*')
@@ -75,6 +77,33 @@ export async function ensureUser(
 
     if (existing) return existing as User;
 
+    // 2. Check if a row exists with this email but a stale auth_id
+    //    (e.g. migrated from Supabase Auth → Clerk, old UUID still stored)
+    if (profile.email) {
+        const { data: byEmail } = await supabase
+            .from('kyoty_users')
+            .select('*')
+            .eq('email', profile.email)
+            .single();
+
+        if (byEmail) {
+            console.log('[auth] ensureUser: Found existing row by email, updating auth_id from', byEmail.auth_id, 'to', profile.authId);
+            const { data: updated, error: updateError } = await supabase
+                .from('kyoty_users')
+                .update({
+                    auth_id: profile.authId,
+                    avatar_url: profile.avatarUrl ?? byEmail.avatar_url,
+                })
+                .eq('id', byEmail.id)
+                .select()
+                .single();
+
+            if (updateError) throw new Error(`Failed to update auth_id: ${updateError.message}`);
+            return updated as User;
+        }
+    }
+
+    // 3. No existing row at all — create a new one
     const { data: newUser, error } = await supabase
         .from('kyoty_users')
         .insert({
